@@ -109,17 +109,16 @@ function showErrorState(msg){
   showState('errorState');
 }
 
-// เรียก Apps Script ผ่าน fetch() แบบ POST — ใช้ Content-Type: text/plain เสมอ เพื่อเลี่ยง CORS
-// preflight (browser จะไม่ยิง OPTIONS ก่อนถ้า Content-Type เป็น text/plain, form-data, หรือ x-www-form-urlencoded
-// เท่านั้น — ถ้าใช้ application/json จะโดน preflight แล้ว Apps Script ตอบ OPTIONS ไม่ได้ ทำให้ fetch ล้มเหลว)
+// เรียก Apps Script ผ่าน fetch() แบบ GET เสมอ (แม้แต่ action ที่เปลี่ยนแปลงข้อมูลอย่าง registerMember)
+// เพราะ Apps Script ตอบกลับด้วย HTTP redirect เสมอ ซึ่งเบราว์เซอร์ในแอป LINE (โดยเฉพาะ iOS)
+// มักบล็อก redirect ของ POST เนื่องจากกฎ CORS เข้มงวดกว่า — GET ไม่มีปัญหานี้ เสถียรกว่ามาก
 function callApi(action, payload){
   payload = payload || {};
   payload.action = action;
-  return fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  }).then(function(res){ return res.json(); });
+  var qs = Object.keys(payload).map(function(k){
+    return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
+  }).join('&');
+  return fetch(API_URL + '?' + qs, { method: 'GET' }).then(function(res){ return res.json(); });
 }
 
 function initLiff(){
