@@ -39,6 +39,24 @@ body::before{
 .hd h1{font-size:19px;font-weight:600;}
 .hd p{font-size:13px;opacity:.9;margin-top:4px;}
 .bd{padding:28px 24px;}
+
+/* ==================== หน้าต้อนรับ — เต็มจอจริงๆ ไม่ใช่กล่องเล็กๆ ในการ์ด ====================
+   position:fixed คลุมทั้งจอ ไม่ขึ้นกับ .wrap/.card เลย — ใช้รูปพื้นหลังชื่อไฟล์คงที่ "welcome-bg.jpg"
+   เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ไม่ต้องแก้โค้ด
+   ขนาดภาพแนะนำ: 1080x1920px (แนวตั้ง 9:16 มาตรฐานจอมือถือ) ไฟล์ไม่ควรเกิน ~500KB —
+   ไม่จำเป็นต้องตรงเป๊ะเพราะใช้ background-size:cover ให้เต็มจอเสมอไม่ว่าอัตราส่วนจอจะต่างกันแค่ไหน */
+#welcomeState{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
+  height:100dvh;background:#000;}
+.welcome-topbar{flex-shrink:0;background:linear-gradient(135deg,var(--gd),#66bb6a);
+  padding:14px 20px;display:flex;align-items:center;gap:10px;color:#fff;}
+.welcome-topbar img{width:28px;height:35px;object-fit:contain;}
+.welcome-topbar span{font-weight:700;font-size:16px;letter-spacing:.5px;}
+.welcome-photo{flex:1;position:relative;background-image:url('welcome-bg.jpg');
+  background-size:cover;background-position:center;min-height:0;}
+.welcome-bottom{flex-shrink:0;background:#fff;border-radius:28px 28px 0 0;margin-top:-28px;
+  position:relative;z-index:1;padding:26px 24px 30px;text-align:center;box-shadow:0 -6px 20px rgba(0,0,0,.12);}
+.welcome-bottom h3{font-size:19px;font-weight:700;color:var(--td);letter-spacing:1px;margin-bottom:14px;}
+.welcome-bottom .btn{max-width:240px;margin:0 auto;border-radius:24px;}
 .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:20px;}
 .fg label{font-size:13px;font-weight:600;color:var(--g8);}
 .fc{height:46px;padding:0 14px;border:1.5px solid #eee;border-radius:10px;font-size:15px;
@@ -58,6 +76,9 @@ body::before{
 .sh{display:none;}
 
 /* ==================== เฟรมรูปภาพ (แยกต่างหาก ไม่ปนกับบัตรสมาชิก) ==================== */
+.promo-frame{border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.12);
+  height:110px;background-image:url('promo-banner.jpg');background-size:cover;background-position:center;
+  margin-bottom:10px;}
 .photo-frame{border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.12);
   height:100px;background-image:url('card-header-bg.jpg');background-size:cover;background-position:center;
   margin-bottom:14px;}
@@ -118,6 +139,18 @@ body::before{
 </head>
 <body>
 
+<div id="welcomeState" class="sh">
+  <div class="welcome-topbar">
+    <img id="welcomeLogo" alt="Em-O-Cha">
+    <span>Em-O-Cha</span>
+  </div>
+  <div class="welcome-photo"></div>
+  <div class="welcome-bottom">
+    <h3>MEMBERSHIP</h3>
+    <button class="btn" onclick="showState('registerState')">🎉 เข้าร่วมเป็นสมาชิก</button>
+  </div>
+</div>
+
 <div class="wrap">
 <div class="card">
   <div class="hd" id="hd">
@@ -159,6 +192,7 @@ body::before{
     </div>
 
     <div id="memberCardState" class="sh">
+      <div class="promo-frame"></div>
       <div class="photo-frame"></div>
 
       <div class="mcard" id="mcard">
@@ -240,7 +274,7 @@ var currentLinePicture = '';
 var brandLogoDataUrl = ''; // เก็บ src ของโลโก้ (ตัวเดียวกับที่ใช้ใน header) ไว้ใช้ซ้ำในบัตรสมาชิก
 
 function showState(id){
-  ['loadingState','registerState','memberCardState','successState','errorState'].forEach(function(s){
+  ['loadingState','welcomeState','registerState','memberCardState','successState','errorState'].forEach(function(s){
     document.getElementById(s).classList.toggle('sh', s !== id);
   });
   // ซ่อนหัวเขียว "เข้าร่วมเป็นสมาชิก" (พร้อมรูปโปรไฟล์/มาสคอต) หลังจากเป็นสมาชิกแล้ว — ไม่จำเป็นอีกต่อไป
@@ -273,7 +307,7 @@ function checkStatus(){
         renderMemberCard(r.member);
         showState('memberCardState');
       } else {
-        showState('registerState');
+        showState('welcomeState'); // ยังไม่เป็นสมาชิก — โชว์หน้าต้อนรับก่อน กดปุ่มแล้วค่อยไปฟอร์มสมัคร
       }
     })
     .catch(function(e){ showErrorState('เรียก API ไม่สำเร็จ: ' + e.message); });
@@ -429,19 +463,111 @@ function closePanel(){
   document.getElementById('panelOverlay').classList.add('sh');
 }
 
+var rewardsCatalogCache = [];
+var currentPointsBalance = 0;
+var redeemQty = 1;
+var redeemItemIdx = -1;
+
+// โหลดแผง "สิทธิ์พิเศษ & คะแนน" — ดึง 3 อย่างพร้อมกัน: สิทธิ์ที่มีอยู่แล้ว, คะแนนคงเหลือปัจจุบัน,
+// และแคตตาล็อกของรางวัลที่แลกได้ (แบบเดียวกับหน้า ChocoCRM ที่อ้างอิงมา)
 function loadPrivilegesPanel(){
-  callApi('getMyPrivileges', { idToken: currentIdToken }).then(function(r){
-    var body = document.getElementById('panelBody');
-    if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
-    if (!r.results.length) { body.innerHTML = '<div class="empty">ยังไม่มีสิทธิ์พิเศษในตอนนี้</div>'; return; }
-    var h = '';
-    r.results.forEach(function(p){
-      var valueText = p.type === 'percent' ? ('ลด ' + p.value + '%') : ('ลด ' + p.value + ' บาท');
-      h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span><span>' + valueText + '</span></div>'
-        + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
-    });
+  var body = document.getElementById('panelBody');
+  Promise.all([
+    callApi('getMyPrivileges', { idToken: currentIdToken }),
+    callApi('checkMemberStatus', { idToken: currentIdToken }),
+    callApi('getRewardsCatalog', {})
+  ]).then(function(results){
+    var privResult = results[0], statusResult = results[1], catalogResult = results[2];
+    currentPointsBalance = (statusResult && statusResult.success && statusResult.isMember) ? (statusResult.member.points || 0) : 0;
+
+    var h = '<div class="bank-box" style="margin-bottom:16px;text-align:center">'
+      + '<div style="font-size:13px;color:var(--g6)">คะแนนคงเหลือ</div>'
+      + '<div style="font-size:28px;font-weight:700;color:var(--gd)">' + currentPointsBalance.toLocaleString('th-TH') + '</div>'
+      + '</div>';
+
+    h += '<p style="font-weight:600;margin-bottom:8px">🎁 สิทธิ์ของคุณ</p>';
+    if (privResult && privResult.success && privResult.results.length) {
+      privResult.results.forEach(function(p){
+        var valueText = p.type === 'percent' ? ('ลด ' + p.value + '%') : ('ลด ' + p.value + ' บาท');
+        h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span><span>' + valueText + '</span></div>'
+          + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
+      });
+    } else {
+      h += '<div class="empty" style="padding:12px 0">ยังไม่มีสิทธิ์พิเศษในตอนนี้</div>';
+    }
+
+    h += '<p style="font-weight:600;margin:18px 0 8px">🏆 แลกของรางวัล</p>';
+    rewardsCatalogCache = (catalogResult && catalogResult.success) ? catalogResult.results : [];
+    if (rewardsCatalogCache.length) {
+      rewardsCatalogCache.forEach(function(item, idx){
+        var valueText = item.type === 'percent' ? ('ลด ' + item.value + '%') : ('ลด ' + item.value + ' บาท');
+        var canAfford = currentPointsBalance >= item.pointCost;
+        h += '<div class="list-item"><div class="row1"><span>' + esc(item.name) + '</span><span>' + item.pointCost.toLocaleString('th-TH') + ' แต้ม</span></div>'
+          + '<div class="row2">' + valueText + (item.remaining >= 0 ? ' · เหลือ ' + item.remaining + ' ชิ้น' : '') + '</div>'
+          + '<button class="btn btn-sm' + (canAfford ? '' : ' btn-outline') + '" style="margin-top:8px"' + (canAfford ? '' : ' disabled') + ' onclick="showRedeemView(' + idx + ')">' + (canAfford ? 'แลกเลย' : 'คะแนนไม่พอ') + '</button>'
+          + '</div>';
+      });
+    } else {
+      h += '<div class="empty" style="padding:12px 0">ยังไม่มีของรางวัลให้แลกตอนนี้</div>';
+    }
+
     body.innerHTML = h;
-  }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+  }).catch(function(e){ body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+}
+
+// เปิดหน้าจอแลกของรางวัลชิ้นที่เลือก (เลือกจำนวน + ยืนยัน) — สไตล์เดียวกับหน้า "แลกของรางวัล" ของ ChocoCRM
+function showRedeemView(idx){
+  redeemItemIdx = idx;
+  redeemQty = 1;
+  renderRedeemView();
+}
+function changeRedeemQty(delta){
+  var item = rewardsCatalogCache[redeemItemIdx];
+  var maxQty = item.remaining >= 0 ? item.remaining : 99;
+  redeemQty = Math.max(1, Math.min(maxQty, redeemQty + delta));
+  renderRedeemView();
+}
+function renderRedeemView(){
+  var item = rewardsCatalogCache[redeemItemIdx];
+  var body = document.getElementById('panelBody');
+  var totalCost = item.pointCost * redeemQty;
+  var valueText = item.type === 'percent' ? ('ลด ' + item.value + '%') : ('ลด ' + item.value + ' บาท');
+  var afford = currentPointsBalance >= totalCost;
+  body.innerHTML =
+    '<button class="btn btn-outline btn-sm" onclick="loadPrivilegesPanel()">← กลับ</button>'
+    + '<div class="bank-box" style="margin:14px 0;text-align:center">'
+    +   '<p style="font-weight:700;font-size:16px">' + esc(item.name) + '</p>'
+    +   '<p style="color:var(--g6);font-size:13px;margin-top:4px">' + valueText + '</p>'
+    + '</div>'
+    + '<div class="info-row"><span>ใช้คะแนน/ชิ้น</span><span>' + item.pointCost.toLocaleString('th-TH') + '</span></div>'
+    + '<div class="info-row"><span>จำนวน</span><span>'
+    +   '<button class="btn btn-outline btn-sm" onclick="changeRedeemQty(-1)">−</button> '
+    +   '<b style="margin:0 10px">' + redeemQty + '</b> '
+    +   '<button class="btn btn-outline btn-sm" onclick="changeRedeemQty(1)">+</button>'
+    + '</span></div>'
+    + '<div class="info-row"><span>คะแนนที่ต้องใช้ทั้งหมด</span><span>' + totalCost.toLocaleString('th-TH') + '</span></div>'
+    + '<div class="info-row"><span>คะแนนคงเหลือหลังแลก</span><span>' + Math.max(0, currentPointsBalance - totalCost).toLocaleString('th-TH') + '</span></div>'
+    + '<div class="err' + (afford ? '' : ' show') + '" id="redeemErrBox">' + (afford ? '' : 'คะแนนไม่พอสำหรับจำนวนนี้') + '</div>'
+    + '<button class="btn btn-block" style="margin-top:10px" onclick="confirmRedeem()"' + (afford ? '' : ' disabled') + '>✅ ยืนยันการแลก</button>';
+}
+function confirmRedeem(){
+  var item = rewardsCatalogCache[redeemItemIdx];
+  callApi('redeemReward', { idToken: currentIdToken, rewardRowIndex: item.rowIndex, quantity: redeemQty }).then(function(r){
+    if (r && r.success) {
+      currentPointsBalance = r.newPoints;
+      var body = document.getElementById('panelBody');
+      body.innerHTML = '<div class="empty" style="padding:20px 0">🎉<br><b>แลก "' + esc(r.rewardName) + '" สำเร็จ!</b><br>เหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน</div>'
+        + '<button class="btn btn-block" onclick="loadPrivilegesPanel()">กลับไปหน้าสิทธิ์พิเศษ</button>';
+    } else {
+      var errEl = document.getElementById('redeemErrBox');
+      errEl.textContent = r ? r.error : 'เกิดข้อผิดพลาด';
+      errEl.classList.add('show');
+    }
+  }).catch(function(e){
+    var errEl = document.getElementById('redeemErrBox');
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.classList.add('show');
+  });
 }
 
 function loadMemberInfoPanel(){
@@ -525,6 +651,8 @@ function initLiff(){
       document.getElementById('avatar').innerHTML = '<img src="' + profile.picture + '">';
     }
     brandLogoDataUrl = document.querySelector('.brand-logo') ? document.querySelector('.brand-logo').src : '';
+    var welcomeLogoEl = document.getElementById('welcomeLogo');
+    if (welcomeLogoEl && brandLogoDataUrl) welcomeLogoEl.src = brandLogoDataUrl;
     checkStatus();
   }).catch(function(e){
     clearTimeout(initTimeout);
