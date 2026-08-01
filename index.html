@@ -47,6 +47,9 @@ body::before{
    ไม่จำเป็นต้องตรงเป๊ะเพราะใช้ background-size:cover ให้เต็มจอเสมอไม่ว่าอัตราส่วนจอจะต่างกันแค่ไหน */
 #welcomeState{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
   height:100dvh;background:#000;}
+#welcomeState.sh{display:none;} /* กันปัญหา specificity: ตัวเลือกแบบ ID (#welcomeState) แรงกว่า .sh
+  เฉยๆ เสมอ ถ้าไม่มีบรรทัดนี้ ปุ่ม "เข้าร่วมเป็นสมาชิก" จะกดแล้วไม่ไปหน้าลงทะเบียนเพราะหน้าต้อนรับ
+  ไม่ยอมซ่อนจริงๆ (ยังคง display:flex ทับอยู่บนสุดเสมอ) */
 .welcome-topbar{flex-shrink:0;background:linear-gradient(135deg,var(--gd),#66bb6a);
   padding:14px 20px;display:flex;align-items:center;gap:10px;color:#fff;}
 .welcome-topbar img{width:28px;height:35px;object-fit:contain;}
