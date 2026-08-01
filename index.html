@@ -19,7 +19,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 body::before{
   content:'';
   position:fixed;
-  inset:-30px;
+  top:-30px; left:-30px; right:-30px; bottom:-30px;
   background-image:url('page-bg.jpg');
   background-size:cover;
   background-position:center;
@@ -45,8 +45,8 @@ body::before{
    เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ไม่ต้องแก้โค้ด
    ขนาดภาพแนะนำ: 1080x1920px (แนวตั้ง 9:16 มาตรฐานจอมือถือ) ไฟล์ไม่ควรเกิน ~500KB —
    ไม่จำเป็นต้องตรงเป๊ะเพราะใช้ background-size:cover ให้เต็มจอเสมอไม่ว่าอัตราส่วนจอจะต่างกันแค่ไหน */
-#welcomeState{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
-  height:100dvh;background:#000;}
+#welcomeState{position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;display:flex;flex-direction:column;
+  height:100vh;background:#000;}
 #welcomeState.sh{display:none;} /* กันปัญหา specificity: ตัวเลือกแบบ ID (#welcomeState) แรงกว่า .sh
   เฉยๆ เสมอ ถ้าไม่มีบรรทัดนี้ ปุ่ม "เข้าร่วมเป็นสมาชิก" จะกดแล้วไม่ไปหน้าลงทะเบียนเพราะหน้าต้อนรับ
   ไม่ยอมซ่อนจริงๆ (ยังคง display:flex ทับอยู่บนสุดเสมอ) */
@@ -121,7 +121,7 @@ body::before{
 .menu-item .txt{font-size:11.5px;font-weight:600;text-align:center;line-height:1.3;}
 
 /* ==================== แผงข้อมูลย่อย (privileges/info/history/coupons) ==================== */
-.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:flex-end;
+.panel-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:flex-end;
   justify-content:center;}
 .panel-overlay.sh{display:none;}
 .panel-sheet{background:#fff;border-radius:20px 20px 0 0;max-width:400px;width:100%;max-height:80vh;
@@ -150,7 +150,7 @@ body::before{
   <div class="welcome-photo"></div>
   <div class="welcome-bottom">
     <h3>MEMBERSHIP</h3>
-    <button class="btn" onclick="showState('registerState')">🎉 เข้าร่วมเป็นสมาชิก</button>
+    <button class="btn" onclick="try{showState('registerState');}catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}">🎉 เข้าร่วมเป็นสมาชิก</button>
   </div>
 </div>
 
@@ -433,8 +433,21 @@ function submitRegister(){
   }
   var btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+
+  // ตั้งเวลาไว้ 12 วินาที — ถ้ายังไม่ตอบกลับภายในนี้ ไม่ได้แปลว่าล้มเหลวเสมอไป (ระบบฝั่งเซิร์ฟเวอร์ของ
+  // Google Apps Script บางครั้งบันทึกข้อมูลเสร็จเรียบร้อยแล้วจริงๆ แต่การส่งผลลัพธ์กลับมาให้เบราว์เซอร์ล่าช้า
+  // เป็นเรื่องปกติของแพลตฟอร์มเอง) จึงเสนอปุ่ม "เช็คอีกครั้ง" แทนที่จะบอกว่าผิดพลาดเฉยๆ
+  var didFinish = false;
+  var slowTimer = setTimeout(function(){
+    if (didFinish) return;
+    errBox.innerHTML = 'ระบบตอบกลับช้ากว่าปกติ — ข้อมูลอาจถูกบันทึกสำเร็จแล้วจริงๆ เพียงแต่แจ้งผลช้า<br>'
+      + '<button class="btn btn-sm" style="margin-top:8px" onclick="checkStatus()">🔄 เช็คสถานะอีกครั้ง</button>';
+    errBox.classList.add('show');
+  }, 12000);
+
   callApi('registerMember', { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday })
     .then(function(r){
+      didFinish = true; clearTimeout(slowTimer);
       btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
       if (r && r.success) {
         checkStatus(); // โหลดข้อมูลสมาชิกที่เพิ่งสมัครใหม่ มาแสดงเป็นบัตรทันที
@@ -443,8 +456,10 @@ function submitRegister(){
       }
     })
     .catch(function(e){
+      didFinish = true; clearTimeout(slowTimer);
       btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
-      errBox.textContent = 'Error: ' + e.message;
+      errBox.innerHTML = 'Error: ' + e.message.replace(/</g,'&lt;') + '<br>'
+        + '<button class="btn btn-sm" style="margin-top:8px" onclick="checkStatus()">🔄 เช็คสถานะอีกครั้ง (เผื่อบันทึกสำเร็จแล้ว)</button>';
       errBox.classList.add('show');
     });
 }
