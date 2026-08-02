@@ -530,10 +530,10 @@ function loadPrivilegesPanel(){
     rewardsCatalogCache = r.rewards || [];
     if (rewardsCatalogCache.length) {
       rewardsCatalogCache.forEach(function(item, idx){
-        var valueText = item.type === 'percent' ? ('ลด ' + item.value + '%') : ('ลด ' + item.value + ' บาท');
+        var subText = rewardSubText_(item);
         var canAfford = currentPointsBalance >= item.pointCost;
         h += '<div class="list-item"><div class="row1"><span>' + esc(item.name) + '</span><span>' + item.pointCost.toLocaleString('th-TH') + ' แต้ม</span></div>'
-          + '<div class="row2">' + valueText + (item.remaining >= 0 ? ' · เหลือ ' + item.remaining + ' ชิ้น' : '') + '</div>'
+          + '<div class="row2">' + esc(item.categoryLabel) + ' · ' + subText + (item.remaining >= 0 ? ' · เหลือ ' + item.remaining + ' ชิ้น' : '') + '</div>'
           + '<button class="btn btn-sm' + (canAfford ? '' : ' btn-outline') + '" style="margin-top:8px"' + (canAfford ? '' : ' disabled') + ' onclick="showRedeemView(' + idx + ')">' + (canAfford ? 'แลกเลย' : 'คะแนนไม่พอ') + '</button>'
           + '</div>';
       });
@@ -547,6 +547,19 @@ function loadPrivilegesPanel(){
       + '\n\nname: ' + esc(e.name || '-')
       + '\n\nstack:\n' + esc((e.stack || '').substring(0, 500)) + '</div>';
   });
+}
+
+// ข้อความอธิบายสั้นๆ ของรางวัลแต่ละชิ้น ตามหมวดหมู่ — coupon/buy_product โชว์เป็นมูลค่าส่วนลด
+// tier_upgrade โชว์ชื่อระดับเป้าหมาย ส่วนหมวดอื่น (free_product/premium/activity) โชว์รายละเอียดที่พิมพ์ไว้
+function rewardSubText_(item){
+  if (item.category === 'coupon' || item.category === 'buy_product') {
+    var valueText = item.type === 'percent' ? ('ลด ' + item.value + '%') : ('ลด ' + item.value + ' บาท');
+    return valueText + (item.detail ? ' (' + item.detail + ')' : '');
+  }
+  if (item.category === 'tier_upgrade') {
+    return 'ระดับ: ' + item.value;
+  }
+  return item.detail || '-';
 }
 
 // เปิดหน้าจอแลกของรางวัลชิ้นที่เลือก (เลือกจำนวน + ยืนยัน) — สไตล์เดียวกับหน้า "แลกของรางวัล" ของ ChocoCRM
@@ -565,22 +578,32 @@ function renderRedeemView(){
   var item = rewardsCatalogCache[redeemItemIdx];
   var body = document.getElementById('panelBody');
   var totalCost = item.pointCost * redeemQty;
-  var valueText = item.type === 'percent' ? ('ลด ' + item.value + '%') : ('ลด ' + item.value + ' บาท');
   var afford = currentPointsBalance >= totalCost;
+  // ของรางวัลที่ไม่ใช่คูปอง/สินค้าที่แลกซื้อ มักจะแลกได้แค่ครั้งละ 1 (เช่น เพิ่มระดับสมาชิก แลกซ้ำไม่มีประโยชน์)
+  var allowMultiQty = (item.category === 'coupon' || item.category === 'buy_product' || item.category === 'free_product' || item.category === 'premium');
+  var qtyRowHtml = allowMultiQty
+    ? '<div class="info-row"><span>จำนวน</span><span>'
+      +   '<button class="btn btn-outline btn-sm" onclick="changeRedeemQty(-1)">−</button> '
+      +   '<b style="margin:0 10px">' + redeemQty + '</b> '
+      +   '<button class="btn btn-outline btn-sm" onclick="changeRedeemQty(1)">+</button>'
+      + '</span></div>'
+    : '';
+  var noteHtml = (item.category === 'coupon' || item.category === 'buy_product')
+    ? '<div class="hint" style="margin-top:10px">✅ แลกแล้วใช้ส่วนลดได้ทันทีตอนสั่งซื้อครั้งถัดไป</div>'
+    : (item.category === 'tier_upgrade'
+        ? '<div class="hint" style="margin-top:10px">✅ แลกแล้วระดับสมาชิกจะอัปเดตทันที</div>'
+        : '<div class="hint" style="margin-top:10px">📦 แลกแล้วทีมงานจะติดต่อกลับเพื่อจัดส่ง/ดำเนินการให้</div>');
   body.innerHTML =
     '<button class="btn btn-outline btn-sm" onclick="loadPrivilegesPanel()">← กลับ</button>'
     + '<div class="bank-box" style="margin:14px 0;text-align:center">'
     +   '<p style="font-weight:700;font-size:16px">' + esc(item.name) + '</p>'
-    +   '<p style="color:var(--g6);font-size:13px;margin-top:4px">' + valueText + '</p>'
+    +   '<p style="color:var(--g6);font-size:13px;margin-top:4px">' + esc(item.categoryLabel) + ' · ' + esc(rewardSubText_(item)) + '</p>'
     + '</div>'
     + '<div class="info-row"><span>ใช้คะแนน/ชิ้น</span><span>' + item.pointCost.toLocaleString('th-TH') + '</span></div>'
-    + '<div class="info-row"><span>จำนวน</span><span>'
-    +   '<button class="btn btn-outline btn-sm" onclick="changeRedeemQty(-1)">−</button> '
-    +   '<b style="margin:0 10px">' + redeemQty + '</b> '
-    +   '<button class="btn btn-outline btn-sm" onclick="changeRedeemQty(1)">+</button>'
-    + '</span></div>'
+    + qtyRowHtml
     + '<div class="info-row"><span>คะแนนที่ต้องใช้ทั้งหมด</span><span>' + totalCost.toLocaleString('th-TH') + '</span></div>'
     + '<div class="info-row"><span>คะแนนคงเหลือหลังแลก</span><span>' + Math.max(0, currentPointsBalance - totalCost).toLocaleString('th-TH') + '</span></div>'
+    + noteHtml
     + '<div class="err' + (afford ? '' : ' show') + '" id="redeemErrBox">' + (afford ? '' : 'คะแนนไม่พอสำหรับจำนวนนี้') + '</div>'
     + '<button class="btn btn-block" style="margin-top:10px" onclick="confirmRedeem()"' + (afford ? '' : ' disabled') + '>✅ ยืนยันการแลก</button>';
 }
@@ -590,7 +613,10 @@ function confirmRedeem(){
     if (r && r.success) {
       currentPointsBalance = r.newPoints;
       var body = document.getElementById('panelBody');
-      body.innerHTML = '<div class="empty" style="padding:20px 0">🎉<br><b>แลก "' + esc(r.rewardName) + '" สำเร็จ!</b><br>เหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน</div>'
+      var msg = (r.category === 'coupon' || r.category === 'buy_product')
+        ? 'ใช้ส่วนลดได้ทันทีตอนสั่งซื้อครั้งถัดไป'
+        : (r.category === 'tier_upgrade' ? 'ระดับสมาชิกของคุณอัปเดตแล้ว' : 'ทีมงานจะติดต่อกลับเพื่อจัดส่ง/ดำเนินการให้เร็วๆ นี้');
+      body.innerHTML = '<div class="empty" style="padding:20px 0">🎉<br><b>แลก "' + esc(r.rewardName) + '" สำเร็จ!</b><br>' + esc(msg) + '<br>เหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน</div>'
         + '<button class="btn btn-block" onclick="loadPrivilegesPanel()">กลับไปหน้าสิทธิ์พิเศษ</button>';
     } else {
       var errEl = document.getElementById('redeemErrBox');
