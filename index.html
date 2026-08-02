@@ -605,11 +605,19 @@ function renderRedeemView(){
     + '<div class="info-row"><span>คะแนนคงเหลือหลังแลก</span><span>' + Math.max(0, currentPointsBalance - totalCost).toLocaleString('th-TH') + '</span></div>'
     + noteHtml
     + '<div class="err' + (afford ? '' : ' show') + '" id="redeemErrBox">' + (afford ? '' : 'คะแนนไม่พอสำหรับจำนวนนี้') + '</div>'
-    + '<button class="btn btn-block" style="margin-top:10px" onclick="confirmRedeem()"' + (afford ? '' : ' disabled') + '>✅ ยืนยันการแลก</button>';
+    + '<button class="btn btn-block" style="margin-top:10px" id="confirmRedeemBtn" onclick="confirmRedeem()"' + (afford ? '' : ' disabled') + '>✅ ยืนยันการแลก</button>';
 }
+var redeemInFlight = false; // กันกดปุ่ม "ยืนยันการแลก" ซ้ำระหว่างรอผลลัพธ์ (เคยเจอปัญหาแลกซ้ำ 2 รอบ เพราะ
+// Apps Script ตอบช้าแล้วผู้ใช้กดซ้ำก่อนได้รับผลลัพธ์รอบแรก ทำให้หักคะแนน/บันทึกคำขอแลกซ้ำ 2 รอบจริง)
 function confirmRedeem(){
+  if (redeemInFlight) return; // กำลังมีคำขอค้างอยู่ ห้ามยิงซ้ำเด็ดขาด
+  redeemInFlight = true;
+  var btn = document.getElementById('confirmRedeemBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังแลก...'; }
+
   var item = rewardsCatalogCache[redeemItemIdx];
   callApi('redeemReward', { idToken: currentIdToken, rewardRowIndex: item.rowIndex, quantity: redeemQty }).then(function(r){
+    redeemInFlight = false;
     if (r && r.success) {
       currentPointsBalance = r.newPoints;
       var body = document.getElementById('panelBody');
@@ -619,11 +627,14 @@ function confirmRedeem(){
       body.innerHTML = '<div class="empty" style="padding:20px 0">🎉<br><b>แลก "' + esc(r.rewardName) + '" สำเร็จ!</b><br>' + esc(msg) + '<br>เหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน</div>'
         + '<button class="btn btn-block" onclick="loadPrivilegesPanel()">กลับไปหน้าสิทธิ์พิเศษ</button>';
     } else {
+      if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันการแลก'; }
       var errEl = document.getElementById('redeemErrBox');
       errEl.textContent = r ? r.error : 'เกิดข้อผิดพลาด';
       errEl.classList.add('show');
     }
   }).catch(function(e){
+    redeemInFlight = false;
+    if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันการแลก'; }
     var errEl = document.getElementById('redeemErrBox');
     errEl.textContent = 'Error: ' + e.message;
     errEl.classList.add('show');
