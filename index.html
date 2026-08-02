@@ -264,7 +264,7 @@ var LIFF_ID = '2010892131-hMnmdrmH';
 
 // ⚠️ ใส่ Apps Script Web App URL ตรงนี้ (ลงท้ายด้วย /exec)
 // หน้านี้จะยิง fetch() ไปที่ URL นี้แทนการใช้ google.script.run (ซึ่งใช้ได้เฉพาะหน้าที่ Apps Script เสิร์ฟเองเท่านั้น)
-var API_URL = 'https://script.google.com/macros/s/AKfycbw0P4L2ztNKcb7Gj_ehituROwU11UsB-mdHNlPkqmbG_1UB_UYqtFkvVV-kgCBL5juSUg/exec';
+var API_URL = 'https://script.google.com/macros/s/AKfycby9b-iuB5voNHdHMzLxB6YrGJBqXUi0E3gTyRlrpsKLFd-z6_Mo7ZidVvRRT_535eGJ6g/exec';
 
 var currentIdToken = null;
 var currentLinePicture = '';
@@ -308,11 +308,16 @@ function callApi(action, payload){
   });
 }
 
+var lastMemberData = null; // แคชข้อมูลสมาชิกล่าสุดที่ดึงมาได้ (จาก checkStatus) — ใช้ซ้ำได้ที่อื่นแทนการ
+var lastMemberDataTime = 0; // ยิง API ใหม่ทุกครั้ง โดยเฉพาะเมนู "ข้อมูลสมาชิก" ที่เพิ่งดึงมาหมาดๆ ตอนเปิดหน้าเลย
+
 function checkStatus(){
   callApi('checkMemberStatus', { idToken: currentIdToken })
     .then(function(r){
       if (!r || !r.success) { showErrorState('checkMemberStatus error: ' + (r ? r.error : 'ไม่ทราบสาเหตุ')); return; }
       if (r.isMember) {
+        lastMemberData = r.member;
+        lastMemberDataTime = Date.now();
         renderMemberCard(r.member);
         showState('memberCardState');
       } else {
@@ -603,11 +608,26 @@ function confirmRedeem(){
 var THAI_PROVINCES = ['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
 var THAI_MONTHS_CLIENT_ = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
+// ใช้ข้อมูลแคชล่าสุดถ้าเพิ่งดึงมาไม่เกิน 20 วินาที (เช่น เพิ่งเปิดหน้ามาหมาดๆ บัตรสมาชิกก็ดึงมาแล้ว)
+// แทนที่จะยิง API ซ้ำอีกรอบให้เสียเวลารอโดยไม่จำเป็น — ถ้าแคชเก่าเกินไปหรือยังไม่มี ค่อยดึงใหม่ตามปกติ
 function loadMemberInfoPanel(){
+  var body = document.getElementById('panelBody');
+  var cacheAge = Date.now() - lastMemberDataTime;
+  if (lastMemberData && cacheAge < 20000) {
+    renderMemberInfoPanel_(lastMemberData);
+    return;
+  }
+  body.innerHTML = '<div class="empty">กำลังโหลด...</div>';
   callApi('checkMemberStatus', { idToken: currentIdToken }).then(function(r){
-    var body = document.getElementById('panelBody');
     if (!r || !r.success || !r.isMember) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
-    var m = r.member;
+    lastMemberData = r.member;
+    lastMemberDataTime = Date.now();
+    renderMemberInfoPanel_(r.member);
+  }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+}
+
+function renderMemberInfoPanel_(m){
+    var body = document.getElementById('panelBody');
     var bParts = String(m.birthdayRaw || '').split('-'); // YYYY-MM-DD
     var by = bParts[0] || '', bm = bParts[1] || '', bd = bParts[2] || '';
 
@@ -658,7 +678,6 @@ function loadMemberInfoPanel(){
     var provSel = document.getElementById('editProvince');
     provSel.innerHTML = '<option value="">— เลือกจังหวัด —</option>';
     THAI_PROVINCES.forEach(function(p){ provSel.innerHTML += '<option value="' + p + '"' + (p === m.province ? ' selected' : '') + '>' + p + '</option>'; });
-  }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
 
 // สลับโหมดดู/แก้ไข — กดดินสอครั้งแรกเพื่อเข้าโหมดแก้ไข กดปุ่ม "ยกเลิก" หรือดินสออีกทีเพื่อกลับไปดูอย่างเดียว
@@ -689,8 +708,16 @@ function saveMemberProfile(){
   callApi('updateMemberProfile', { idToken: currentIdToken, fullName: fullName, phone: phone, birthday: birthday, address: address, province: province })
     .then(function(r){
       if (r && r.success) {
-        checkStatus(); // รีเฟรชบัตรสมาชิกด้านหลัง เผื่อชื่อเปลี่ยน
-        loadMemberInfoPanel(); // โหลดแผงนี้ใหม่ กลับไปโหมดดูอย่างเดียวพร้อมค่าที่อัปเดตแล้ว
+        // อัปเดตแคชด้วยค่าที่เพิ่งบันทึกไปตรงๆ เลย (รู้ค่าใหม่อยู่แล้วจากฟอร์ม) ไม่ต้องรอยิง API ไปดึงซ้ำ
+        // ให้กลับไปโหมดดูเห็นผลทันที ส่วน checkStatus() ที่เรียกคู่กันไว้ทีหลังจะซิงค์บัตรสมาชิกในพื้นหลังอีกที
+        if (lastMemberData) {
+          lastMemberData = Object.assign({}, lastMemberData, {
+            fullName: fullName, phone: phone, address: address, province: province,
+            birthdayRaw: birthday, birthday: (function(){ var p = birthday.split('-'); return p[2] + ' ' + THAI_MONTHS_CLIENT_[parseInt(p[1])-1] + ' ' + (parseInt(p[0])+543); })()
+          });
+        }
+        loadMemberInfoPanel(); // กลับไปโหมดดูอย่างเดียวพร้อมค่าที่อัปเดตแล้วทันที (ใช้แคชที่เพิ่งอัปเดต)
+        checkStatus(); // ซิงค์บัตรสมาชิกด้านหลังด้วย (เผื่อชื่อเปลี่ยน) — ไม่บล็อกการแสดงผลด้านบน
       } else {
         errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด'; errBox.classList.add('show');
       }
