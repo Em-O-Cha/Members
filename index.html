@@ -293,7 +293,19 @@ function callApi(action, payload){
   var qs = Object.keys(payload).map(function(k){
     return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
   }).join('&');
-  return fetch(API_URL + '?' + qs, { method: 'GET' }).then(function(res){ return res.json(); });
+  return fetch(API_URL + '?' + qs, { method: 'GET' }).then(function(res){
+    return res.text().then(function(text){
+      try {
+        return JSON.parse(text);
+      } catch (parseErr) {
+        // แปลง error การแปลง JSON ที่คลุมเครือ ให้เห็นเนื้อหาจริงที่ Apps Script ตอบกลับมา (เผื่อไม่ใช่ JSON
+        // เช่น หน้า HTML error ของ Google เอง) ช่วยวินิจฉัยได้ตรงจุดกว่าข้อความ error กว้างๆ ของเบราว์เซอร์
+        var err = new Error('แปลงผลลัพธ์จากเซิร์ฟเวอร์ไม่ได้ (ไม่ใช่ JSON) — เนื้อหาที่ได้รับจริง: ' + text.substring(0, 300));
+        err.rawResponse = text;
+        throw err;
+      }
+    });
+  });
 }
 
 function checkStatus(){
@@ -489,13 +501,9 @@ var redeemItemIdx = -1;
 // และแคตตาล็อกของรางวัลที่แลกได้ (แบบเดียวกับหน้า ChocoCRM ที่อ้างอิงมา)
 function loadPrivilegesPanel(){
   var body = document.getElementById('panelBody');
-  Promise.all([
-    callApi('getMyPrivileges', { idToken: currentIdToken }),
-    callApi('checkMemberStatus', { idToken: currentIdToken }),
-    callApi('getRewardsCatalog', {})
-  ]).then(function(results){
-    var privResult = results[0], statusResult = results[1], catalogResult = results[2];
-    currentPointsBalance = (statusResult && statusResult.success && statusResult.isMember) ? (statusResult.member.points || 0) : 0;
+  callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
+    if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
+    currentPointsBalance = r.points || 0;
 
     var h = '<div class="bank-box" style="margin-bottom:16px;text-align:center">'
       + '<div style="font-size:13px;color:var(--g6)">คะแนนคงเหลือ</div>'
@@ -503,8 +511,8 @@ function loadPrivilegesPanel(){
       + '</div>';
 
     h += '<p style="font-weight:600;margin-bottom:8px">🎁 สิทธิ์ของคุณ</p>';
-    if (privResult && privResult.success && privResult.results.length) {
-      privResult.results.forEach(function(p){
+    if (r.privileges && r.privileges.length) {
+      r.privileges.forEach(function(p){
         var valueText = p.type === 'percent' ? ('ลด ' + p.value + '%') : ('ลด ' + p.value + ' บาท');
         h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span><span>' + valueText + '</span></div>'
           + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
@@ -514,7 +522,7 @@ function loadPrivilegesPanel(){
     }
 
     h += '<p style="font-weight:600;margin:18px 0 8px">🏆 แลกของรางวัล</p>';
-    rewardsCatalogCache = (catalogResult && catalogResult.success) ? catalogResult.results : [];
+    rewardsCatalogCache = r.rewards || [];
     if (rewardsCatalogCache.length) {
       rewardsCatalogCache.forEach(function(item, idx){
         var valueText = item.type === 'percent' ? ('ลด ' + item.value + '%') : ('ลด ' + item.value + ' บาท');
@@ -529,7 +537,11 @@ function loadPrivilegesPanel(){
     }
 
     body.innerHTML = h;
-  }).catch(function(e){ body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+  }).catch(function(e){
+    body.innerHTML = '<div class="empty" style="text-align:left;white-space:pre-wrap;font-size:11px">⚠️ Error: ' + esc(e.message)
+      + '\n\nname: ' + esc(e.name || '-')
+      + '\n\nstack:\n' + esc((e.stack || '').substring(0, 500)) + '</div>';
+  });
 }
 
 // เปิดหน้าจอแลกของรางวัลชิ้นที่เลือก (เลือกจำนวน + ยืนยัน) — สไตล์เดียวกับหน้า "แลกของรางวัล" ของ ChocoCRM
