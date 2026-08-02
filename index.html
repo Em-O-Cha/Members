@@ -27,7 +27,10 @@ body::before{
   z-index:-1;
 }
 .wrap{max-width:400px;margin:0 auto;position:relative;z-index:1;}
-.card{background:#fff;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);width:100%;overflow:hidden;margin-bottom:16px;}
+/* พื้นหลังของกล่องการ์ดใหญ่ (ช่องว่างรอบๆ แบนเนอร์/รูปสินค้า/บัตรสมาชิก/เมนู) — ใช้ไฟล์ชื่อคงที่
+   "member-bg.jpg" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ไม่ต้องแก้โค้ด ถ้ายังไม่มีไฟล์นี้
+   จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) */
+.card{background:#fff url('member-bg.jpg') center/cover no-repeat;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);width:100%;overflow:hidden;margin-bottom:16px;}
 .mascot-left{position:absolute;left:4px;bottom:4px;width:68px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 .mascot-right{position:absolute;right:4px;bottom:4px;width:56px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 
