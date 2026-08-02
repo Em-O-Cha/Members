@@ -12,20 +12,9 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
-  padding:20px;position:relative;isolation:isolate;background:#f5f5f5;}
-/* พื้นหลังนอกการ์ด: ใช้รูปเบลอ — วางไฟล์ชื่อ "page-bg.jpg" ไว้ตำแหน่งเดียวกับไฟล์นี้บน GitHub เสมอ
-   เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิม ไม่ต้องแก้โค้ดเลย — ขยายใหญ่กว่าจอ (inset ติดลบ) และเบลอ
-   หนักพอที่จะไม่บังตัวหนังสือ ไม่ต้องเบลอไฟล์รูปมาเองล่วงหน้า ที่นี่เบลอให้อัตโนมัติด้วย CSS */
-body::before{
-  content:'';
-  position:fixed;
-  top:-30px; left:-30px; right:-30px; bottom:-30px;
-  background-image:url('page-bg.jpg');
-  background-size:cover;
-  background-position:center;
-  filter:blur(18px) brightness(.92);
-  z-index:-1;
-}
+  padding:20px;position:relative;isolation:isolate;background:#f5f5f5;transition:background .3s ease;}
+/* พื้นหลังนอกการ์ด: เปลี่ยนจากภาพเบลอ (page-bg.jpg) เป็น "สีพื้นเรียบตามระดับสมาชิก" แทน
+   (ตั้งค่าจริงผ่าน JS ในฟังก์ชัน renderMemberCard — ดูเมธอด mixWithWhite) ไม่ใช้ไฟล์ page-bg.jpg อีกต่อไป */
 .wrap{max-width:400px;margin:0 auto;position:relative;z-index:1;}
 /* พื้นหลังของกล่องการ์ดใหญ่ (ช่องว่างรอบๆ แบนเนอร์/รูปสินค้า/บัตรสมาชิก/เมนู) — ใช้ไฟล์ชื่อคงที่
    "member-bg.jpg" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ไม่ต้องแก้โค้ด ถ้ายังไม่มีไฟล์นี้
@@ -79,6 +68,8 @@ body::before{
 #errorMsg{white-space:pre-line;text-align:left;font-size:13px;line-height:1.6;background:#fff3e0;border-radius:8px;padding:12px;}
 .err{background:#ffebee;color:#c62828;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none;}
 .err.show{display:block;}
+.ok{background:#e8f5e9;color:var(--gd);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none;}
+.ok.show{display:block;}
 .sh{display:none;}
 
 /* ==================== เฟรมรูปภาพ (แยกต่างหาก ไม่ปนกับบัตรสมาชิก) ==================== */
@@ -348,10 +339,15 @@ function renderMemberCard(member){
   var logoEl = document.getElementById('mcardLogo');
   if (brandLogoDataUrl) logoEl.src = brandLogoDataUrl;
 
-  // เมนู 6 ช่องด้านล่าง — เปลี่ยนสีให้เข้าธีมของระดับสมาชิกด้วยเช่นกัน (ไม่ใช้สีเขียวคงที่ตลอดแบบเดิม)
-  // พื้นหลังใช้สีของระดับแบบจางมากๆ (โปร่งแสง 12%) ส่วนตัวอักษร/ไอคอนใช้สีของระดับที่ทำให้เข้มขึ้นอีกที
+  // พื้นหลังทั้งหน้า (นอกกล่องการ์ด) — สีพื้นเรียบอ่อนๆ ของระดับ (ทึบ ไม่ใช่รูปภาพ ไม่ใช่โปร่งแสง)
+  document.body.style.background = mixWithWhite(baseColor, .12);
+
+  // เมนู 6 ช่องด้านล่าง — เปลี่ยนสีให้เข้าธีมของระดับสมาชิกด้วยเช่นกัน
+  // สำคัญ: ใช้สีทึบอ่อนๆ (mixWithWhite) แทนสีโปร่งแสง (rgba alpha ต่ำ) แบบเดิม เพราะตอนนี้ด้านหลังกล่อง
+  // การ์ดมีรูปพื้นหลัง (member-bg.jpg) ถ้าพื้นปุ่มยังโปร่งแสงอยู่ รูปจะทะลุมาบังตัวหนังสือจนอ่านไม่ออก
+  // การใช้สีทึบ (แม้จะอ่อน) การันตีว่าตัวหนังสือจะคมชัดอ่านง่ายเสมอไม่ว่าพื้นหลังจะเป็นรูปอะไรก็ตาม
   var menuTextColor = shadeColor(baseColor, -35);
-  var menuBg = hexToRgba(baseColor, .12);
+  var menuBg = mixWithWhite(baseColor, .18);
   document.querySelectorAll('.menu-item').forEach(function(el){
     el.style.background = menuBg;
     el.style.color = menuTextColor;
@@ -591,20 +587,84 @@ function confirmRedeem(){
   });
 }
 
+// รายชื่อ 77 จังหวัดของไทย — ใช้ทั้งตอนแก้ไขที่อยู่ในหน้านี้
+var THAI_PROVINCES = ['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
+var THAI_MONTHS_CLIENT_ = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
 function loadMemberInfoPanel(){
   callApi('checkMemberStatus', { idToken: currentIdToken }).then(function(r){
     var body = document.getElementById('panelBody');
     if (!r || !r.success || !r.isMember) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
     var m = r.member;
-    body.innerHTML =
-      '<div class="info-row"><span>ชื่อ-นามสกุล</span><span>' + esc(m.fullName) + '</span></div>'
-      + '<div class="info-row"><span>เบอร์โทร</span><span>' + esc(m.phone) + '</span></div>'
-      + '<div class="info-row"><span>วันเกิด</span><span>' + esc(m.birthday) + '</span></div>'
-      + '<div class="info-row"><span>ระดับสมาชิก</span><span>' + esc(m.tier) + '</span></div>'
+    var bParts = String(m.birthdayRaw || '').split('-'); // YYYY-MM-DD
+    var by = bParts[0] || '', bm = bParts[1] || '', bd = bParts[2] || '';
+
+    var h = '<div class="info-row"><span>ระดับสมาชิก</span><span>' + esc(m.tier) + '</span></div>'
       + '<div class="info-row"><span>คะแนนสะสม</span><span>' + (m.points || 0).toLocaleString('th-TH') + '</span></div>'
       + '<div class="info-row"><span>ยอดซื้อสะสม</span><span>฿' + (m.lifetimeSpend || 0).toLocaleString('th-TH') + '</span></div>'
       + '<div class="info-row"><span>สมัครเมื่อ</span><span>' + (m.joinDate ? new Date(m.joinDate).toLocaleDateString('th-TH') : '') + '</span></div>';
+
+    h += '<p style="font-weight:600;margin:18px 0 10px;border-top:1px dashed var(--gb);padding-top:16px">✏️ แก้ไขข้อมูลของคุณ</p>';
+    h += '<div class="err" id="editInfoErr"></div><div class="ok" id="editInfoOk"></div>';
+    h += '<div class="fg"><label>ชื่อ-นามสกุล</label><input type="text" class="fc" id="editFullName" value="' + esc(m.fullName) + '"></div>';
+    h += '<div class="fg"><label>เบอร์โทรศัพท์</label><input type="tel" class="fc" id="editPhone" value="' + esc(m.phone) + '" maxlength="10"></div>';
+    h += '<div class="fg"><label>วันเกิด</label><div class="date-select-row">'
+      + '<select id="editBirthDay"></select><select id="editBirthMonth"></select><select id="editBirthYear"></select>'
+      + '</div></div>';
+    h += '<div class="fg"><label>ที่อยู่จัดส่ง</label><textarea class="fc" id="editAddress" rows="3" style="height:auto;padding:10px 14px;resize:vertical">' + esc(m.address) + '</textarea></div>';
+    h += '<div class="fg"><label>จังหวัด</label><select class="fc" id="editProvince"></select></div>';
+    h += '<button class="btn btn-block" onclick="saveMemberProfile()">💾 บันทึกการแก้ไข</button>';
+
+    body.innerHTML = h;
+
+    // เติมตัวเลือกวัน/เดือน/ปี แล้วเลือกค่าปัจจุบันไว้ล่วงหน้า
+    var daySel = document.getElementById('editBirthDay');
+    daySel.innerHTML = '<option value="">วัน</option>';
+    for (var d = 1; d <= 31; d++) { var dv = String(d).padStart(2,'0'); daySel.innerHTML += '<option value="' + dv + '"' + (dv === bd ? ' selected' : '') + '>' + d + '</option>'; }
+    var monthSel = document.getElementById('editBirthMonth');
+    monthSel.innerHTML = '<option value="">เดือน</option>';
+    THAI_MONTHS_CLIENT_.forEach(function(name, idx){ var mv = String(idx+1).padStart(2,'0'); monthSel.innerHTML += '<option value="' + mv + '"' + (mv === bm ? ' selected' : '') + '>' + name + '</option>'; });
+    var yearSel = document.getElementById('editBirthYear');
+    yearSel.innerHTML = '<option value="">ปี</option>';
+    var thisYear = new Date().getFullYear();
+    for (var y = thisYear; y >= thisYear - 90; y--) { var yv = String(y); yearSel.innerHTML += '<option value="' + yv + '"' + (yv === by ? ' selected' : '') + '>' + (y+543) + '</option>'; }
+
+    // เติมตัวเลือกจังหวัด แล้วเลือกจังหวัดปัจจุบันไว้ล่วงหน้า
+    var provSel = document.getElementById('editProvince');
+    provSel.innerHTML = '<option value="">— เลือกจังหวัด —</option>';
+    THAI_PROVINCES.forEach(function(p){ provSel.innerHTML += '<option value="' + p + '"' + (p === m.province ? ' selected' : '') + '>' + p + '</option>'; });
   }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+}
+
+function saveMemberProfile(){
+  var errBox = document.getElementById('editInfoErr');
+  var okBox = document.getElementById('editInfoOk');
+  errBox.classList.remove('show'); okBox.classList.remove('show');
+
+  var fullName = document.getElementById('editFullName').value.trim();
+  var phone = document.getElementById('editPhone').value.trim();
+  var bd = document.getElementById('editBirthDay').value;
+  var bm = document.getElementById('editBirthMonth').value;
+  var by = document.getElementById('editBirthYear').value;
+  var address = document.getElementById('editAddress').value.trim();
+  var province = document.getElementById('editProvince').value;
+
+  if (!fullName) { errBox.textContent = 'กรุณากรอกชื่อ-นามสกุล'; errBox.classList.add('show'); return; }
+  if (!/^0\d{9}$/.test(phone)) { errBox.textContent = 'กรุณากรอกเบอร์โทร 10 หลัก ขึ้นต้นด้วย 0'; errBox.classList.add('show'); return; }
+  if (!bd || !bm || !by) { errBox.textContent = 'กรุณาเลือกวัน/เดือน/ปีเกิดให้ครบ'; errBox.classList.add('show'); return; }
+  var birthday = by + '-' + bm + '-' + bd;
+
+  callApi('updateMemberProfile', { idToken: currentIdToken, fullName: fullName, phone: phone, birthday: birthday, address: address, province: province })
+    .then(function(r){
+      if (r && r.success) {
+        okBox.textContent = '✅ บันทึกข้อมูลสำเร็จแล้ว';
+        okBox.classList.add('show');
+        checkStatus(); // รีเฟรชบัตรสมาชิกด้านหลัง เผื่อชื่อเปลี่ยน
+      } else {
+        errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด'; errBox.classList.add('show');
+      }
+    })
+    .catch(function(e){ errBox.textContent = 'Error: ' + e.message; errBox.classList.add('show'); });
 }
 
 function loadHistoryPanel(){
