@@ -267,7 +267,7 @@ var LIFF_ID = '2010892131-hMnmdrmH';
 
 // ⚠️ ใส่ Apps Script Web App URL ตรงนี้ (ลงท้ายด้วย /exec)
 // หน้านี้จะยิง fetch() ไปที่ URL นี้แทนการใช้ google.script.run (ซึ่งใช้ได้เฉพาะหน้าที่ Apps Script เสิร์ฟเองเท่านั้น)
-var API_URL = 'https://script.google.com/macros/s/AKfycbwNUP800QEj3J4aJhALA5ajEtnWI25xAITkdF2t_HAW6siswNAzkO4g6KHYahUcOCuUaw/exec';
+var API_URL = 'https://script.google.com/macros/s/AKfycby_bfO-sR2d3l55SMu62IoPQ1PkwO2AXHOKU562gEk9PhLDCR4Ml9uG2re89unqJbE/exec';
 
 var currentIdToken = null;
 var currentLinePicture = '';
@@ -290,24 +290,43 @@ function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace
 // เรียก Apps Script ผ่าน fetch() แบบ GET เสมอ (แม้แต่ action ที่เปลี่ยนแปลงข้อมูลอย่าง registerMember)
 // เพราะ Apps Script ตอบกลับด้วย HTTP redirect เสมอ ซึ่งเบราว์เซอร์ในแอป LINE (โดยเฉพาะ iOS)
 // มักบล็อก redirect ของ POST เนื่องจากกฎ CORS เข้มงวดกว่า — GET ไม่มีปัญหานี้ เสถียรกว่ามาก
-function callApi(action, payload){
+// เรียก Apps Script — พร้อมระบบ "ลองใหม่อัตโนมัติ" เมื่อเจอปัญหาชั่วคราว
+// ที่มา: Apps Script บางครั้งตอบกลับมาเป็นหน้า HTML ของ Google (หน้า login/error) แทนที่จะเป็น JSON
+// โดยไม่มีสาเหตุชัดเจน แล้วพอลองใหม่อีกครั้งก็หายเอง — เดิมระบบจะโยน error ดิบๆ ที่มีโค้ด HTML เต็มไป
+// หมดขึ้นหน้าจอทันที ลูกค้าอ่านไม่รู้เรื่องและต้องปิดแอปเปิดใหม่เอง จึงเปลี่ยนเป็นลองใหม่ให้เงียบๆ
+// สูงสุด 3 ครั้ง (เว้นระยะห่างขึ้นเรื่อยๆ) ก่อนจะยอมแพ้แล้วค่อยแจ้ง error แบบเข้าใจง่ายแทน
+function callApi(action, payload, _attempt){
   payload = payload || {};
   payload.action = action;
+  var attempt = _attempt || 1;
+  var MAX_ATTEMPTS = 3;
   var qs = Object.keys(payload).map(function(k){
     return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
   }).join('&');
+
   return fetch(API_URL + '?' + qs, { method: 'GET' }).then(function(res){
     return res.text().then(function(text){
       try {
         return JSON.parse(text);
       } catch (parseErr) {
-        // แปลง error การแปลง JSON ที่คลุมเครือ ให้เห็นเนื้อหาจริงที่ Apps Script ตอบกลับมา (เผื่อไม่ใช่ JSON
-        // เช่น หน้า HTML error ของ Google เอง) ช่วยวินิจฉัยได้ตรงจุดกว่าข้อความ error กว้างๆ ของเบราว์เซอร์
-        var err = new Error('แปลงผลลัพธ์จากเซิร์ฟเวอร์ไม่ได้ (ไม่ใช่ JSON) — เนื้อหาที่ได้รับจริง: ' + text.substring(0, 300));
-        err.rawResponse = text;
-        throw err;
+        // ไม่ใช่ JSON = เจอปัญหาชั่วคราวของ Apps Script — ลองใหม่เงียบๆ ถ้ายังไม่ครบ 3 ครั้ง
+        if (attempt < MAX_ATTEMPTS) {
+          return new Promise(function(resolve){
+            setTimeout(function(){ resolve(callApi(action, payload, attempt + 1)); }, attempt * 800);
+          });
+        }
+        // ลองครบ 3 ครั้งแล้วยังไม่ได้ — แจ้งข้อความที่ลูกค้าเข้าใจได้ (ไม่โชว์โค้ด HTML ดิบให้งง)
+        throw new Error('ระบบไม่ตอบสนองชั่วคราว กรุณาลองใหม่อีกครั้งในสักครู่');
       }
     });
+  }).catch(function(networkErr){
+    // เน็ตหลุด/ต่อไม่ติดชั่วคราว ก็ลองใหม่เหมือนกัน
+    if (attempt < MAX_ATTEMPTS && networkErr.message.indexOf('ระบบไม่ตอบสนอง') === -1) {
+      return new Promise(function(resolve){
+        setTimeout(function(){ resolve(callApi(action, payload, attempt + 1)); }, attempt * 800);
+      });
+    }
+    throw networkErr;
   });
 }
 
