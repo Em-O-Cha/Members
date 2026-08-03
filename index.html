@@ -81,22 +81,20 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
   margin-bottom:14px;}
 
 /* ==================== บัตรสมาชิก (กล่องแยกต่างหากอีกกล่อง อยู่ใต้เฟรมรูป) ==================== */
-.mcard{border-radius:20px;overflow:hidden;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.18);}
-.mcard-top{display:flex;align-items:center;gap:12px;position:relative;z-index:1;padding:20px 20px 8px;}
-.mcard-avatar{width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.8);
+.mcard{border-radius:20px;overflow:hidden;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.18);
+  background-size:cover;background-position:center;aspect-ratio:1.5;}
+.mcard-top{display:flex;align-items:center;gap:8px;position:absolute;left:18px;bottom:38%;z-index:1;
+  flex-direction:row;max-width:62%;}
+.mcard-avatar{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.85);
   overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.3);}
 .mcard-avatar img{width:100%;height:100%;object-fit:cover;}
-.mcard-name{font-size:17px;font-weight:700;}
-.mcard-tier-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
-  background:rgba(255,255,255,.92);margin-top:4px;letter-spacing:.5px;} /* สีตัวอักษรของ badge เปลี่ยนตามระดับผ่าน JS */
-.mcard-body{padding:8px 20px 18px;position:relative;}
-.mcard-points{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;}
-.mcard-points .num{font-size:26px;font-weight:700;}
-.mcard-points .label{font-size:11px;opacity:.85;}
-.mcard-logo{position:absolute;bottom:14px;right:16px;width:30px;height:37px;object-fit:contain;z-index:2;
-  filter:drop-shadow(0 1px 3px rgba(0,0,0,.35));
-  filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));}
-.mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:11px;opacity:.9;margin-top:2px;padding-right:38px;}
+.mcard-name{font-size:13px;font-weight:700;text-align:left;text-shadow:0 1px 4px rgba(0,0,0,.55);line-height:1.25;}
+.mcard-tier-badge{display:none;} /* ไม่ต้องมี badge ซ้ำอีก เพราะรูปพื้นหลังการ์ดใหม่มีชื่อระดับ (EM-START ฯลฯ) ฝังอยู่ในรูปแล้ว */
+.mcard-body{position:absolute;bottom:16px;right:16px;text-align:right;z-index:1;}
+.mcard-points{display:block;}
+.mcard-points .num{font-size:24px;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,.55);}
+.mcard-points .label{font-size:10.5px;opacity:.95;text-shadow:0 1px 4px rgba(0,0,0,.55);}
+.mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.55);}
 
 /* ==================== วันเกิด: เลือกวัน/เดือน/ปี แยก 3 ช่อง (แทน input type=date ที่หน้าตาไม่นิ่งข้ามอุปกรณ์) ==================== */
 .date-select-row{display:flex;gap:8px;}
@@ -199,7 +197,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
       <div class="photo-frame"></div>
 
       <div class="mcard" id="mcard">
-        <img class="mcard-logo" id="mcardLogo" alt="Em-O-Cha">
         <div class="mcard-top">
           <div class="mcard-avatar" id="mcardAvatar"></div>
           <div>
@@ -342,25 +339,24 @@ function checkStatus(){
 function renderMemberCard(member){
   var baseColor = member.tierColor || '#2e7d32';
   var textColor = member.tierTextColor || '#ffffff';
+  var tierKey = member.tierKey || 'start';
 
+  // ใช้ภาพบัตรพรีเมียมจริงเป็นพื้นหลัง (แทนไล่สี CSS แบบเดิม) — ไฟล์ชื่อคงที่ตามระดับ เปลี่ยนภาพได้ตลอด
+  // แค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub (member-card-start.jpg / -silver.jpg / -gold.jpg / -platinum.jpg)
+  var cardImageMap = { start: 'member-card-start.jpg', fan: 'member-card-silver.jpg', love: 'member-card-gold.jpg', vip: 'member-card-platinum.jpg' };
   var mcardEl = document.getElementById('mcard');
-  mcardEl.style.background = 'linear-gradient(135deg, ' + baseColor + ', ' + shadeColor(baseColor, -20) + ')';
+  mcardEl.style.backgroundImage = "url('" + (cardImageMap[tierKey] || cardImageMap.start) + "')";
   mcardEl.style.color = textColor;
 
   var avatarEl = document.getElementById('mcardAvatar');
   avatarEl.innerHTML = member.picture ? '<img src="' + member.picture + '">' : '👤';
 
   document.getElementById('mcardName').textContent = member.fullName || member.displayName || '';
-  var badgeEl = document.getElementById('mcardTierBadge');
-  badgeEl.textContent = '★ ' + member.tier + (member.tierNameEn ? ' (' + member.tierNameEn + ')' : '');
-  badgeEl.style.color = baseColor; // ตัวอักษรใน badge ใช้สีของระดับเอง (พื้น badge เป็นสีขาวทึบ อ่านง่ายทุกระดับ)
+  // ไม่ต้องโชว์ badge ชื่อระดับซ้ำอีกแล้ว เพราะรูปพื้นหลังใหม่มีชื่อระดับ (EM-START ฯลฯ) ฝังอยู่ในรูปแล้ว
   document.getElementById('mcardPoints').textContent = (member.points || 0).toLocaleString('th-TH');
 
   var mult = parseFloat(member.pointMultiplier) || 1;
   document.getElementById('mcardMultiplier').textContent = mult > 1 ? ('รับคะแนน x' + mult + ' ทุกการสั่งซื้อ 🌟') : '';
-
-  var logoEl = document.getElementById('mcardLogo');
-  if (brandLogoDataUrl) logoEl.src = brandLogoDataUrl;
 
   // พื้นหลังทั้งหน้า (นอกกล่องการ์ด) — สีพื้นเรียบอ่อนๆ ของระดับ (ทึบ ไม่ใช่รูปภาพ ไม่ใช่โปร่งแสง)
   document.body.style.background = mixWithWhite(baseColor, .12);
