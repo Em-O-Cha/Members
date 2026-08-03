@@ -93,10 +93,10 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .mcard-points{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;}
 .mcard-points .num{font-size:26px;font-weight:700;}
 .mcard-points .label{font-size:11px;opacity:.85;}
-.mcard-logo{position:absolute;top:14px;right:16px;width:30px;height:37px;object-fit:contain;z-index:2;
+.mcard-logo{position:absolute;bottom:14px;right:16px;width:30px;height:37px;object-fit:contain;z-index:2;
   filter:drop-shadow(0 1px 3px rgba(0,0,0,.35));
   filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));}
-.mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:11px;opacity:.9;margin-top:2px;}
+.mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:11px;opacity:.9;margin-top:2px;padding-right:38px;}
 
 /* ==================== วันเกิด: เลือกวัน/เดือน/ปี แยก 3 ช่อง (แทน input type=date ที่หน้าตาไม่นิ่งข้ามอุปกรณ์) ==================== */
 .date-select-row{display:flex;gap:8px;}
@@ -126,6 +126,12 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .panel-close{width:32px;height:32px;border-radius:50%;border:none;background:#f0f0f0;font-size:16px;
   cursor:pointer;color:var(--g8);}
 .list-item{border:1.5px solid #eee;border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+.reward-card{border:1.5px solid #eee;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;gap:12px;align-items:center;}
+.reward-card .reward-img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--gp);}
+.reward-card .reward-body{flex:1;min-width:0;}
+.reward-card .reward-name{font-weight:600;font-size:14px;}
+.reward-card .reward-sub{font-size:12px;color:var(--g6);margin-top:2px;}
+.reward-card .reward-btn-col{flex-shrink:0;}
 .list-item .row1{display:flex;justify-content:space-between;font-weight:600;font-size:14px;}
 .list-item .row2{font-size:12px;color:var(--g6);margin-top:3px;}
 .empty{text-align:center;color:var(--g6);font-size:13px;padding:24px 0;}
@@ -264,7 +270,7 @@ var LIFF_ID = '2010892131-hMnmdrmH';
 
 // ⚠️ ใส่ Apps Script Web App URL ตรงนี้ (ลงท้ายด้วย /exec)
 // หน้านี้จะยิง fetch() ไปที่ URL นี้แทนการใช้ google.script.run (ซึ่งใช้ได้เฉพาะหน้าที่ Apps Script เสิร์ฟเองเท่านั้น)
-var API_URL = 'https://script.google.com/macros/s/AKfycbw8NyT6FLn9AM6M55CGIKY8_oMwsHR2N-4rfs7rtz5vrCkpXNaFhHZ4S7nwtnMMZl6QDg/exec';
+var API_URL = 'https://script.google.com/macros/s/AKfycby9b-iuB5voNHdHMzLxB6YrGJBqXUi0E3gTyRlrpsKLFd-z6_Mo7ZidVvRRT_535eGJ6g/exec';
 
 var currentIdToken = null;
 var currentLinePicture = '';
@@ -532,9 +538,17 @@ function loadPrivilegesPanel(){
       rewardsCatalogCache.forEach(function(item, idx){
         var subText = rewardSubText_(item);
         var canAfford = currentPointsBalance >= item.pointCost;
-        h += '<div class="list-item"><div class="row1"><span>' + esc(item.name) + '</span><span>' + item.pointCost.toLocaleString('th-TH') + ' แต้ม</span></div>'
-          + '<div class="row2">' + esc(item.categoryLabel) + ' · ' + subText + (item.remaining >= 0 ? ' · เหลือ ' + item.remaining + ' ชิ้น' : '') + '</div>'
-          + '<button class="btn btn-sm' + (canAfford ? '' : ' btn-outline') + '" style="margin-top:8px"' + (canAfford ? '' : ' disabled') + ' onclick="showRedeemView(' + idx + ')">' + (canAfford ? 'แลกเลย' : 'คะแนนไม่พอ') + '</button>'
+        var imgHtml = item.image
+          ? '<img class="reward-img" src="' + esc(item.image) + '" onerror="this.style.display=\'none\'">'
+          : '<div class="reward-img" style="display:flex;align-items:center;justify-content:center;font-size:22px">🎁</div>';
+        h += '<div class="reward-card">'
+          + imgHtml
+          + '<div class="reward-body">'
+          +   '<div class="reward-name">' + esc(item.name) + '</div>'
+          +   '<div class="reward-sub">' + esc(item.categoryLabel) + ' · ' + esc(subText) + (item.remaining >= 0 ? ' · เหลือ ' + item.remaining + ' ชิ้น' : '') + '</div>'
+          +   '<div class="reward-sub" style="color:var(--gd);font-weight:600">' + item.pointCost.toLocaleString('th-TH') + ' แต้ม</div>'
+          + '</div>'
+          + '<div class="reward-btn-col"><button class="btn btn-sm' + (canAfford ? '' : ' btn-outline') + '"' + (canAfford ? '' : ' disabled') + ' onclick="showRedeemView(' + idx + ')">' + (canAfford ? 'แลกเลย' : 'คะแนนไม่พอ') + '</button></div>'
           + '</div>';
       });
     } else {
@@ -593,9 +607,11 @@ function renderRedeemView(){
     : (item.category === 'tier_upgrade'
         ? '<div class="hint" style="margin-top:10px">✅ แลกแล้วระดับสมาชิกจะอัปเดตทันที</div>'
         : '<div class="hint" style="margin-top:10px">📦 แลกแล้วทีมงานจะติดต่อกลับเพื่อจัดส่ง/ดำเนินการให้</div>');
+  var imgHtml = item.image ? '<img src="' + esc(item.image) + '" style="width:80px;height:80px;border-radius:12px;object-fit:cover;margin:0 auto 10px;display:block" onerror="this.style.display=\'none\'">' : '';
   body.innerHTML =
     '<button class="btn btn-outline btn-sm" onclick="loadPrivilegesPanel()">← กลับ</button>'
     + '<div class="bank-box" style="margin:14px 0;text-align:center">'
+    +   imgHtml
     +   '<p style="font-weight:700;font-size:16px">' + esc(item.name) + '</p>'
     +   '<p style="color:var(--g6);font-size:13px;margin-top:4px">' + esc(item.categoryLabel) + ' · ' + esc(rewardSubText_(item)) + '</p>'
     + '</div>'
