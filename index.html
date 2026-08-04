@@ -295,19 +295,6 @@ function showErrorState(msg){
 }
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// สร้าง <img> ที่มี "แผนสำรอง" ในตัว — ถ้ารูปโหลดไม่ขึ้นด้วยลิงก์แบบ thumbnail (รูปแบบที่ไม่เป็นทางการของ
-// Google Drive ที่บางครั้งถูกจำกัด/บล็อกได้เองโดยไม่แจ้งล่วงหน้า) จะลองสลับไปใช้ลิงก์อีกแบบ (uc?export=view)
-// โดยอัตโนมัติก่อนที่จะยอมแพ้แล้วซ่อนรูปทิ้งไป — เพิ่มโอกาสที่รูปจะโหลดขึ้นได้จริงโดยไม่ต้องแก้อะไรเพิ่ม
-function imgWithFallback_(url, extraAttrs){
-  if (!url) return '';
-  var idMatch = String(url).match(/[?&]id=([^&]+)/); // ดึง file id ออกจากลิงก์ thumbnail เดิม
-  var altUrl = idMatch ? ('https://drive.google.com/uc?export=view&id=' + idMatch[1]) : '';
-  var onerrorJs = altUrl
-    ? "if(!this.dataset.fallbackTried){this.dataset.fallbackTried='1';this.src='" + altUrl.replace(/'/g, "\\'") + "';}else{this.style.display='none';}"
-    : "this.style.display='none';";
-  return '<img src="' + esc(url) + '" onerror="' + onerrorJs + '" ' + (extraAttrs || '') + '>';
-}
-
 // เรียก Apps Script ผ่าน fetch() แบบ GET เสมอ (แม้แต่ action ที่เปลี่ยนแปลงข้อมูลอย่าง registerMember)
 // เพราะ Apps Script ตอบกลับด้วย HTTP redirect เสมอ ซึ่งเบราว์เซอร์ในแอป LINE (โดยเฉพาะ iOS)
 // มักบล็อก redirect ของ POST เนื่องจากกฎ CORS เข้มงวดกว่า — GET ไม่มีปัญหานี้ เสถียรกว่ามาก
@@ -575,7 +562,7 @@ function loadPrivilegesPanel(){
         var subText = rewardSubText_(item);
         var canAfford = currentPointsBalance >= item.pointCost;
         var imgHtml = item.image
-          ? imgWithFallback_(item.image, 'class="reward-img"')
+          ? '<img class="reward-img" src="' + esc(item.image) + '" onerror="this.style.display=\'none\'">'
           : '<div class="reward-img" style="display:flex;align-items:center;justify-content:center;font-size:22px">🎁</div>';
         h += '<div class="reward-card">'
           + imgHtml
@@ -643,7 +630,7 @@ function renderRedeemView(){
     : (item.category === 'tier_upgrade'
         ? '<div class="hint" style="margin-top:10px">✅ แลกแล้วระดับสมาชิกจะอัปเดตทันที</div>'
         : '<div class="hint" style="margin-top:10px">📦 แลกแล้วทีมงานจะติดต่อกลับเพื่อจัดส่ง/ดำเนินการให้</div>');
-  var imgHtml = item.image ? imgWithFallback_(item.image, 'style="width:80px;height:80px;border-radius:12px;object-fit:cover;margin:0 auto 10px;display:block"') : '';
+  var imgHtml = item.image ? '<img src="' + esc(item.image) + '" style="width:80px;height:80px;border-radius:12px;object-fit:cover;margin:0 auto 10px;display:block" onerror="this.style.display=\'none\'">' : '';
   body.innerHTML =
     '<button class="btn btn-outline btn-sm" onclick="loadPrivilegesPanel()">← กลับ</button>'
     + '<div class="bank-box" style="margin:14px 0;text-align:center">'
