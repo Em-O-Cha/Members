@@ -2,6 +2,14 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<!-- บอกเบราว์เซอร์ให้เริ่มต่อเชื่อม (DNS + TLS handshake) กับเซิร์ฟเวอร์ LINE ล่วงหน้าทันทีที่เปิดหน้า
+     แทนที่จะรอจนกว่าจะโหลดถึงบรรทัด <script src="...line-scdn..."> ค่อยเริ่มต่อ — ช่วยลดเวลาที่ใช้
+     "เชื่อมต่อกับ LINE" ได้บ้าง (ตัดขั้นตอนต่อเชื่อมเบื้องต้นออกไปแล้วล่วงหน้า) แม้จะช่วยได้ไม่เยอะมาก
+     เพราะเวลาส่วนใหญ่ยังขึ้นอยู่กับความเร็วเซิร์ฟเวอร์ของ LINE เองซึ่งเราควบคุมไม่ได้ -->
+<link rel="preconnect" href="https://static.line-scdn.net">
+<link rel="preconnect" href="https://access.line.me">
+<link rel="dns-prefetch" href="https://static.line-scdn.net">
+<link rel="dns-prefetch" href="https://access.line.me">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>สมัครสมาชิก</title>
 <style>
@@ -267,7 +275,7 @@ var LIFF_ID = '2010892131-hMnmdrmH';
 
 // ⚠️ ใส่ Apps Script Web App URL ตรงนี้ (ลงท้ายด้วย /exec)
 // หน้านี้จะยิง fetch() ไปที่ URL นี้แทนการใช้ google.script.run (ซึ่งใช้ได้เฉพาะหน้าที่ Apps Script เสิร์ฟเองเท่านั้น)
-var API_URL = 'https://script.google.com/macros/s/AKfycby_bfO-sR2d3l55SMu62IoPQ1PkwO2AXHOKU562gEk9PhLDCR4Ml9uG2re89unqJbE/exec';
+var API_URL = 'https://script.google.com/macros/s/AKfycby9b-iuB5voNHdHMzLxB6YrGJBqXUi0E3gTyRlrpsKLFd-z6_Mo7ZidVvRRT_535eGJ6g/exec';
 
 var currentIdToken = null;
 var currentLinePicture = '';
@@ -647,14 +655,27 @@ function confirmRedeem(){
   if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังแลก...'; }
 
   var item = rewardsCatalogCache[redeemItemIdx];
+  var didFinish = false;
+  // กันปุ่มค้างตลอดไปแบบไม่มีวันจบ ถ้ารอเกิน 15 วินาทีแล้วยังไม่ได้ผลลัพธ์ ให้แจ้งเตือนว่าอาจสำเร็จแล้ว
+  // จริงๆ (Apps Script บางครั้งบันทึกเสร็จแล้วแต่ส่งผลลัพธ์กลับมาช้า) แทนที่จะปล่อยให้ค้างเงียบๆ ไม่รู้จบ
+  setTimeout(function(){
+    if (didFinish) return;
+    var errEl = document.getElementById('redeemErrBox');
+    errEl.innerHTML = 'ระบบตอบกลับช้ากว่าปกติ — การแลกอาจสำเร็จแล้วจริงๆ เพียงแต่แจ้งผลช้า<br>'
+      + '<button class="btn btn-sm" style="margin-top:8px" onclick="loadPrivilegesPanel()">🔄 เช็คสถานะอีกครั้ง</button>';
+    errEl.classList.add('show');
+  }, 15000);
+
   callApi('redeemReward', { idToken: currentIdToken, rewardRowIndex: item.rowIndex, quantity: redeemQty }).then(function(r){
+    didFinish = true;
     redeemInFlight = false;
     if (r && r.success) {
       currentPointsBalance = r.newPoints;
-      var body = document.getElementById('panelBody');
       var msg = (r.category === 'coupon' || r.category === 'buy_product')
         ? 'ใช้ส่วนลดได้ทันทีตอนสั่งซื้อครั้งถัดไป'
         : (r.category === 'tier_upgrade' ? 'ระดับสมาชิกของคุณอัปเดตแล้ว' : 'ทีมงานจะติดต่อกลับเพื่อจัดส่ง/ดำเนินการให้เร็วๆ นี้');
+      alert('🎉 แลก "' + r.rewardName + '" สำเร็จ!\n' + msg + '\nเหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน'); // popup ยืนยันชัดเจนตามที่ขอ
+      var body = document.getElementById('panelBody');
       body.innerHTML = '<div class="empty" style="padding:20px 0">🎉<br><b>แลก "' + esc(r.rewardName) + '" สำเร็จ!</b><br>' + esc(msg) + '<br>เหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน</div>'
         + '<button class="btn btn-block" onclick="loadPrivilegesPanel()">กลับไปหน้าสิทธิ์พิเศษ</button>';
     } else {
@@ -664,10 +685,11 @@ function confirmRedeem(){
       errEl.classList.add('show');
     }
   }).catch(function(e){
+    didFinish = true;
     redeemInFlight = false;
     if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันการแลก'; }
     var errEl = document.getElementById('redeemErrBox');
-    errEl.textContent = 'Error: ' + e.message;
+    errEl.innerHTML = 'Error: ' + esc(e.message) + '<br><button class="btn btn-sm" style="margin-top:8px" onclick="loadPrivilegesPanel()">🔄 เช็คสถานะอีกครั้ง (เผื่อแลกสำเร็จแล้ว)</button>';
     errEl.classList.add('show');
   });
 }
