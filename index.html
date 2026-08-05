@@ -372,7 +372,8 @@ function renderMemberCard(member){
   // แค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub (member-card-start.jpg / -silver.jpg / -gold.jpg / -platinum.jpg)
   var CARD_IMAGE_VERSION = '2'; // ทุกครั้งที่เปลี่ยนภาพบัตรใหม่ ให้เพิ่มเลขนี้ขึ้นทีละ 1 เพื่อล้างแคชภาพ
   var mcardEl = document.getElementById('mcard');
-  mcardEl.style.backgroundImage = "url('member-card-" + tierKey + ".jpg?v=" + CARD_IMAGE_VERSION + "')";
+  var cardImageMap = { start: 'member-card-start.jpg', fan: 'member-card-silver.jpg', love: 'member-card-gold.jpg', vip: 'member-card-platinum.jpg' };
+  mcardEl.style.backgroundImage = "url('" + (cardImageMap[tierKey] || cardImageMap.start) + "?v=" + CARD_IMAGE_VERSION + "')";
   mcardEl.style.color = textColor;
 
   var avatarEl = document.getElementById('mcardAvatar');
