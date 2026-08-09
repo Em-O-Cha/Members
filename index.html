@@ -96,7 +96,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    ใช้ transform เลื่อนกล่องทั้งหมดขึ้นด้านบนประมาณ 1 ซม. (~38px ที่ความละเอียดจอมือถือทั่วไป) จาก
    ตำแหน่งเดิม */
 .mcard-top{display:flex;flex-direction:column;align-items:flex-start;gap:0;position:absolute;left:18px;
-  bottom:38%;z-index:1;transform:translateY(-38px);}
+  bottom:38%;z-index:1;transform:translateY(-19px);}
 /* เดิมตรงนี้เป็นรูปโปรไฟล์ LINE ทรงกลม (.mcard-avatar) — เอาออกแล้ว แทนที่ด้วยตัวเลขคะแนนสะสม
    (.mcard-points-badge) ตามตำแหน่งเดิมแทน (ดูเหตุผลใน renderMemberCard) */
 .mcard-points-badge{font-size:26px;font-weight:800;line-height:1;flex-shrink:0;
@@ -121,8 +121,12 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
   border-radius:12px;background:var(--gp);cursor:pointer;text-decoration:none;color:var(--td);
   border:1.5px solid transparent;transition:border-color .15s;}
 .menu-item:active{border-color:var(--gm);}
-.menu-item .icon{font-size:20px;display:flex;align-items:center;justify-content:center;}
-.menu-item .icon svg{width:20px;height:20px;}
+/* ไอคอนทุกแบบ (emoji/SVG/รูปโลโก้ Facebook-TikTok) บังคับให้อยู่ในกล่องขนาดเท่ากันเป๊ะ (20x20) และ
+   จัดกึ่งกลางแนวตั้งแบบเดียวกันหมด — กันปัญหาแถวไอคอนดูเยื้องไม่เป็นระเบียบ (เดิมรูป Facebook/TikTok
+   ใหญ่กว่า emoji/SVG ตัวอื่นอยู่ที่ 26px ทำให้แถวดูไม่เท่ากัน) */
+.menu-item .icon{width:20px;height:20px;font-size:20px;line-height:20px;display:flex;
+  align-items:center;justify-content:center;}
+.menu-item .icon svg,.menu-item .icon img{width:20px;height:20px;object-fit:contain;}
 .menu-item .txt{font-size:9.5px;font-weight:600;text-align:center;line-height:1.25;}
 
 /* ==================== แผงข้อมูลย่อย (privileges/info/history/coupons) ==================== */
@@ -239,10 +243,10 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
           <div class="icon">🧾</div><div class="txt">ประวัติ<br>สั่งซื้อ</div>
         </div>
         <a class="menu-item" href="https://www.facebook.com/emocha.official/" target="_blank">
-          <img class="icon" src="icon-facebook.png" alt="Facebook" style="width:26px;height:26px;object-fit:contain"><div class="txt">Facebook</div>
+          <img class="icon" src="icon-facebook.png" alt="Facebook"><div class="txt">Facebook</div>
         </a>
         <a class="menu-item" href="https://www.tiktok.com/@emocha.food?_r=1&_t=ZS-98ViS0aVxWW" target="_blank">
-          <img class="icon" src="icon-tiktok.png" alt="TikTok" style="width:26px;height:26px;object-fit:contain"><div class="txt">TikTok</div>
+          <img class="icon" src="icon-tiktok.png" alt="TikTok"><div class="txt">TikTok</div>
         </a>
       </div>
     </div>
@@ -385,13 +389,58 @@ function renderMemberCard(member){
   document.getElementById('mcardMultiplier').textContent = mult > 1 ? ('รับคะแนน x' + mult + ' ทุกการสั่งซื้อ 🌟') : '';
 
   // พื้นหลังทั้งหน้า (นอกกล่องการ์ด) — สีพื้นเรียบอ่อนๆ ของระดับ (ทึบ ไม่ใช่รูปภาพ ไม่ใช่โปร่งแสง)
-  document.body.style.background = mixWithWhite(baseColor, .12);
-
   // เมนู 8 ช่องด้านล่าง — เปลี่ยนสีให้เข้าธีมของระดับสมาชิกด้วยเช่นกัน (ไอคอน SVG อย่าง "คูปอง" ก็ใช้
   // currentColor จึงเปลี่ยนสีตามธีมนี้ไปโดยอัตโนมัติเช่นกัน ไม่ต้องเซ็ตสีแยกต่างหาก)
   // สำคัญ: ใช้สีทึบอ่อนๆ (mixWithWhite) แทนสีโปร่งแสง (rgba alpha ต่ำ) แบบเดิม เพราะตอนนี้ด้านหลังกล่อง
   // การ์ดมีรูปพื้นหลัง (member-bg.jpg) ถ้าพื้นปุ่มยังโปร่งแสงอยู่ รูปจะทะลุมาบังตัวหนังสือจนอ่านไม่ออก
   // การใช้สีทึบ (แม้จะอ่อน) การันตีว่าตัวหนังสือจะคมชัดอ่านง่ายเสมอไม่ว่าพื้นหลังจะเป็นรูปอะไรก็ตาม
+  applyThemeColor_(baseColor); // ใช้สี tierColor จากชีตไปพลางๆ ก่อน (เห็นผลทันที ไม่ต้องรอโหลดรูป)
+
+  // จากนั้นสุ่มอ่านสีจริงจากรูปภาพบัตร (member-card-xxx.jpg) มาปรับพื้นหลัง/เมนูให้ตรงกับสีของบัตรจริง
+  // เป๊ะๆ อีกที — สาเหตุที่ต้องทำแบบนี้: เดิมใช้แค่ tierColor (ค่า hex ที่ตั้งไว้ใน Tier_Config) ซึ่งเป็น
+  // ค่าที่ตั้งไว้สำหรับดีไซน์บัตรแบบไล่สีเดิม ไม่ได้ตั้งใจให้ตรงกับโทนสีจริงของรูปภาพบัตรที่ใช้อยู่ตอนนี้
+  // ทำให้เมนูกับบัตรดูสีไม่เข้ากัน แก้โดยอ่านค่าเฉลี่ยสีจากรูปจริงผ่าน canvas แทน (แม่นกว่าเดาจาก hex)
+  sampleImageAverageColor_(mcardEl.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '').split('?')[0], function(sampledColor){
+    if (sampledColor) applyThemeColor_(sampledColor);
+  });
+}
+
+// อ่านสีเฉลี่ยจากรูปภาพ (ใช้ canvas ย่อรูปเหลือ 16x16 แล้วเฉลี่ยทุกพิกเซล) — คืนค่าเป็น hex string
+// ผ่าน callback หรือคืน null ถ้าอ่านไม่ได้ (เช่น รูปโหลดไม่สำเร็จ หรือติดปัญหา CORS)
+function sampleImageAverageColor_(imgSrc, callback){
+  try {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function(){
+      try {
+        var size = 16;
+        var canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        var data = ctx.getImageData(0, 0, size, size).data;
+        var r = 0, g = 0, b = 0, count = 0;
+        for (var i = 0; i < data.length; i += 4) {
+          r += data[i]; g += data[i + 1]; b += data[i + 2]; count++;
+        }
+        r = Math.round(r / count); g = Math.round(g / count); b = Math.round(b / count);
+        var hex = '#' + [r, g, b].map(function(c){ return c.toString(16).padStart(2, '0'); }).join('');
+        callback(hex);
+      } catch (e) {
+        callback(null); // ติด CORS หรือ error อื่นๆ ตอนอ่านพิกเซล — ใช้สี tierColor เดิมต่อไปเงียบๆ
+      }
+    };
+    img.onerror = function(){ callback(null); };
+    img.src = imgSrc;
+  } catch (e) {
+    callback(null);
+  }
+}
+
+// ใช้สี (hex) ที่ส่งมาปรับพื้นหลังหน้าเว็บ + สีเมนู 8 ช่องให้เข้าธีมเดียวกัน — เรียกซ้ำได้เรื่อยๆ
+// (ครั้งแรกด้วย tierColor ให้เห็นผลทันที ครั้งที่สองด้วยสีที่สุ่มได้จากรูปบัตรจริงเพื่อความแม่นยำ)
+function applyThemeColor_(baseColor){
+  document.body.style.background = mixWithWhite(baseColor, .12);
   var menuTextColor = shadeColor(baseColor, -35);
   var menuBg = mixWithWhite(baseColor, .18);
   document.querySelectorAll('.menu-item').forEach(function(el){
