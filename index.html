@@ -404,10 +404,12 @@ function renderMemberCard(member){
 }
 
 // ใช้สี (hex) ที่ส่งมาปรับพื้นหลังหน้าเว็บ + สีเมนู 8 ช่องให้เข้าธีมเดียวกัน
+// หมายเหตุ: เพิ่มความเข้มของสีพื้นหลังเมนูจาก .18 เป็น .45 (เดิมผสมสีขาวเยอะเกินไปจนแทบมองไม่เห็นว่า
+// เปลี่ยนสีจริง โดยเฉพาะกับสีโทนเข้ม/สีน้ำตาลอย่างระดับ Platinum) ให้เห็นสีของระดับสมาชิกชัดเจนขึ้น
 function applyThemeColor_(baseColor){
   document.body.style.background = mixWithWhite(baseColor, .12);
-  var menuTextColor = shadeColor(baseColor, -35);
-  var menuBg = mixWithWhite(baseColor, .18);
+  var menuTextColor = shadeColor(baseColor, -45);
+  var menuBg = mixWithWhite(baseColor, .45);
   document.querySelectorAll('.menu-item').forEach(function(el){
     el.style.background = menuBg;
     el.style.color = menuTextColor;
