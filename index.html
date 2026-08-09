@@ -394,57 +394,16 @@ function renderMemberCard(member){
   var mult = parseFloat(member.pointMultiplier) || 1;
   document.getElementById('mcardMultiplier').textContent = mult > 1 ? ('รับคะแนน x' + mult + ' ทุกการสั่งซื้อ 🌟') : '';
 
-  // พื้นหลังทั้งหน้า (นอกกล่องการ์ด) — สีพื้นเรียบอ่อนๆ ของระดับ (ทึบ ไม่ใช่รูปภาพ ไม่ใช่โปร่งแสง)
-  // เมนู 8 ช่องด้านล่าง — เปลี่ยนสีให้เข้าธีมของระดับสมาชิกด้วยเช่นกัน (ไอคอน SVG อย่าง "คูปอง" ก็ใช้
-  // currentColor จึงเปลี่ยนสีตามธีมนี้ไปโดยอัตโนมัติเช่นกัน ไม่ต้องเซ็ตสีแยกต่างหาก)
-  // สำคัญ: ใช้สีทึบอ่อนๆ (mixWithWhite) แทนสีโปร่งแสง (rgba alpha ต่ำ) แบบเดิม เพราะตอนนี้ด้านหลังกล่อง
-  // การ์ดมีรูปพื้นหลัง (member-bg.jpg) ถ้าพื้นปุ่มยังโปร่งแสงอยู่ รูปจะทะลุมาบังตัวหนังสือจนอ่านไม่ออก
-  // การใช้สีทึบ (แม้จะอ่อน) การันตีว่าตัวหนังสือจะคมชัดอ่านง่ายเสมอไม่ว่าพื้นหลังจะเป็นรูปอะไรก็ตาม
-  applyThemeColor_(baseColor); // ใช้สี tierColor จากชีตไปพลางๆ ก่อน (เห็นผลทันที ไม่ต้องรอโหลดรูป)
-
-  // จากนั้นสุ่มอ่านสีจริงจากรูปภาพบัตร (member-card-xxx.jpg) มาปรับพื้นหลัง/เมนูให้ตรงกับสีของบัตรจริง
-  // เป๊ะๆ อีกที — สาเหตุที่ต้องทำแบบนี้: เดิมใช้แค่ tierColor (ค่า hex ที่ตั้งไว้ใน Tier_Config) ซึ่งเป็น
-  // ค่าที่ตั้งไว้สำหรับดีไซน์บัตรแบบไล่สีเดิม ไม่ได้ตั้งใจให้ตรงกับโทนสีจริงของรูปภาพบัตรที่ใช้อยู่ตอนนี้
-  // ทำให้เมนูกับบัตรดูสีไม่เข้ากัน แก้โดยอ่านค่าเฉลี่ยสีจากรูปจริงผ่าน canvas แทน (แม่นกว่าเดาจาก hex)
-  sampleImageAverageColor_(mcardEl.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '').split('?')[0], function(sampledColor){
-    if (sampledColor) applyThemeColor_(sampledColor);
-  });
+  // พื้นหลังทั้งหน้า (นอกกล่องการ์ด) + เมนู 8 ช่องด้านล่าง — ทาสีตาม tierColor ที่ตั้งไว้ในชีต Tier_Config
+  // โดยตรง (แก้สีในชีต แล้วจะเปลี่ยนตรงนี้ทันที) ไอคอน SVG อย่าง "คูปอง" ก็ใช้ currentColor จึงเปลี่ยนสี
+  // ตามธีมนี้ไปโดยอัตโนมัติเช่นกัน ไม่ต้องเซ็ตสีแยกต่างหาก
+  // หมายเหตุ: ก่อนหน้านี้เคยลองอ่านสีเฉลี่ยจากรูปภาพบัตรจริงผ่าน canvas มาทับสีจากชีตอีกที แต่ทำให้แก้สี
+  // ในชีตแล้วไม่เห็นผล (เพราะรูปภาพไม่เปลี่ยน สีที่อ่านได้เลยเหมือนเดิมทุกครั้ง) เอาออกแล้วตามที่แจ้ง —
+  // ตอนนี้สีเมนูอ้างอิงจากค่าในชีตเพียงอย่างเดียวเท่านั้น
+  applyThemeColor_(baseColor);
 }
 
-// อ่านสีเฉลี่ยจากรูปภาพ (ใช้ canvas ย่อรูปเหลือ 16x16 แล้วเฉลี่ยทุกพิกเซล) — คืนค่าเป็น hex string
-// ผ่าน callback หรือคืน null ถ้าอ่านไม่ได้ (เช่น รูปโหลดไม่สำเร็จ หรือติดปัญหา CORS)
-function sampleImageAverageColor_(imgSrc, callback){
-  try {
-    var img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = function(){
-      try {
-        var size = 16;
-        var canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, size, size);
-        var data = ctx.getImageData(0, 0, size, size).data;
-        var r = 0, g = 0, b = 0, count = 0;
-        for (var i = 0; i < data.length; i += 4) {
-          r += data[i]; g += data[i + 1]; b += data[i + 2]; count++;
-        }
-        r = Math.round(r / count); g = Math.round(g / count); b = Math.round(b / count);
-        var hex = '#' + [r, g, b].map(function(c){ return c.toString(16).padStart(2, '0'); }).join('');
-        callback(hex);
-      } catch (e) {
-        callback(null); // ติด CORS หรือ error อื่นๆ ตอนอ่านพิกเซล — ใช้สี tierColor เดิมต่อไปเงียบๆ
-      }
-    };
-    img.onerror = function(){ callback(null); };
-    img.src = imgSrc;
-  } catch (e) {
-    callback(null);
-  }
-}
-
-// ใช้สี (hex) ที่ส่งมาปรับพื้นหลังหน้าเว็บ + สีเมนู 8 ช่องให้เข้าธีมเดียวกัน — เรียกซ้ำได้เรื่อยๆ
-// (ครั้งแรกด้วย tierColor ให้เห็นผลทันที ครั้งที่สองด้วยสีที่สุ่มได้จากรูปบัตรจริงเพื่อความแม่นยำ)
+// ใช้สี (hex) ที่ส่งมาปรับพื้นหลังหน้าเว็บ + สีเมนู 8 ช่องให้เข้าธีมเดียวกัน
 function applyThemeColor_(baseColor){
   document.body.style.background = mixWithWhite(baseColor, .12);
   var menuTextColor = shadeColor(baseColor, -35);
