@@ -126,7 +126,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    ใหญ่กว่า emoji/SVG ตัวอื่นอยู่ที่ 26px ทำให้แถวดูไม่เท่ากัน) */
 .menu-item .icon{width:20px;height:20px;font-size:20px;line-height:20px;display:flex;
   align-items:center;justify-content:center;}
-.menu-item .icon svg,.menu-item .icon img{width:32px;height:32px;object-fit:contain;}
+.menu-item .icon svg,.menu-item .icon img{width:26px;height:26px;object-fit:contain;}
 /* จุดสำคัญของข้อนี้: บังคับให้ "ตัวอักษร" (ไม่ใช่ไอคอน) อยู่ระดับเดียวกันทุกช่องเป๊ะๆ โดยจองพื้นที่สูง
    คงที่ไว้เท่ากับ 2 บรรทัดเสมอ (min-height) แล้วเริ่มบรรทัดแรกชิดบนด้วย align-items:flex-start —
    ทำให้บรรทัดแรกของทุกช่องเริ่มที่ตำแหน่งเดียวกันเป๊ะ ไม่ว่าป้ายชื่อจะยาว 1 หรือ 2 บรรทัดก็ตาม (ต่างจาก
@@ -143,7 +143,8 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
   overflow-y:auto;padding:20px;animation:slideUp .2s ease-out;}
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 .panel-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-.panel-hd h2{font-size:16px;font-weight:700;}
+.panel-hd h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.panel-hd h2 img{width:22px;height:22px;object-fit:contain;flex-shrink:0;}
 .panel-close{width:32px;height:32px;border-radius:50%;border:none;background:#f0f0f0;font-size:16px;
   cursor:pointer;color:var(--g8);}
 .list-item{border:1.5px solid #eee;border-radius:12px;padding:12px 14px;margin-bottom:8px;}
@@ -526,10 +527,20 @@ function submitRegister(){
 }
 
 // ==================== แผงข้อมูลย่อยของเมนู (8 ช่อง) ====================
-var PANEL_TITLES = { points: '🪙 คะแนนสะสม', rewards: '🎁 แลกของรางวัล', privileges: '👑 สิทธิ์พิเศษ', info: '👤 ข้อมูลสมาชิก', history: '🧾 ประวัติการสั่งซื้อ', coupons: '% คูปอง' };
+// ไอคอนหัวข้อแผงเมนู — ใช้ตัวเดียวกันเป๊ะกับไอคอนบนปุ่มเมนูหน้าแรก (รูปภาพจริงสำหรับคูปอง/ประวัติสั่งซื้อ
+// ไม่ใช่ emoji ประมาณเอาแบบเดิมแล้ว) ต้องใช้ innerHTML แทน textContent เพื่อให้ฝัง <img> ได้
+var PANEL_TITLES = {
+  points: { icon: '💰', label: 'คะแนนสะสม' },
+  rewards: { icon: '🎁', label: 'แลกของรางวัล' },
+  privileges: { icon: '👑', label: 'สิทธิ์พิเศษ' },
+  info: { icon: '👤', label: 'ข้อมูลสมาชิก' },
+  history: { icon: '<img src="icon-history.png" alt="">', label: 'ประวัติการสั่งซื้อ' },
+  coupons: { icon: '<img src="icon-coupon.png" alt="">', label: 'คูปอง' }
+};
 
 function openPanel(type){
-  document.getElementById('panelTitle').textContent = PANEL_TITLES[type] || '';
+  var t = PANEL_TITLES[type];
+  document.getElementById('panelTitle').innerHTML = t ? (t.icon + '<span>' + esc(t.label) + '</span>') : '';
   document.getElementById('panelBody').innerHTML = '<div class="empty">กำลังโหลด...</div>';
   document.getElementById('panelOverlay').classList.remove('sh');
 
