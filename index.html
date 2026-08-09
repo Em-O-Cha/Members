@@ -91,14 +91,19 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* ==================== บัตรสมาชิก (กล่องแยกต่างหากอีกกล่อง อยู่ใต้เฟรมรูป) ==================== */
 .mcard{border-radius:20px;overflow:hidden;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.18);
   background-size:cover;background-position:center;aspect-ratio:1.5;}
-.mcard-top{display:flex;align-items:center;gap:8px;position:absolute;left:18px;bottom:38%;z-index:1;
-  flex-direction:row;max-width:62%;}
+/* เดิมตรงนี้เป็นแถวแนวนอน (รูปโปรไฟล์/ชื่อ + คะแนน) — ตอนนี้เอาชื่อ (ทั้งชื่อไลน์และชื่อที่กรอกตอน
+   สมัคร) ออกทั้งหมดตามที่ขอ เหลือแค่ตัวเลขคะแนน + คำว่า "คะแนน" กำกับด้านล่าง เรียงในแนวตั้งแทน
+   ใช้ transform เลื่อนกล่องทั้งหมดขึ้นด้านบนประมาณ 1 ซม. (~38px ที่ความละเอียดจอมือถือทั่วไป) จาก
+   ตำแหน่งเดิม */
+.mcard-top{display:flex;flex-direction:column;align-items:flex-start;gap:0;position:absolute;left:18px;
+  bottom:38%;z-index:1;transform:translateY(-38px);}
 /* เดิมตรงนี้เป็นรูปโปรไฟล์ LINE ทรงกลม (.mcard-avatar) — เอาออกแล้ว แทนที่ด้วยตัวเลขคะแนนสะสม
    (.mcard-points-badge) ตามตำแหน่งเดิมแทน (ดูเหตุผลใน renderMemberCard) */
 .mcard-points-badge{font-size:26px;font-weight:800;line-height:1;flex-shrink:0;
   text-shadow:0 1px 4px rgba(0,0,0,.55);}
-.mcard-name{font-size:13px;font-weight:700;text-align:left;text-shadow:0 1px 4px rgba(0,0,0,.55);line-height:1.25;}
-.mcard-tier-badge{display:none;} /* ไม่ต้องมี badge ซ้ำอีก เพราะรูปพื้นหลังการ์ดใหม่มีชื่อระดับ (EM-START ฯลฯ) ฝังอยู่ในรูปแล้ว */
+/* คำว่า "คะแนน" กำกับใต้ตัวเลข — เพิ่มใหม่ตามที่ขอ */
+.mcard-points-label{font-size:11px;font-weight:600;opacity:.95;margin-top:2px;
+  text-shadow:0 1px 4px rgba(0,0,0,.55);}
 .mcard-body{position:absolute;bottom:16px;right:16px;text-align:right;z-index:1;}
 /* เดิมตรงนี้มีเลขคะแนนสะสมซ้ำอีกจุด (.mcard-points) — เอาออกแล้ว เหลือแค่ตัวคูณแต้ม (ถ้ามี) */
 .mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.55);}
@@ -110,14 +115,15 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .date-select-row select:focus{outline:none;border-color:var(--gm);}
 
 
-/* ==================== เมนู 8 ช่อง ==================== */
-.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:20px;}
-.menu-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;
-  border-radius:14px;background:var(--gp);cursor:pointer;text-decoration:none;color:var(--td);
+/* ==================== เมนู 8 ช่อง (แถวละ 4 ไอคอน ตามที่ขอ — เดิมแถวละ 3) ==================== */
+.menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:16px;}
+.menu-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;
+  border-radius:12px;background:var(--gp);cursor:pointer;text-decoration:none;color:var(--td);
   border:1.5px solid transparent;transition:border-color .15s;}
 .menu-item:active{border-color:var(--gm);}
-.menu-item .icon{font-size:24px;}
-.menu-item .txt{font-size:11.5px;font-weight:600;text-align:center;line-height:1.3;}
+.menu-item .icon{font-size:20px;display:flex;align-items:center;justify-content:center;}
+.menu-item .icon svg{width:20px;height:20px;}
+.menu-item .txt{font-size:9.5px;font-weight:600;text-align:center;line-height:1.25;}
 
 /* ==================== แผงข้อมูลย่อย (privileges/info/history/coupons) ==================== */
 .panel-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:flex-end;
@@ -206,10 +212,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
       <div class="mcard" id="mcard">
         <div class="mcard-top">
           <div class="mcard-points-badge" id="mcardPointsBadge">0</div>
-          <div>
-            <div class="mcard-name" id="mcardName"></div>
-            <div class="mcard-tier-badge" id="mcardTierBadge"></div>
-          </div>
+          <div class="mcard-points-label">คะแนน</div>
         </div>
         <div class="mcard-body" id="mcardBody">
           <div class="mcard-multiplier" id="mcardMultiplier"></div>
@@ -224,7 +227,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
           <div class="icon">🎁</div><div class="txt">แลก<br>ของรางวัล</div>
         </div>
         <div class="menu-item" onclick="openPanel('coupons')">
-          <div class="icon">%</div><div class="txt">คูปอง</div>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2.5"/><line x1="8" y1="15" x2="16" y2="9"/><circle cx="8.7" cy="9.3" r="1.1"/><circle cx="15.3" cy="14.7" r="1.1"/></svg></div><div class="txt">คูปอง</div>
         </div>
         <div class="menu-item" onclick="openPanel('privileges')">
           <div class="icon">👑</div><div class="txt">สิทธิ์<br>พิเศษ</div>
@@ -375,10 +378,8 @@ function renderMemberCard(member){
   mcardEl.style.color = textColor;
 
   // เดิมตรงนี้โชว์รูปโปรไฟล์ LINE (mcardAvatar) — เอาออกตามที่ขอ แทนที่ด้วยตัวเลขคะแนนสะสมแทน
+  // และเอาชื่อ (ทั้งชื่อไลน์และชื่อที่กรอกตอนสมัคร) ออกทั้งหมดตามที่ขอด้วย เหลือแค่ตัวเลขคะแนนอย่างเดียว
   document.getElementById('mcardPointsBadge').textContent = (member.points || 0).toLocaleString('th-TH');
-
-  document.getElementById('mcardName').textContent = member.fullName || member.displayName || '';
-  // ไม่ต้องโชว์ badge ชื่อระดับซ้ำอีกแล้ว เพราะรูปพื้นหลังใหม่มีชื่อระดับ (EM-START ฯลฯ) ฝังอยู่ในรูปแล้ว
 
   var mult = parseFloat(member.pointMultiplier) || 1;
   document.getElementById('mcardMultiplier').textContent = mult > 1 ? ('รับคะแนน x' + mult + ' ทุกการสั่งซื้อ 🌟') : '';
@@ -386,7 +387,8 @@ function renderMemberCard(member){
   // พื้นหลังทั้งหน้า (นอกกล่องการ์ด) — สีพื้นเรียบอ่อนๆ ของระดับ (ทึบ ไม่ใช่รูปภาพ ไม่ใช่โปร่งแสง)
   document.body.style.background = mixWithWhite(baseColor, .12);
 
-  // เมนู 6 ช่องด้านล่าง — เปลี่ยนสีให้เข้าธีมของระดับสมาชิกด้วยเช่นกัน
+  // เมนู 8 ช่องด้านล่าง — เปลี่ยนสีให้เข้าธีมของระดับสมาชิกด้วยเช่นกัน (ไอคอน SVG อย่าง "คูปอง" ก็ใช้
+  // currentColor จึงเปลี่ยนสีตามธีมนี้ไปโดยอัตโนมัติเช่นกัน ไม่ต้องเซ็ตสีแยกต่างหาก)
   // สำคัญ: ใช้สีทึบอ่อนๆ (mixWithWhite) แทนสีโปร่งแสง (rgba alpha ต่ำ) แบบเดิม เพราะตอนนี้ด้านหลังกล่อง
   // การ์ดมีรูปพื้นหลัง (member-bg.jpg) ถ้าพื้นปุ่มยังโปร่งแสงอยู่ รูปจะทะลุมาบังตัวหนังสือจนอ่านไม่ออก
   // การใช้สีทึบ (แม้จะอ่อน) การันตีว่าตัวหนังสือจะคมชัดอ่านง่ายเสมอไม่ว่าพื้นหลังจะเป็นรูปอะไรก็ตาม
