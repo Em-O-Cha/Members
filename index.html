@@ -124,9 +124,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* ไอคอนทุกแบบ (emoji/SVG/รูปโลโก้ Facebook-TikTok) บังคับให้อยู่ในกล่องขนาดเท่ากันเป๊ะ (20x20) และ
    จัดกึ่งกลางแนวตั้งแบบเดียวกันหมด — กันปัญหาแถวไอคอนดูเยื้องไม่เป็นระเบียบ (เดิมรูป Facebook/TikTok
    ใหญ่กว่า emoji/SVG ตัวอื่นอยู่ที่ 26px ทำให้แถวดูไม่เท่ากัน) */
-.menu-item .icon{width:26px;height:26px;font-size:20px;line-height:20px;display:flex;
+.menu-item .icon{width:20px;height:20px;font-size:20px;line-height:20px;display:flex;
   align-items:center;justify-content:center;}
-.menu-item .icon svg,.menu-item .icon img{width:20px;height:20px;object-fit:contain;}
+.menu-item .icon svg,.menu-item .icon img{width:26px;height:26px;object-fit:contain;}
 /* จุดสำคัญของข้อนี้: บังคับให้ "ตัวอักษร" (ไม่ใช่ไอคอน) อยู่ระดับเดียวกันทุกช่องเป๊ะๆ โดยจองพื้นที่สูง
    คงที่ไว้เท่ากับ 2 บรรทัดเสมอ (min-height) แล้วเริ่มบรรทัดแรกชิดบนด้วย align-items:flex-start —
    ทำให้บรรทัดแรกของทุกช่องเริ่มที่ตำแหน่งเดียวกันเป๊ะ ไม่ว่าป้ายชื่อจะยาว 1 หรือ 2 บรรทัดก็ตาม (ต่างจาก
