@@ -96,7 +96,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    ใช้ transform เลื่อนกล่องทั้งหมดขึ้นด้านบนประมาณ 1 ซม. (~38px ที่ความละเอียดจอมือถือทั่วไป) จาก
    ตำแหน่งเดิม */
 .mcard-top{display:flex;flex-direction:column;align-items:flex-start;gap:0;position:absolute;left:18px;
-  bottom:38%;z-index:1;transform:translateY(-19px);}
+  bottom:38%;z-index:1;}
 /* เดิมตรงนี้เป็นรูปโปรไฟล์ LINE ทรงกลม (.mcard-avatar) — เอาออกแล้ว แทนที่ด้วยตัวเลขคะแนนสะสม
    (.mcard-points-badge) ตามตำแหน่งเดิมแทน (ดูเหตุผลใน renderMemberCard) */
 .mcard-points-badge{font-size:26px;font-weight:800;line-height:1;flex-shrink:0;
@@ -127,7 +127,13 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .menu-item .icon{width:20px;height:20px;font-size:20px;line-height:20px;display:flex;
   align-items:center;justify-content:center;}
 .menu-item .icon svg,.menu-item .icon img{width:20px;height:20px;object-fit:contain;}
-.menu-item .txt{font-size:9.5px;font-weight:600;text-align:center;line-height:1.25;}
+/* จุดสำคัญของข้อนี้: บังคับให้ "ตัวอักษร" (ไม่ใช่ไอคอน) อยู่ระดับเดียวกันทุกช่องเป๊ะๆ โดยจองพื้นที่สูง
+   คงที่ไว้เท่ากับ 2 บรรทัดเสมอ (min-height) แล้วเริ่มบรรทัดแรกชิดบนด้วย align-items:flex-start —
+   ทำให้บรรทัดแรกของทุกช่องเริ่มที่ตำแหน่งเดียวกันเป๊ะ ไม่ว่าป้ายชื่อจะยาว 1 หรือ 2 บรรทัดก็ตาม (ต่างจาก
+   ไอคอนที่ต่างชนิดกัน — emoji/SVG/รูปโลโก้แบรนด์ — ซึ่งมีเส้นขอบภาพในตัวเองไม่เท่ากันเป๊ะ ทำให้จัดให้
+   ระดับเดียวกัน 100% ไม่ได้จริงๆ จึงเน้นที่ตัวอักษรแทนตามที่ขอ) */
+.menu-item .txt{font-size:9.5px;font-weight:600;text-align:center;line-height:1.25;min-height:24px;
+  display:flex;align-items:flex-start;justify-content:center;}
 
 /* ==================== แผงข้อมูลย่อย (privileges/info/history/coupons) ==================== */
 .panel-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:flex-end;
