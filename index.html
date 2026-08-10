@@ -404,7 +404,7 @@ function renderMemberCard(member){
   var tierKey = member.tierKey || 'start';
 
   // ใช้ภาพบัตรพรีเมียมจริงเป็นพื้นหลัง (แทนไล่สี CSS แบบเดิม) — ไฟล์ชื่อคงที่ตามระดับ เปลี่ยนภาพได้ตลอด
-  // แค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub (member-card-start.png / -silver.jpg / -gold.jpg / -platinum.jpg)
+  // แค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub (member-card-start.png / -silver.png / -gold.png / -platinum.png)
   var CARD_IMAGE_VERSION = '2'; // ทุกครั้งที่เปลี่ยนภาพบัตรใหม่ ให้เพิ่มเลขนี้ขึ้นทีละ 1 เพื่อล้างแคชภาพ
   var mcardEl = document.getElementById('mcard');
   var cardImageMap = { start: 'member-card-start.png', fan: 'member-card-silver.png', love: 'member-card-gold.png', vip: 'member-card-platinum.png' };
