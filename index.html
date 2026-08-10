@@ -404,10 +404,10 @@ function renderMemberCard(member){
   var tierKey = member.tierKey || 'start';
 
   // ใช้ภาพบัตรพรีเมียมจริงเป็นพื้นหลัง (แทนไล่สี CSS แบบเดิม) — ไฟล์ชื่อคงที่ตามระดับ เปลี่ยนภาพได้ตลอด
-  // แค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub (member-card-start.jpg / -silver.jpg / -gold.jpg / -platinum.jpg)
+  // แค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub (member-card-start.png / -silver.jpg / -gold.jpg / -platinum.jpg)
   var CARD_IMAGE_VERSION = '2'; // ทุกครั้งที่เปลี่ยนภาพบัตรใหม่ ให้เพิ่มเลขนี้ขึ้นทีละ 1 เพื่อล้างแคชภาพ
   var mcardEl = document.getElementById('mcard');
-  var cardImageMap = { start: 'member-card-start.jpg', fan: 'member-card-silver.jpg', love: 'member-card-gold.jpg', vip: 'member-card-platinum.jpg' };
+  var cardImageMap = { start: 'member-card-start.png', fan: 'member-card-silver.png', love: 'member-card-gold.png', vip: 'member-card-platinum.png' };
   mcardEl.style.backgroundImage = "url('" + (cardImageMap[tierKey] || cardImageMap.start) + "?v=" + CARD_IMAGE_VERSION + "')";
   mcardEl.style.color = textColor;
 
