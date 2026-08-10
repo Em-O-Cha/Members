@@ -25,9 +25,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    (ตั้งค่าจริงผ่าน JS ในฟังก์ชัน renderMemberCard — ดูเมธอด mixWithWhite) ไม่ใช้ไฟล์ page-bg.jpg อีกต่อไป */
 .wrap{max-width:400px;margin:0 auto;position:relative;z-index:1;}
 /* พื้นหลังของกล่องการ์ดใหญ่ (ช่องว่างรอบๆ แบนเนอร์/รูปสินค้า/บัตรสมาชิก/เมนู) — ใช้ไฟล์ชื่อคงที่
-   "member-bg.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ไม่ต้องแก้โค้ด ถ้ายังไม่มีไฟล์นี้
+   "member-bg.jpg" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ไม่ต้องแก้โค้ด ถ้ายังไม่มีไฟล์นี้
    จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) */
-.card{background:#fff url('member-bg.png') center/cover no-repeat;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);width:100%;overflow:hidden;margin-bottom:16px;}
+.card{background:#fff url('member-bg.jpg') center/cover no-repeat;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);width:100%;overflow:hidden;margin-bottom:16px;}
 .mascot-left{position:absolute;left:4px;bottom:4px;width:68px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 .mascot-right{position:absolute;right:4px;bottom:4px;width:56px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 
@@ -129,8 +129,8 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    จัดกึ่งกลางแนวตั้งแบบเดียวกันหมด — กันปัญหาแถวไอคอนดูเยื้องไม่เป็นระเบียบ (เดิมรูป Facebook/TikTok
    ใหญ่กว่า emoji/SVG ตัวอื่นอยู่ที่ 26px ทำให้แถวดูไม่เท่ากัน) */
 .menu-item .icon,.panel-menu-icon{width:70px;height:70px;display:inline-flex;align-items:center;justify-content:center;
-  flex:0 0 auto;border-radius:50%;background:radial-gradient(circle at 34% 27%,#fbfeff 0,#eaf6ff 42%,#d5edff 100%);
-  color:#20384b;box-shadow:inset 0 0 0 1px rgba(155,207,240,.38),0 2px 7px rgba(83,153,201,.12);}
+  flex:0 0 auto;border-radius:50%;overflow:hidden;background:transparent;color:#20384b;box-shadow:none;}
+.menu-item .icon img,.panel-menu-icon img{width:100%;height:100%;display:block;object-fit:cover;}
 .menu-item .icon svg{position:relative;z-index:1;width:43px;height:43px;stroke:currentColor;fill:none;stroke-width:2.05;
   stroke-linecap:round;stroke-linejoin:round;}
 .menu-item .icon svg .blue-fill,.panel-hd h2 .panel-menu-icon svg .blue-fill{fill:#9ed6f5;}
@@ -552,8 +552,21 @@ function submitRegister(){
 // ==================== แผงข้อมูลย่อยของเมนู (8 ช่อง) ====================
 // ไอคอนหัวข้อแผงเมนู — ใช้ตัวเดียวกันเป๊ะกับไอคอนบนปุ่มเมนูหน้าแรก (รูปภาพจริงสำหรับคูปอง/ประวัติสั่งซื้อ
 // ไม่ใช่ emoji ประมาณเอาแบบเดิมแล้ว) ต้องใช้ innerHTML แทน textContent เพื่อให้ฝัง <img> ได้
+var MENU_ICON_FILES = {
+  points: 'assets/menu-icons/icon-points.png',
+  rewards: 'assets/menu-icons/icon-rewards.png',
+  coupons: 'assets/menu-icons/icon-coupon.png',
+  privileges: 'assets/menu-icons/icon-privileges.png',
+  info: 'assets/menu-icons/icon-info.png',
+  history: 'assets/menu-icons/icon-history.png',
+  facebook: 'assets/menu-icons/icon-facebook.png',
+  tiktok: 'assets/menu-icons/icon-tiktok.png'
+};
+
 function menuIcon(type, className){
-  return '<span class="' + (className || 'icon') + '" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#icon-' + type + '"></use></svg></span>';
+  var src = MENU_ICON_FILES[type];
+  return '<span class="' + (className || 'icon') + '" aria-hidden="true">'
+    + '<img src="' + src + '" alt=""></span>';
 }
 
 function decorateMemberMenu(){
