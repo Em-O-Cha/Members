@@ -128,11 +128,13 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* ไอคอนทุกแบบ (emoji/SVG/รูปโลโก้ Facebook-TikTok) บังคับให้อยู่ในกล่องขนาดเท่ากันเป๊ะ (20x20) และ
    จัดกึ่งกลางแนวตั้งแบบเดียวกันหมด — กันปัญหาแถวไอคอนดูเยื้องไม่เป็นระเบียบ (เดิมรูป Facebook/TikTok
    ใหญ่กว่า emoji/SVG ตัวอื่นอยู่ที่ 26px ทำให้แถวดูไม่เท่ากัน) */
-.menu-item .icon,.panel-menu-icon{width:62px;height:62px;display:inline-flex;align-items:center;justify-content:center;
-  flex:0 0 auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f8fcff 0,#e4f3ff 72%);
-  color:#263746;box-shadow:inset 0 0 0 1px rgba(178,216,242,.28);}
-.menu-item .icon svg{width:38px;height:38px;stroke:currentColor;fill:none;stroke-width:1.75;
+.menu-item .icon,.panel-menu-icon{width:70px;height:70px;display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 auto;border-radius:50%;background:radial-gradient(circle at 34% 27%,#fbfeff 0,#eaf6ff 42%,#d5edff 100%);
+  color:#20384b;box-shadow:inset 0 0 0 1px rgba(155,207,240,.38),0 2px 7px rgba(83,153,201,.12);}
+.menu-item .icon svg{position:relative;z-index:1;width:43px;height:43px;stroke:currentColor;fill:none;stroke-width:2.05;
   stroke-linecap:round;stroke-linejoin:round;}
+.menu-item .icon svg .blue-fill,.panel-hd h2 .panel-menu-icon svg .blue-fill{fill:#9ed6f5;}
+.menu-item .icon svg .blue-stroke,.panel-hd h2 .panel-menu-icon svg .blue-stroke{stroke:#4b9dcd;}
 /* จุดสำคัญของข้อนี้: บังคับให้ "ตัวอักษร" (ไม่ใช่ไอคอน) อยู่ระดับเดียวกันทุกช่องเป๊ะๆ โดยจองพื้นที่สูง
    คงที่ไว้เท่ากับ 2 บรรทัดเสมอ (min-height) แล้วเริ่มบรรทัดแรกชิดบนด้วย align-items:flex-start —
    ทำให้บรรทัดแรกของทุกช่องเริ่มที่ตำแหน่งเดียวกันเป๊ะ ไม่ว่าป้ายชื่อจะยาว 1 หรือ 2 บรรทัดก็ตาม (ต่างจาก
@@ -151,8 +153,8 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 .panel-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
 .panel-hd h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;}
-.panel-hd h2 .panel-menu-icon{width:38px;height:38px;color:#263746;}
-.panel-hd h2 .panel-menu-icon svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;
+.panel-hd h2 .panel-menu-icon{width:42px;height:42px;color:#20384b;}
+.panel-hd h2 .panel-menu-icon svg{width:27px;height:27px;stroke:currentColor;fill:none;stroke-width:2.05;
   stroke-linecap:round;stroke-linejoin:round;}
 .icon-defs{position:absolute;width:0;height:0;overflow:hidden;}
 .panel-close{width:32px;height:32px;border-radius:50%;border:none;background:#f0f0f0;font-size:16px;
@@ -175,14 +177,14 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 <body>
 <!-- Reusable line icons: used by the menu and its matching detail-sheet title. -->
 <svg class="icon-defs" aria-hidden="true" focusable="false">
-  <symbol id="icon-points" viewBox="0 0 48 48"><ellipse cx="18" cy="12" rx="11" ry="4"/><path d="M7 12v7c0 2.2 4.9 4 11 4s11-1.8 11-4v-7M7 19v7c0 2.2 4.9 4 11 4 1.3 0 2.6-.1 3.8-.3M7 26v6c0 2.2 4.9 4 11 4 1.5 0 3-.1 4.3-.4"/><circle cx="33" cy="31" r="10"/><path d="m33 25 1.8 3.7 4.1.6-3 2.9.7 4.1-3.6-1.9-3.7 1.9.7-4.1-3-2.9 4.1-.6z"/></symbol>
-  <symbol id="icon-rewards" viewBox="0 0 48 48"><path d="M8 21h32v19H8zM6 15h36v7H6zM24 15v25M24 15c-7 0-11-2.2-11-6 0-2.3 1.8-3.7 3.8-3.7 3.8 0 7.2 5.5 7.2 8.7M24 15c7 0 11-2.2 11-6 0-2.3-1.8-3.7-3.8-3.7-3.8 0-7.2 5.5-7.2 8.7"/><path d="M35 35c1.8.1 3.6-.6 4.9-1.9l1.1-1.1M40 28l1 4-4 1M13 35c-1.8.1-3.6-.6-4.9-1.9L7 32M8 28l-1 4 4 1"/></symbol>
-  <symbol id="icon-coupons" viewBox="0 0 48 48"><path d="M7 12h34v10a5 5 0 0 0 0 10v10H7V32a5 5 0 0 0 0-10z"/><path d="M20 17v3m0 8v3m0 8v3M28 17l-9 15M17 20.5a2 2 0 1 0 0 .1M30 31.5a2 2 0 1 0 0 .1"/></symbol>
-  <symbol id="icon-privileges" viewBox="0 0 48 48"><path d="M24 7l3.2 3.2 4.5-.4 1.5 4.2 4 2.1-1.5 4.2 1.5 4.2-4 2.1-1.5 4.2-4.5-.4L24 34l-3.2 3.2-4.5-.4-1.5-4.2-4-2.1 1.5-4.2-1.5-4.2 4-2.1 1.5-4.2 4.5.4z"/><path d="m24 15 2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.9-5.4 2.9 1-6-4.3-4.2 6-.9zM18 35l-2 7 8-4 8 4-2-7"/></symbol>
-  <symbol id="icon-info" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18"/><circle cx="24" cy="18" r="6"/><path d="M12 38c1.5-7 6-10 12-10s10.5 3 12 10"/></symbol>
-  <symbol id="icon-history" viewBox="0 0 48 48"><path d="M7 9h5l3 24h19M15 29h20l3-15H13M20 40a2.5 2.5 0 1 0 0 .1M32 40a2.5 2.5 0 1 0 0 .1"/><circle cx="35" cy="28" r="9"/><path d="M35 23v5l4 2"/></symbol>
-  <symbol id="icon-facebook" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18"/><path d="M27 39V25h5l.8-5H27v-2.6c0-1.5.6-2.6 2.8-2.6H33V10c-.6-.1-1.9-.3-3.7-.3-4 0-6.5 2.4-6.5 6.8V20h-4.4v5h4.4v14"/></symbol>
-  <symbol id="icon-tiktok" viewBox="0 0 48 48"><path d="M28 8v20.5a7.5 7.5 0 1 1-6-7.4M28 8c1.5 5.2 4.5 8.2 10 8.7V22c-4.1-.2-7.5-1.5-10-4"/></symbol>
+  <symbol id="icon-points" viewBox="0 0 48 48"><ellipse class="blue-fill" cx="18" cy="12" rx="11" ry="4"/><path d="M7 12v7c0 2.2 4.9 4 11 4s11-1.8 11-4v-7M7 19v7c0 2.2 4.9 4 11 4 1.3 0 2.6-.1 3.8-.3M7 26v6c0 2.2 4.9 4 11 4 1.5 0 3-.1 4.3-.4"/><circle class="blue-fill" cx="33" cy="31" r="10"/><path d="m33 25 1.8 3.7 4.1.6-3 2.9.7 4.1-3.6-1.9-3.7 1.9.7-4.1-3-2.9 4.1-.6z"/></symbol>
+  <symbol id="icon-rewards" viewBox="0 0 48 48"><path class="blue-fill" d="M8 21h32v19H8zM6 15h36v7H6zM24 15v25M24 15c-7 0-11-2.2-11-6 0-2.3 1.8-3.7 3.8-3.7 3.8 0 7.2 5.5 7.2 8.7M24 15c7 0 11-2.2 11-6 0-2.3-1.8-3.7-3.8-3.7-3.8 0-7.2 5.5-7.2 8.7"/><path d="M35 35c1.8.1 3.6-.6 4.9-1.9l1.1-1.1M40 28l1 4-4 1M13 35c-1.8.1-3.6-.6-4.9-1.9L7 32M8 28l-1 4 4 1"/></symbol>
+  <symbol id="icon-coupons" viewBox="0 0 48 48"><path class="blue-fill" d="M7 12h34v10a5 5 0 0 0 0 10v10H7V32a5 5 0 0 0 0-10z"/><path d="M20 17v3m0 8v3m0 8v3M28 17l-9 15M17 20.5a2 2 0 1 0 0 .1M30 31.5a2 2 0 1 0 0 .1"/></symbol>
+  <symbol id="icon-privileges" viewBox="0 0 48 48"><path class="blue-fill" d="M24 7l3.2 3.2 4.5-.4 1.5 4.2 4 2.1-1.5 4.2 1.5 4.2-4 2.1-1.5 4.2-4.5-.4L24 34l-3.2 3.2-4.5-.4-1.5-4.2-4-2.1 1.5-4.2-1.5-4.2 4-2.1 1.5-4.2 4.5.4z"/><path d="m24 15 2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.9-5.4 2.9 1-6-4.3-4.2 6-.9zM18 35l-2 7 8-4 8 4-2-7"/></symbol>
+  <symbol id="icon-info" viewBox="0 0 48 48"><circle class="blue-fill" cx="24" cy="24" r="18"/><circle cx="24" cy="18" r="6"/><path d="M12 38c1.5-7 6-10 12-10s10.5 3 12 10"/></symbol>
+  <symbol id="icon-history" viewBox="0 0 48 48"><path d="M7 9h5l3 24h19M15 29h20l3-15H13M20 40a2.5 2.5 0 1 0 0 .1M32 40a2.5 2.5 0 1 0 0 .1"/><circle class="blue-fill" cx="35" cy="28" r="9"/><path d="M35 23v5l4 2"/></symbol>
+  <symbol id="icon-facebook" viewBox="0 0 48 48"><circle class="blue-fill" cx="24" cy="24" r="18"/><path d="M27 39V25h5l.8-5H27v-2.6c0-1.5.6-2.6 2.8-2.6H33V10c-.6-.1-1.9-.3-3.7-.3-4 0-6.5 2.4-6.5 6.8V20h-4.4v5h4.4v14"/></symbol>
+  <symbol id="icon-tiktok" viewBox="0 0 48 48"><path class="blue-stroke" d="M28 8v20.5a7.5 7.5 0 1 1-6-7.4M28 8c1.5 5.2 4.5 8.2 10 8.7V22c-4.1-.2-7.5-1.5-10-4"/></symbol>
 </svg>
 
 <div id="welcomeState" class="sh">
