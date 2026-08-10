@@ -122,9 +122,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* ==================== เมนู 8 ช่อง (แถวละ 4 ไอคอน ตามที่ขอ — เดิมแถวละ 3) ==================== */
 .menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px;padding:18px 8px 20px;}
 .menu-item{display:flex;flex-direction:column;align-items:center;gap:8px;padding:2px 0;
-  border-radius:12px;background:transparent;cursor:pointer;text-decoration:none;color:var(--td);
-  border:1.5px solid transparent;transition:transform .15s,background .15s;}
-.menu-item:active{transform:scale(.96);background:#f7fbff;}
+  border-radius:12px;background:transparent !important;box-shadow:none;cursor:pointer;text-decoration:none;
+  color:#123d26;border:0;transition:transform .15s;}
+.menu-item:active{transform:scale(.96);background:transparent !important;}
 /* ไอคอนทุกแบบ (emoji/SVG/รูปโลโก้ Facebook-TikTok) บังคับให้อยู่ในกล่องขนาดเท่ากันเป๊ะ (20x20) และ
    จัดกึ่งกลางแนวตั้งแบบเดียวกันหมด — กันปัญหาแถวไอคอนดูเยื้องไม่เป็นระเบียบ (เดิมรูป Facebook/TikTok
    ใหญ่กว่า emoji/SVG ตัวอื่นอยู่ที่ 26px ทำให้แถวดูไม่เท่ากัน) */
@@ -138,8 +138,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    ทำให้บรรทัดแรกของทุกช่องเริ่มที่ตำแหน่งเดียวกันเป๊ะ ไม่ว่าป้ายชื่อจะยาว 1 หรือ 2 บรรทัดก็ตาม (ต่างจาก
    ไอคอนที่ต่างชนิดกัน — emoji/SVG/รูปโลโก้แบรนด์ — ซึ่งมีเส้นขอบภาพในตัวเองไม่เท่ากันเป๊ะ ทำให้จัดให้
    ระดับเดียวกัน 100% ไม่ได้จริงๆ จึงเน้นที่ตัวอักษรแทนตามที่ขอ) */
-.menu-item .txt{font-size:9.5px;font-weight:600;text-align:center;line-height:1.25;min-height:24px;
-  display:flex;align-items:flex-start;justify-content:center;}
+.menu-item .txt{font-size:11px;font-weight:800;text-align:center;line-height:1.28;min-height:28px;
+  display:flex;align-items:flex-start;justify-content:center;color:#123d26;
+  text-shadow:0 1px 2px rgba(255,255,255,.95);letter-spacing:.05px;}
 
 /* ==================== แผงข้อมูลย่อย (privileges/info/history/coupons) ==================== */
 .panel-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:flex-end;
