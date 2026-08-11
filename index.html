@@ -42,6 +42,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .hd h1{font-size:19px;font-weight:600;}
 .hd p{font-size:13px;opacity:.9;margin-top:4px;}
 .bd{padding:28px 24px;}
+/* padding-top ลดลงเหลือน้อยมาก เฉพาะตอนโชว์บัตรสมาชิกเท่านั้น (ดูเหตุผลใน showState()) — ทำให้ลดระยะ
+   บนสุดได้อีกโดยไม่ต้องพึ่ง margin ติดลบมากๆ บน #memberCardState ที่เคยเสี่ยงโดนตัดขอบ */
+#bdArea.member-view{padding-top:6px;}
 
 /* ==================== หน้าต้อนรับ — เต็มจอจริงๆ ไม่ใช่กล่องเล็กๆ ในการ์ด ====================
    position:fixed คลุมทั้งจอ ไม่ขึ้นกับ .wrap/.card เลย — ใช้รูปพื้นหลังชื่อไฟล์คงที่ "welcome-bg.jpg"
@@ -124,7 +127,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 
 /* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงอีก (แคบกว่าเดิม) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ
    .bd padding ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
-#memberCardState{margin-top:-26px;}
+#memberCardState{margin-top:0;}
 
 /* ==================== บัตรสมาชิก (กล่องแยกต่างหาก อยู่บนสุด บนพื้นสีขาวของ .bd) ==================== */
 /* ขยายบัตรให้ใหญ่ขึ้นเล็กน้อยตามที่ขอ ให้ดูสมดุลกับเฟรมโค้งมนของ .lower-section ด้านล่าง:
@@ -372,6 +375,12 @@ function showState(id){
   // ซ่อนหัวเขียว "เข้าร่วมเป็นสมาชิก" (พร้อมรูปโปรไฟล์/มาสคอต) หลังจากเป็นสมาชิกแล้ว — ไม่จำเป็นอีกต่อไป
   // เพราะบัตรสมาชิกด้านล่างมีรูปโปรไฟล์และข้อมูลครบอยู่แล้ว โชว์ซ้ำจะดูรกเกินไป
   document.getElementById('hd').classList.toggle('sh', id === 'memberCardState');
+  // เพิ่มคลาส member-view ให้ .bd เฉพาะตอนโชว์บัตรสมาชิกเท่านั้น — ใช้ลด padding-top ของ .bd เฉพาะจุด
+  // นี้แยกจากหน้าอื่น (สมัคร/สำเร็จ/error ที่ยังต้องการ padding 28px เท่าเดิม) เพราะก่อนหน้านี้พยายามลด
+  // ระยะบนด้วย margin-top ติดลบบน #memberCardState อย่างเดียว แต่ติดเพดานที่ -28px (เท่ากับ padding-top
+  // เดิมของ .bd พอดี) ถ้าติดลบมากกว่านี้จะดันแถวโลโก้ทะลุขึ้นไปโดน overflow:hidden ตัดขอบ วิธีนี้ลด
+  // padding ที่ต้นตอแทน จะได้ไม่ต้องพึ่ง margin ติดลบมากเกินจำเป็นอีกต่อไป ปลอดภัยกว่า
+  document.getElementById('bdArea').classList.toggle('member-view', id === 'memberCardState');
 }
 function showErrorState(msg){
   document.getElementById('errorState').innerHTML = '<div class="ico">⚠️</div><div id="errorMsg">' + msg.replace(/</g,'&lt;') + '</div>';
