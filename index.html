@@ -24,10 +24,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* พื้นหลังนอกการ์ด: เปลี่ยนจากภาพเบลอ (page-bg.jpg) เป็น "สีพื้นเรียบตามระดับสมาชิก" แทน
    (ตั้งค่าจริงผ่าน JS ในฟังก์ชัน renderMemberCard — ดูเมธอด mixWithWhite) ไม่ใช้ไฟล์ page-bg.jpg อีกต่อไป */
 .wrap{max-width:400px;margin:0 auto;position:relative;z-index:1;}
-/* พื้นหลังของกล่องการ์ดใหญ่ (ช่องว่างรอบๆ แบนเนอร์/รูปสินค้า/บัตรสมาชิก/เมนู) — ใช้ไฟล์ชื่อคงที่
-   "member-bg.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ไม่ต้องแก้โค้ด ถ้ายังไม่มีไฟล์นี้
-   จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) */
-.card{background:#fff url('member-bg.png') center/cover no-repeat;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);width:100%;overflow:hidden;margin-bottom:16px;}
+/* พื้นหลังของกล่องการ์ดใหญ่: ตอนนี้เหลือแค่สีขาวล้วน (ไม่มีภาพ member-bg.png ทับทั้งกล่องอีกต่อไป)
+   เพราะ member-bg.png ถูกย้ายไปใช้เฉพาะโซนล่าง (.lower-section) แทน ดูรายละเอียดที่ .lower-section */
+.card{background:#fff;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);width:100%;overflow:hidden;margin-bottom:16px;}
 .mascot-left{position:absolute;left:4px;bottom:4px;width:68px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 .mascot-right{position:absolute;right:4px;bottom:4px;width:56px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 
@@ -83,16 +82,23 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* ==================== เฟรมรูปภาพ (แยกต่างหาก ไม่ปนกับบัตรสมาชิก) ==================== */
 .promo-frame,.photo-frame{border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.12);
   background-size:cover;background-position:center;}
-/* Header image is first; the promotion banner stays at the bottom of the member area. */
+/* ลำดับการแสดงผลตอนนี้เรียงตาม DOM ปกติแล้ว (ไม่ต้องใช้ flex order อีกต่อไป):
+   บัตรสมาชิก (พื้นขาว) -> เมนู 8 ช่อง -> ภาพสินค้า -> โปรโมชั่น (ทั้ง 3 อย่างหลังอยู่บน member-bg.png
+   ภายใน .lower-section) ดูรายละเอียดโซนพื้นหลังที่ .lower-section ด้านล่าง */
 #memberCardState{display:flex;flex-direction:column;}
-.photo-frame{order:1;}
-.mcard{order:2;}
-.menu-grid{order:3;}
-.promo-frame{order:4;}
 .photo-frame{height:100px;background-image:url('card-header-bg.png');margin-bottom:14px;}
 .promo-frame{height:110px;background-image:url('promo-banner.png');margin:4px 0 0;}
 
-/* ==================== บัตรสมาชิก (กล่องแยกต่างหากอีกกล่อง อยู่ใต้เฟรมรูป) ==================== */
+/* ==================== โซนล่าง: เมนู + ภาพสินค้า + โปรโมชั่น (ใช้พื้นหลัง member-bg.png ร่วมกัน) ====================
+   ใช้ margin ติดลบเท่ากับ padding ของ .bd (28px บน/ล่าง, 24px ซ้าย/ขวา) เพื่อดึงพื้นหลังให้เต็มขอบกล่อง
+   การ์ด แล้วใส่ padding กลับเข้าไปเท่าเดิมเพื่อให้เนื้อหา (ไอคอนเมนู/ภาพ/โปรโมชั่น) อยู่ตำแหน่งเดิมเป๊ะ
+   ไม่ขยับ — ไฟล์ชื่อคงที่ "member-bg.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ถ้ายังไม่มี
+   ไฟล์นี้จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) มุมล่างโค้งตาม .card เพราะ .card มี
+   overflow:hidden + border-radius:20px ครอบอยู่อีกที */
+.lower-section{background:#fff url('member-bg.png') center/cover no-repeat;margin:0 -24px -28px;
+  padding:0 24px 28px;border-radius:0 0 20px 20px;}
+
+/* ==================== บัตรสมาชิก (กล่องแยกต่างหาก อยู่บนสุด บนพื้นสีขาวของ .bd) ==================== */
 .mcard{border-radius:20px;overflow:hidden;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.18);
   background-size:cover;background-position:center;aspect-ratio:1.5;}
 /* เดิมตรงนี้เป็นแถวแนวนอน (รูปโปรไฟล์/ชื่อ + คะแนน) — ตอนนี้เอาชื่อ (ทั้งชื่อไลน์และชื่อที่กรอกตอน
@@ -240,8 +246,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
     </div>
 
     <div id="memberCardState" class="sh">
-      <div class="promo-frame"></div>
-      <div class="photo-frame"></div>
 
       <div class="mcard" id="mcard">
         <div class="mcard-top">
@@ -253,32 +257,39 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
         </div>
       </div>
 
-      <div class="menu-grid">
-        <div class="menu-item" onclick="openPanel('points')">
-          <div class="icon">💰</div><div class="txt">คะแนน<br>สะสม</div>
+      <div class="lower-section">
+        <div class="menu-grid">
+          <div class="menu-item" onclick="openPanel('points')">
+            <div class="icon">💰</div><div class="txt">คะแนน<br>สะสม</div>
+          </div>
+          <div class="menu-item" onclick="openPanel('rewards')">
+            <div class="icon">🎁</div><div class="txt">แลก<br>ของรางวัล</div>
+          </div>
+          <div class="menu-item" onclick="openPanel('coupons')">
+            <div class="icon"><img src="icon-coupon.png" alt="คูปอง"></div><div class="txt">คูปอง</div>
+          </div>
+          <div class="menu-item" onclick="openPanel('privileges')">
+            <div class="icon">👑</div><div class="txt">สิทธิ์<br>พิเศษ</div>
+          </div>
+          <div class="menu-item" onclick="openPanel('info')">
+            <div class="icon">👤</div><div class="txt">ข้อมูล<br>สมาชิก</div>
+          </div>
+          <div class="menu-item" onclick="openPanel('history')">
+            <div class="icon"><img src="icon-history.png" alt="ประวัติสั่งซื้อ"></div><div class="txt">ประวัติ<br>สั่งซื้อ</div>
+          </div>
+          <a class="menu-item" href="https://www.facebook.com/emocha.official/" target="_blank">
+            <img class="icon" src="icon-facebook.png" alt="Facebook"><div class="txt">Facebook</div>
+          </a>
+          <a class="menu-item" href="https://www.tiktok.com/@emocha.food?_r=1&_t=ZS-98ViS0aVxWW" target="_blank">
+            <img class="icon" src="icon-tiktok.png" alt="TikTok"><div class="txt">TikTok</div>
+          </a>
         </div>
-        <div class="menu-item" onclick="openPanel('rewards')">
-          <div class="icon">🎁</div><div class="txt">แลก<br>ของรางวัล</div>
-        </div>
-        <div class="menu-item" onclick="openPanel('coupons')">
-          <div class="icon"><img src="icon-coupon.png" alt="คูปอง"></div><div class="txt">คูปอง</div>
-        </div>
-        <div class="menu-item" onclick="openPanel('privileges')">
-          <div class="icon">👑</div><div class="txt">สิทธิ์<br>พิเศษ</div>
-        </div>
-        <div class="menu-item" onclick="openPanel('info')">
-          <div class="icon">👤</div><div class="txt">ข้อมูล<br>สมาชิก</div>
-        </div>
-        <div class="menu-item" onclick="openPanel('history')">
-          <div class="icon"><img src="icon-history.png" alt="ประวัติสั่งซื้อ"></div><div class="txt">ประวัติ<br>สั่งซื้อ</div>
-        </div>
-        <a class="menu-item" href="https://www.facebook.com/emocha.official/" target="_blank">
-          <img class="icon" src="icon-facebook.png" alt="Facebook"><div class="txt">Facebook</div>
-        </a>
-        <a class="menu-item" href="https://www.tiktok.com/@emocha.food?_r=1&_t=ZS-98ViS0aVxWW" target="_blank">
-          <img class="icon" src="icon-tiktok.png" alt="TikTok"><div class="txt">TikTok</div>
-        </a>
+
+        <div class="photo-frame"></div>
+
+        <div class="promo-frame"></div>
       </div>
+
     </div>
 
     <div id="successState" class="sh state">
