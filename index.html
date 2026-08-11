@@ -113,18 +113,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    ปรับตัวเลขนี้ได้อิสระจาก header แรกเลย ไม่กระทบกัน */
 #newUpdateTitle{margin-bottom:10px;margin-top:6px;}
 
-/* แถวโลโก้บนสุด: โลโก้เล็ก (brand-logo.png) ชิดซ้าย คู่กับข้อความ "คลับของคนรักเอมโอชา" (Topcard.png)
-   ชิดขวา อยู่ระดับเดียวกัน — ใช้ flex + justify-content:space-between แทนการดันด้วย margin-left:auto
-   แบบเดิม ทั้งสองภาพตั้งใจให้เล็กพอดีน่ารัก ไม่ใหญ่แย่งความสนใจจากบัตร
-   ไฟล์ชื่อคงที่ "brand-logo.png" / "Topcard.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub */
-.member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:-30px;}
-/* ขนาดโลโก้ทั้งสอง เดิมเป็น px ตายตัว (34px / 130px) ซึ่งไม่ขยายตามเวลาที่พื้นที่การ์ดกว้างขึ้น (เช่น
-   ตอนนี้ที่เอา body padding ออกแล้วทำให้การ์ดกว้างเต็มจอ) เปลี่ยนเป็นหน่วย % (คำนวณจากสัดส่วนเดิมเทียบกับ
-   ความกว้างการ์ดฐาน 400px: 34/400≈8.5%, 130/400≈32.5%) ให้ขยาย/หดตามความกว้างจริงของการ์ดเสมอ ไม่ตายตัว
-   อีกต่อไปตามที่ขอ ("ทุกอย่างต้องขยายไปตามสัดส่วนของมันด้วย") */
-.member-brand-badge{width:8.5%;height:auto;object-fit:contain;}
-.member-topcard{width:32.5%;max-width:55%;height:auto;}
-
 /* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงอีก (แคบกว่าเดิม) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ
    .bd padding ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
 #memberCardState{margin-top:0;}
@@ -180,8 +168,8 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    ทำให้บรรทัดแรกของทุกช่องเริ่มที่ตำแหน่งเดียวกันเป๊ะ ไม่ว่าป้ายชื่อจะยาว 1 หรือ 2 บรรทัดก็ตาม (ต่างจาก
    ไอคอนที่ต่างชนิดกัน — emoji/SVG/รูปโลโก้แบรนด์ — ซึ่งมีเส้นขอบภาพในตัวเองไม่เท่ากันเป๊ะ ทำให้จัดให้
    ระดับเดียวกัน 100% ไม่ได้จริงๆ จึงเน้นที่ตัวอักษรแทนตามที่ขอ) */
-.menu-item .txt{font-size:11px;font-weight:800;text-align:center;line-height:1.28;min-height:28px;
-  display:flex;align-items:flex-start;justify-content:center;color:#123d26;
+.menu-item .txt{font-size:11px;font-weight:800;text-align:center;line-height:1.6;min-height:34px;
+  display:flex;align-items:flex-start;justify-content:center;color:inherit;
   text-shadow:0 1px 2px rgba(255,255,255,.95);letter-spacing:.05px;}
 
 /* ==================== แผงข้อมูลย่อย (privileges/info/history/coupons) ==================== */
@@ -280,11 +268,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
     </div>
 
     <div id="memberCardState" class="sh">
-
-      <div class="member-top-row">
-        <img class="member-brand-badge" src="brand-logo.png" alt="Em-O-Cha">
-        <img class="member-topcard" src="Topcard.png" alt="คลับของคนรักเอมโอชา">
-      </div>
 
       <div class="mcard" id="mcard">
         <div class="mcard-top">
@@ -477,6 +460,12 @@ function renderMemberCard(member){
   var bgImageMap = { start: 'member-bg-start.png', fan: 'member-bg-silver.png', love: 'member-bg-gold.png', vip: 'member-bg-platinum.png' };
   if (cardEl) cardEl.style.backgroundImage = "url('" + (bgImageMap[tierKey] || 'member-bg.png') + "?v=" + CARD_IMAGE_VERSION + "')";
 
+  // อัปเดตไอคอนเมนู 8 ช่องให้เป็นสีตามระดับสมาชิกด้วย (ไฟล์ที่ผู้ใช้จะเพิ่มเองใน GitHub ตามระดับ) — ตอน
+  // หน้าเว็บเพิ่งโหลด ยังไม่รู้ระดับสมาชิกจริง เลยใช้ไอคอนชุด "start" ไปก่อนเป็นค่าเริ่มต้น พอรู้ระดับจริง
+  // จากตรงนี้แล้ว จึงอัปเดต currentTierSuffix แล้วสั่งวาดไอคอนใหม่อีกรอบให้ตรงกับระดับจริง
+  currentTierSuffix = TIER_FILE_SUFFIX_[tierKey] || 'start';
+  decorateMemberMenu();
+
   // เดิมตรงนี้โชว์รูปโปรไฟล์ LINE (mcardAvatar) — เอาออกตามที่ขอ แทนที่ด้วยตัวเลขคะแนนสะสมแทน
   // และเอาชื่อ (ทั้งชื่อไลน์และชื่อที่กรอกตอนสมัคร) ออกทั้งหมดตามที่ขอด้วย เหลือแค่ตัวเลขคะแนนอย่างเดียว
   document.getElementById('mcardPointsBadge').textContent = (member.points || 0).toLocaleString('th-TH');
@@ -624,19 +613,31 @@ function submitRegister(){
 // ==================== แผงข้อมูลย่อยของเมนู (8 ช่อง) ====================
 // ไอคอนหัวข้อแผงเมนู — ใช้ตัวเดียวกันเป๊ะกับไอคอนบนปุ่มเมนูหน้าแรก (รูปภาพจริงสำหรับคูปอง/ประวัติสั่งซื้อ
 // ไม่ใช่ emoji ประมาณเอาแบบเดิมแล้ว) ต้องใช้ innerHTML แทน textContent เพื่อให้ฝัง <img> ได้
-var MENU_ICON_FILES = {
-  points: 'icon-points.png',
-  rewards: 'icon-rewards.png',
-  coupons: 'icon-coupon.png',
-  privileges: 'icon-privileges.png',
-  info: 'icon-info.png',
-  history: 'icon-history.png',
-  facebook: 'icon-facebook.png',
-  tiktok: 'icon-tiktok.png'
+// ตอนนี้ไอคอนแยกไฟล์ตามระดับสมาชิกด้วย (ผู้ใช้จะเพิ่มไฟล์ภาพสีตามระดับเองใน GitHub) จึงเก็บแค่ "ชื่อฐาน"
+// ของไฟล์ไว้ตรงนี้ ส่วนคำต่อท้ายระดับ (currentTierSuffix) จะถูกต่อเข้าไปตอนสร้าง src จริงใน menuIcon()
+var MENU_ICON_BASE_FILES = {
+  points: 'icon-points',
+  rewards: 'icon-rewards',
+  coupons: 'icon-coupon',
+  privileges: 'icon-privileges',
+  info: 'icon-info',
+  history: 'icon-history',
+  facebook: 'icon-facebook',
+  tiktok: 'icon-tiktok'
 };
 
+// คำต่อท้ายชื่อไฟล์ตามระดับสมาชิก — ใช้ชุดเดียวกับที่ cardImageMap/bgImageMap ใน renderMemberCard() ใช้
+// อยู่แล้ว (tierKey ที่เก็บจริงคือ start/fan/love/vip แต่ชื่อไฟล์อยากให้อ่านง่ายเป็น start/silver/gold/
+// platinum) ค่าเริ่มต้นก่อนรู้ระดับสมาชิกจริง (ตอนหน้าเพิ่งโหลด ยังไม่ login เสร็จ) คือ 'start' ไปก่อน
+var TIER_FILE_SUFFIX_ = { start: 'start', fan: 'silver', love: 'gold', vip: 'platinum' };
+var currentTierSuffix = 'start';
+
 function menuIcon(type, className){
-  var src = MENU_ICON_FILES[type];
+  var base = MENU_ICON_BASE_FILES[type];
+  // จัดเก็บไอคอนเป็นโฟลเดอร์แยกตามระดับสมาชิก (icons/start/, icons/silver/, icons/gold/,
+  // icons/platinum/) แทนการตั้งชื่อไฟล์ยาวๆ ปนกันหมดในโฟลเดอร์หลัก — ชื่อไฟล์ภายในแต่ละโฟลเดอร์ใช้ชื่อ
+  // เดิมง่ายๆ (เช่น icon-points.png) ซ้ำกันได้ในแต่ละโฟลเดอร์ เพราะแยกด้วย path ไม่ใช่ชื่อไฟล์แล้ว
+  var src = 'icons/' + currentTierSuffix + '/' + base + '.png';
   return '<span class="' + (className || 'icon') + '" aria-hidden="true">'
     + '<img src="' + src + '" alt=""></span>';
 }
