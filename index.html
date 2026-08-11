@@ -97,20 +97,20 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    โผล่มาคั่นระหว่างบัตรกับเฟรมนี้ ไม่ให้ติดกันจนเกินไปตามที่ขอ มุมบนโค้งมนใหญ่ (28px) ให้ดูเป็นเฟรมลอย
    แบบภาพอ้างอิงที่แนบมา ส่วนมุมล่างปล่อย 0 เพราะ .card มี overflow:hidden + border-radius:20px ครอบ
    อยู่อีกที จะโค้งตามขอบการ์ดให้อัตโนมัติอยู่แล้ว */
-.lower-section{background:#fff;margin:24px -24px -28px;
+.lower-section{background:#fff;margin:10px -14px -28px;
   padding:20px 24px 28px;border-radius:28px 28px 0 0;}
 
 /* แถวโลโก้บนสุด: โลโก้เล็ก (brand-logo.png) ชิดซ้าย คู่กับข้อความ "คลับของคนรักเอมโอชา" (Topcard.png)
    ชิดขวา อยู่ระดับเดียวกัน — ใช้ flex + justify-content:space-between แทนการดันด้วย margin-left:auto
    แบบเดิม ทั้งสองภาพตั้งใจให้เล็กพอดีน่ารัก ไม่ใหญ่แย่งความสนใจจากบัตร
    ไฟล์ชื่อคงที่ "brand-logo.png" / "Topcard.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub */
-.member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:-30px;}
 .member-brand-badge{width:34px;height:auto;object-fit:contain;}
 .member-topcard{width:130px;max-width:55%;height:auto;}
 
 /* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงอีก (แคบกว่าเดิม) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ
    .bd padding ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
-#memberCardState{margin-top:-32px;}
+#memberCardState{margin-top:-65px;}
 
 /* ==================== บัตรสมาชิก (กล่องแยกต่างหาก อยู่บนสุด บนพื้นสีขาวของ .bd) ==================== */
 /* ขยายบัตรให้ใหญ่ขึ้นเล็กน้อยตามที่ขอ ให้ดูสมดุลกับเฟรมโค้งมนของ .lower-section ด้านล่าง:
