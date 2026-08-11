@@ -108,13 +108,13 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* Header "New & Update" แยก margin-bottom เป็นค่าของตัวเองต่างหาก (ไม่ใช้ -15px ร่วมกับ header แรกแล้ว)
    เพราะค่าติดลบแบบเดิมไปดึงภาพ banner ด้านล่างขึ้นมาทับตัวหนังสือ ตั้งเป็นค่าบวกแทนกันภาพทับข้อความ
    ปรับตัวเลขนี้ได้อิสระจาก header แรกเลย ไม่กระทบกัน */
-#newUpdateTitle{margin-bottom:10px;}
+#newUpdateTitle{margin-bottom:10px;margin-top:-10px;}
 
 /* แถวโลโก้บนสุด: โลโก้เล็ก (brand-logo.png) ชิดซ้าย คู่กับข้อความ "คลับของคนรักเอมโอชา" (Topcard.png)
    ชิดขวา อยู่ระดับเดียวกัน — ใช้ flex + justify-content:space-between แทนการดันด้วย margin-left:auto
    แบบเดิม ทั้งสองภาพตั้งใจให้เล็กพอดีน่ารัก ไม่ใหญ่แย่งความสนใจจากบัตร
    ไฟล์ชื่อคงที่ "brand-logo.png" / "Topcard.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub */
-.member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:-35px;}
+.member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:-30px;}
 /* ขนาดโลโก้ทั้งสอง เดิมเป็น px ตายตัว (34px / 130px) ซึ่งไม่ขยายตามเวลาที่พื้นที่การ์ดกว้างขึ้น (เช่น
    ตอนนี้ที่เอา body padding ออกแล้วทำให้การ์ดกว้างเต็มจอ) เปลี่ยนเป็นหน่วย % (คำนวณจากสัดส่วนเดิมเทียบกับ
    ความกว้างการ์ดฐาน 400px: 34/400≈8.5%, 130/400≈32.5%) ให้ขยาย/หดตามความกว้างจริงของการ์ดเสมอ ไม่ตายตัว
@@ -124,7 +124,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 
 /* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงอีก (แคบกว่าเดิม) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ
    .bd padding ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
-#memberCardState{margin-top:-80px;}
+#memberCardState{margin-top:-20px;}
 
 /* ==================== บัตรสมาชิก (กล่องแยกต่างหาก อยู่บนสุด บนพื้นสีขาวของ .bd) ==================== */
 /* ขยายบัตรให้ใหญ่ขึ้นเล็กน้อยตามที่ขอ ให้ดูสมดุลกับเฟรมโค้งมนของ .lower-section ด้านล่าง:
@@ -157,7 +157,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 
 
 /* ==================== เมนู 8 ช่อง (แถวละ 4 ไอคอน ตามที่ขอ — เดิมแถวละ 3) ==================== */
-.menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px;padding:18px 8px 8px;}
+.menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px;padding:18px 8px 0;}
 .menu-item{display:flex;flex-direction:column;align-items:center;gap:8px;padding:2px 0;
   border-radius:12px;background:transparent !important;box-shadow:none;cursor:pointer;text-decoration:none;
   color:#123d26;border:0;transition:transform .15s;}
@@ -322,7 +322,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
           </a>
         </div>
 
-        <h2 class="menu-section-title" id="newUpdateTitle">New & Update</h2>
+        <h2 class="menu-section-title" id="newUpdateTitle">News & Update</h2>
         <div class="photo-frame"></div>
 
         <div class="promo-frame"></div>
