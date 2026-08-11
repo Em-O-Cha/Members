@@ -20,7 +20,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
-  padding:12px 0 0;position:relative;isolation:isolate;background:#f5f5f5;transition:background .3s ease;}
+  padding:0;position:relative;isolation:isolate;background:#f5f5f5;transition:background .3s ease;}
 /* พื้นหลังนอกการ์ด: เปลี่ยนจากภาพเบลอ (page-bg.jpg) เป็น "สีพื้นเรียบตามระดับสมาชิก" แทน
    (ตั้งค่าจริงผ่าน JS ในฟังก์ชัน renderMemberCard — ดูเมธอด mixWithWhite) ไม่ใช้ไฟล์ page-bg.jpg อีกต่อไป */
 .wrap{max-width:400px;margin:0 auto;position:relative;z-index:1;}
@@ -111,7 +111,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* Header "New & Update" แยก margin-bottom เป็นค่าของตัวเองต่างหาก (ไม่ใช้ -15px ร่วมกับ header แรกแล้ว)
    เพราะค่าติดลบแบบเดิมไปดึงภาพ banner ด้านล่างขึ้นมาทับตัวหนังสือ ตั้งเป็นค่าบวกแทนกันภาพทับข้อความ
    ปรับตัวเลขนี้ได้อิสระจาก header แรกเลย ไม่กระทบกัน */
-#newUpdateTitle{margin-bottom:10px;margin-top:6px;}
+#newUpdateTitle{margin-bottom:10px;margin-top:20px;}
 
 /* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงอีก (แคบกว่าเดิม) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ
    .bd padding ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
