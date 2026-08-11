@@ -120,7 +120,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 
 /* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงอีก (แคบกว่าเดิม) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ
    .bd padding ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
-#memberCardState{margin-top:-65px;}
+#memberCardState{margin-top:-80px;}
 
 /* ==================== บัตรสมาชิก (กล่องแยกต่างหาก อยู่บนสุด บนพื้นสีขาวของ .bd) ==================== */
 /* ขยายบัตรให้ใหญ่ขึ้นเล็กน้อยตามที่ขอ ให้ดูสมดุลกับเฟรมโค้งมนของ .lower-section ด้านล่าง:
@@ -290,7 +290,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
       </div>
 
       <div class="lower-section">
-        <h2 class="menu-section-title" id="menuSectionTitle">จัดการสมาชิกและโปรโมชั่น</h2>
+        <h2 class="menu-section-title" id="menuSectionTitle">สิทธิพิเศษสมาชิก</h2>
         <div class="menu-grid">
           <div class="menu-item" onclick="openPanel('points')">
             <div class="icon">💰</div><div class="txt">คะแนน<br>สะสม</div>
@@ -318,6 +318,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
           </a>
         </div>
 
+        <h2 class="menu-section-title" id="newUpdateTitle">New & Update</h2>
         <div class="photo-frame"></div>
 
         <div class="promo-frame"></div>
@@ -490,10 +491,12 @@ function applyThemeColor_(baseColor){
     el.style.background = menuBg;
     el.style.color = menuTextColor;
   });
-  // Header "จัดการสมาชิกและโปรโมชั่น" เหนือกลุ่มเมนู — ใช้สีเดียวกับ tierColor ตรงๆ (สีระดับสมาชิกของ
-  // แต่ละคน) ตามที่ขอ ไม่ผสมขาว/เข้มเหมือนสีเมนู เพื่อให้เห็นสีระดับสมาชิกชัดเจนตรงตัว
-  var titleEl = document.getElementById('menuSectionTitle');
-  if (titleEl) titleEl.style.color = baseColor;
+  // Header "สิทธิพิเศษสมาชิก" เหนือกลุ่มเมนู + Header "New & Update" เหนือภาพสินค้า — ใช้สีเดียวกับ
+  // tierColor ตรงๆ (สีระดับสมาชิกของแต่ละคน) ตามที่ขอ ไม่ผสมขาว/เข้มเหมือนสีเมนู เพื่อให้เห็นสีระดับ
+  // สมาชิกชัดเจนตรงตัว ทั้งสอง header ใช้คลาสเดียวกัน (.menu-section-title) จึงตั้งสีพร้อมกันได้เลย
+  document.querySelectorAll('.menu-section-title').forEach(function(el){
+    el.style.color = baseColor;
+  });
 }
 
 // แปลงสี hex เป็น rgba() พร้อมกำหนดความโปร่งใส — ใช้ทำ overlay สีทับรูปพื้นหลังส่วนหัวบัตร
