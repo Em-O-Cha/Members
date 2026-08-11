@@ -20,14 +20,17 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
-  padding:20px;position:relative;isolation:isolate;background:#f5f5f5;transition:background .3s ease;}
+  padding:0;position:relative;isolation:isolate;background:#f5f5f5;transition:background .3s ease;}
 /* พื้นหลังนอกการ์ด: เปลี่ยนจากภาพเบลอ (page-bg.jpg) เป็น "สีพื้นเรียบตามระดับสมาชิก" แทน
    (ตั้งค่าจริงผ่าน JS ในฟังก์ชัน renderMemberCard — ดูเมธอด mixWithWhite) ไม่ใช้ไฟล์ page-bg.jpg อีกต่อไป */
 .wrap{max-width:400px;margin:0 auto;position:relative;z-index:1;}
 /* พื้นหลังของกล่องการ์ดใหญ่: กลับมาใช้ member-bg.png อีกครั้ง (สลับกับโซนเมนูตามที่ขอ) — ตอนนี้
    member-bg.png เป็นพื้นหลังของโซนบัตรสมาชิก ส่วนโซนเมนู (.lower-section) เปลี่ยนเป็นพื้นสีขาวแทน
-   ถ้ายังไม่มีไฟล์ member-bg.png จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) */
-.card{background:#fff url('member-bg.png') center/cover no-repeat;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);width:100%;overflow:hidden;margin-bottom:16px;}
+   ถ้ายังไม่มีไฟล์ member-bg.png จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) — เอา
+   border-radius/box-shadow/margin-bottom ออก + body padding เป็น 0 ด้านบน เพื่อให้พื้นหลังนี้เต็มขอบจอ
+   ทั้ง 4 ด้าน ไม่มีขอบขาว/ช่องว่างล้อมรอบอีกต่อไปตามที่ขอ (ยังคง overflow:hidden ไว้ เพราะ .lower-section
+   ยังต้องใช้ margin ติดลบบวกกับตัวนี้เพื่อบานให้เต็มขอบเหมือนเดิม) */
+.card{background:#fff url('member-bg.png') center/cover no-repeat;border-radius:0;box-shadow:none;width:100%;overflow:hidden;margin-bottom:0;min-height:100vh;}
 .mascot-left{position:absolute;left:4px;bottom:4px;width:68px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 .mascot-right{position:absolute;right:4px;bottom:4px;width:56px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 
@@ -105,8 +108,12 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    แบบเดิม ทั้งสองภาพตั้งใจให้เล็กพอดีน่ารัก ไม่ใหญ่แย่งความสนใจจากบัตร
    ไฟล์ชื่อคงที่ "brand-logo.png" / "Topcard.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub */
 .member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:-40px;}
-.member-brand-badge{width:34px;height:auto;object-fit:contain;}
-.member-topcard{width:130px;max-width:55%;height:auto;}
+/* ขนาดโลโก้ทั้งสอง เดิมเป็น px ตายตัว (34px / 130px) ซึ่งไม่ขยายตามเวลาที่พื้นที่การ์ดกว้างขึ้น (เช่น
+   ตอนนี้ที่เอา body padding ออกแล้วทำให้การ์ดกว้างเต็มจอ) เปลี่ยนเป็นหน่วย % (คำนวณจากสัดส่วนเดิมเทียบกับ
+   ความกว้างการ์ดฐาน 400px: 34/400≈8.5%, 130/400≈32.5%) ให้ขยาย/หดตามความกว้างจริงของการ์ดเสมอ ไม่ตายตัว
+   อีกต่อไปตามที่ขอ ("ทุกอย่างต้องขยายไปตามสัดส่วนของมันด้วย") */
+.member-brand-badge{width:8.5%;height:auto;object-fit:contain;}
+.member-topcard{width:32.5%;max-width:55%;height:auto;}
 
 /* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงอีก (แคบกว่าเดิม) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ
    .bd padding ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
@@ -443,6 +450,14 @@ function renderMemberCard(member){
   var cardImageMap = { start: 'member-card-start.png', fan: 'member-card-silver.png', love: 'member-card-gold.png', vip: 'member-card-platinum.png' };
   mcardEl.style.backgroundImage = "url('" + (cardImageMap[tierKey] || cardImageMap.start) + "?v=" + CARD_IMAGE_VERSION + "')";
   mcardEl.style.color = textColor;
+
+  // พื้นหลังทั้งกล่อง .card (พื้นหลังใหญ่ที่ครอบทั้งหน้า ไม่ใช่แค่ตัวบัตร) ก็เปลี่ยนตามระดับสมาชิกด้วย
+  // ตามที่ขอ — ไฟล์ชื่อคงที่ตามระดับเหมือนกับภาพบัตร เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน
+  // GitHub (member-bg-start.png / -silver.png / -gold.png / -platinum.png) ถ้ายังไม่มีไฟล์ของระดับไหน
+  // จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) ใช้เลขเวอร์ชันเดียวกับภาพบัตรด้านบน
+  var cardEl = document.querySelector('.card');
+  var bgImageMap = { start: 'member-bg-start.png', fan: 'member-bg-silver.png', love: 'member-bg-gold.png', vip: 'member-bg-platinum.png' };
+  if (cardEl) cardEl.style.backgroundImage = "url('" + (bgImageMap[tierKey] || 'member-bg.png') + "?v=" + CARD_IMAGE_VERSION + "')";
 
   // เดิมตรงนี้โชว์รูปโปรไฟล์ LINE (mcardAvatar) — เอาออกตามที่ขอ แทนที่ด้วยตัวเลขคะแนนสะสมแทน
   // และเอาชื่อ (ทั้งชื่อไลน์และชื่อที่กรอกตอนสมัคร) ออกทั้งหมดตามที่ขอด้วย เหลือแค่ตัวเลขคะแนนอย่างเดียว
