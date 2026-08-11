@@ -100,14 +100,17 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    โผล่มาคั่นระหว่างบัตรกับเฟรมนี้ ไม่ให้ติดกันจนเกินไปตามที่ขอ มุมบนโค้งมนใหญ่ (28px) ให้ดูเป็นเฟรมลอย
    แบบภาพอ้างอิงที่แนบมา ส่วนมุมล่างปล่อย 0 เพราะ .card มี overflow:hidden + border-radius:20px ครอบ
    อยู่อีกที จะโค้งตามขอบการ์ดให้อัตโนมัติอยู่แล้ว */
-.lower-section{background:#fff;margin:10px -14px -28px;
+.lower-section{background:#f5f5f5;margin:10px -24px -28px;
   padding:20px 24px 28px;border-radius:28px 28px 0 0;}
+/* Header เหนือกลุ่มเมนู ชิดซ้าย ตามที่ขอ — สีตัวอักษรตั้งเป็นสีเดียวกับสีระดับสมาชิก (tierColor) ผ่าน JS
+   ในฟังก์ชัน applyThemeColor_ (ไม่ได้ fix สีไว้ตรงนี้ เพราะต้องเปลี่ยนตามระดับสมาชิกแต่ละคน) */
+.menu-section-title{font-size:15px;font-weight:700;text-align:left;margin:0 0 14px;}
 
 /* แถวโลโก้บนสุด: โลโก้เล็ก (brand-logo.png) ชิดซ้าย คู่กับข้อความ "คลับของคนรักเอมโอชา" (Topcard.png)
    ชิดขวา อยู่ระดับเดียวกัน — ใช้ flex + justify-content:space-between แทนการดันด้วย margin-left:auto
    แบบเดิม ทั้งสองภาพตั้งใจให้เล็กพอดีน่ารัก ไม่ใหญ่แย่งความสนใจจากบัตร
    ไฟล์ชื่อคงที่ "brand-logo.png" / "Topcard.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub */
-.member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:-35px;}
+.member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:-40px;}
 /* ขนาดโลโก้ทั้งสอง เดิมเป็น px ตายตัว (34px / 130px) ซึ่งไม่ขยายตามเวลาที่พื้นที่การ์ดกว้างขึ้น (เช่น
    ตอนนี้ที่เอา body padding ออกแล้วทำให้การ์ดกว้างเต็มจอ) เปลี่ยนเป็นหน่วย % (คำนวณจากสัดส่วนเดิมเทียบกับ
    ความกว้างการ์ดฐาน 400px: 34/400≈8.5%, 130/400≈32.5%) ให้ขยาย/หดตามความกว้างจริงของการ์ดเสมอ ไม่ตายตัว
@@ -287,6 +290,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
       </div>
 
       <div class="lower-section">
+        <h2 class="menu-section-title" id="menuSectionTitle">จัดการสมาชิกและโปรโมชั่น</h2>
         <div class="menu-grid">
           <div class="menu-item" onclick="openPanel('points')">
             <div class="icon">💰</div><div class="txt">คะแนน<br>สะสม</div>
@@ -486,6 +490,10 @@ function applyThemeColor_(baseColor){
     el.style.background = menuBg;
     el.style.color = menuTextColor;
   });
+  // Header "จัดการสมาชิกและโปรโมชั่น" เหนือกลุ่มเมนู — ใช้สีเดียวกับ tierColor ตรงๆ (สีระดับสมาชิกของ
+  // แต่ละคน) ตามที่ขอ ไม่ผสมขาว/เข้มเหมือนสีเมนู เพื่อให้เห็นสีระดับสมาชิกชัดเจนตรงตัว
+  var titleEl = document.getElementById('menuSectionTitle');
+  if (titleEl) titleEl.style.color = baseColor;
 }
 
 // แปลงสี hex เป็น rgba() พร้อมกำหนดความโปร่งใส — ใช้ทำ overlay สีทับรูปพื้นหลังส่วนหัวบัตร
@@ -1074,8 +1082,11 @@ function initLiff(){
     }
 
     // เช็คว่า idToken ที่ LIFF เก็บ session ไว้ให้ตัวนี้หมดอายุไปแล้วหรือยัง (ดูเหตุผลที่ refreshGuardKey
-    // ด้านบน) ถ้าหมดอายุแล้ว (หรือถอดรหัสไม่ได้) ให้บังคับ logout แล้ว login ใหม่ทันทีแบบอัตโนมัติ ผู้ใช้
-    // จะเห็นแค่หน้าจอ LINE Login ผ่านไปเร็วๆ แล้วกลับเข้าหน้าปกติเลย ไม่ต้องไปล้าง cache/ปิดแอปเองอีกต่อไป
+    // ด้านบน) ถ้าหมดอายุแล้ว (หรือถอดรหัสไม่ได้) ให้บังคับ logout แล้วรีโหลดหน้า (ไม่เรียก liff.login()
+    // ต่อทันทีในจังหวะเดียวกับ liff.logout() เพราะ LIFF SDK ต้องการให้หน้ารีเฟรชใหม่ก่อนสถานะ logout จะมีผล
+    // จริง — เดิมเรียก login() ต่อทันทีทำให้ค้างที่ "กำลังเชื่อมต่อกับ LINE..." ไม่ไปไหนเลย เพราะ SDK ยังเห็น
+    // สถานะ login เดิมค้างอยู่ในหน่วยความจำ) พอรีโหลดหน้าใหม่ initLiff() จะรันใหม่ตั้งแต่ต้น คราวนี้
+    // liff.isLoggedIn() จะเป็น false จริงๆ แล้ว ตกไปเข้า branch login ปกติที่ทำงานถูกต้องอยู่แล้วด้านบน
     var exp = decodeJwtExp_(currentIdToken);
     if (!exp || exp * 1000 < Date.now()) {
       if (sessionStorage.getItem(refreshGuardKey)) {
@@ -1084,10 +1095,7 @@ function initLiff(){
       }
       sessionStorage.setItem(refreshGuardKey, '1');
       liff.logout();
-      var refreshUrl = new URL(location.href);
-      ['code', 'state', 'liff.state', 'friendship_status_changed'].forEach(function(key){ refreshUrl.searchParams.delete(key); });
-      refreshUrl.hash = '';
-      liff.login({ redirectUri: refreshUrl.toString() });
+      location.reload();
       return;
     }
     sessionStorage.removeItem(refreshGuardKey);
