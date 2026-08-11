@@ -100,10 +100,18 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .lower-section{background:#fff;margin:24px -24px -28px;
   padding:20px 24px 28px;border-radius:28px 28px 0 0;}
 
-/* โลโก้ "คลับของคนรักเอมโอชา" ไว้เหนือบัตรสมาชิก มุมขวาบนสุด — ตั้งใจให้เล็กพอดีน่ารัก ไม่ใหญ่แย่ง
-   ความสนใจจากบัตร ใช้ margin-left:auto ดันไปชิดขวาแทนการจัดกึ่งกลางแบบเดิม
-   ไฟล์ชื่อคงที่ "Topcard.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub */
-.member-topcard{display:block;width:130px;max-width:55%;height:auto;margin:0 0 10px auto;}
+/* แถวโลโก้บนสุด: โลโก้เล็ก (brand-logo.png) ชิดซ้าย คู่กับข้อความ "คลับของคนรักเอมโอชา" (Topcard.png)
+   ชิดขวา อยู่ระดับเดียวกัน — ใช้ flex + justify-content:space-between แทนการดันด้วย margin-left:auto
+   แบบเดิม ทั้งสองภาพตั้งใจให้เล็กพอดีน่ารัก ไม่ใหญ่แย่งความสนใจจากบัตร
+   ไฟล์ชื่อคงที่ "brand-logo.png" / "Topcard.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub */
+.member-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.member-brand-badge{width:34px;height:auto;object-fit:contain;}
+.member-topcard{width:130px;max-width:55%;height:auto;}
+
+/* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงเล็กน้อย (เดิมพื้นที่ว่างเหนือโลโก้กว้างเกินไปเมื่อเทียบกับระยะ
+   ห่างจุดอื่นๆ เช่น ช่องว่างก่อนเฟรมเมนูด้านล่าง) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ .bd padding
+   ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
+#memberCardState{margin-top:-20px;}
 
 /* ==================== บัตรสมาชิก (กล่องแยกต่างหาก อยู่บนสุด บนพื้นสีขาวของ .bd) ==================== */
 /* ขยายบัตรให้ใหญ่ขึ้นเล็กน้อยตามที่ขอ ให้ดูสมดุลกับเฟรมโค้งมนของ .lower-section ด้านล่าง:
@@ -257,7 +265,10 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 
     <div id="memberCardState" class="sh">
 
-      <img class="member-topcard" src="Topcard.png" alt="คลับของคนรักเอมโอชา">
+      <div class="member-top-row">
+        <img class="member-brand-badge" src="brand-logo.png" alt="Em-O-Cha">
+        <img class="member-topcard" src="Topcard.png" alt="คลับของคนรักเอมโอชา">
+      </div>
 
       <div class="mcard" id="mcard">
         <div class="mcard-top">
