@@ -100,9 +100,16 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .lower-section{background:#fff;margin:24px -24px -28px;
   padding:20px 24px 28px;border-radius:28px 28px 0 0;}
 
+/* โลโก้ "คลับของคนรักเอมโอชา" ไว้เหนือบัตรสมาชิก — ตั้งใจให้เล็กพอดีน่ารัก ไม่ใหญ่แย่งความสนใจจากบัตร
+   ไฟล์ชื่อคงที่ "Topcard.png" เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub */
+.member-topcard{display:block;width:130px;max-width:55%;height:auto;margin:0 auto 10px;}
+
 /* ==================== บัตรสมาชิก (กล่องแยกต่างหาก อยู่บนสุด บนพื้นสีขาวของ .bd) ==================== */
+/* ขยายบัตรให้ใหญ่ขึ้นเล็กน้อยตามที่ขอ ให้ดูสมดุลกับเฟรมโค้งมนของ .lower-section ด้านล่าง:
+   margin ซ้าย/ขวาติดลบ 8px ทำให้บัตรกว้างกว่ากรอบเดิมเล็กน้อย (ยังอยู่ในขอบเขต .card ที่ overflow:hidden
+   ปลอดภัย ไม่ถูกตัด) และลด aspect-ratio จาก 1.5 เป็น 1.4 ทำให้บัตรสูงขึ้นตามสัดส่วนด้วย */
 .mcard{border-radius:20px;overflow:hidden;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.18);
-  background-size:cover;background-position:center;aspect-ratio:1.5;}
+  background-size:cover;background-position:center;aspect-ratio:1.4;margin:0 -8px;}
 /* เดิมตรงนี้เป็นแถวแนวนอน (รูปโปรไฟล์/ชื่อ + คะแนน) — ตอนนี้เอาชื่อ (ทั้งชื่อไลน์และชื่อที่กรอกตอน
    สมัคร) ออกทั้งหมดตามที่ขอ เหลือแค่ตัวเลขคะแนน + คำว่า "คะแนน" กำกับด้านล่าง เรียงในแนวตั้งแทน
    ใช้ transform เลื่อนกล่องทั้งหมดขึ้นด้านบนประมาณ 1 ซม. (~38px ที่ความละเอียดจอมือถือทั่วไป) จาก
@@ -248,6 +255,8 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
     </div>
 
     <div id="memberCardState" class="sh">
+
+      <img class="member-topcard" src="Topcard.png" alt="คลับของคนรักเอมโอชา">
 
       <div class="mcard" id="mcard">
         <div class="mcard-top">
