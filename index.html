@@ -108,6 +108,20 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 /* Header เหนือกลุ่มเมนู ชิดซ้าย ตามที่ขอ — สีตัวอักษรตั้งเป็นสีเดียวกับสีระดับสมาชิก (tierColor) ผ่าน JS
    ในฟังก์ชัน applyThemeColor_ (ไม่ได้ fix สีไว้ตรงนี้ เพราะต้องเปลี่ยนตามระดับสมาชิกแต่ละคน) */
 .menu-section-title{font-size:15px;font-weight:700;text-align:left;margin:0 0 -15px;}
+/* ไอคอนข้อมูล (ⓘ) ต่อท้ายหัวข้อ "สิทธิพิเศษสมาชิก" กดแล้วเปิด popup เงื่อนไขสิทธิพิเศษสมาชิก
+   (ดู PANEL_TITLES.terms + loadTermsPanel ในสคริปต์ด้านล่าง) */
+.tier-info-icon{font-size:13px;font-weight:400;margin-left:6px;cursor:pointer;opacity:.75;vertical-align:middle;}
+/* กล่องสีเทา "ยอดใช้จ่ายสะสม" + "คะแนนสะสมของคุณ" ใต้หัวข้อ "สิทธิพิเศษสมาชิก" ตามภาพอ้างอิงที่ขอ —
+   margin-top ชดเชย margin-bottom ติดลบของ .menu-section-title ด้านบน (-15px) ให้มีระยะห่างที่พอดี
+   ไม่ทับหัวข้อ */
+.tier-progress-boxes{display:flex;gap:10px;margin:28px 0 0;}
+.tier-progress-box{flex:1;background:#f3f4f6;border-radius:14px;padding:12px 14px;}
+.tier-progress-label{font-size:12px;color:#8a8f98;margin-bottom:4px;}
+.tier-progress-value{font-size:18px;font-weight:800;color:#1a1a1a;}
+/* ข้อความ "สะสมอีก X บาทเพื่อเลื่อนขั้น" ใต้กล่องสีเทา คำนวณจากคอลัมน์ "ยอดซื้อสะสมขั้นต่ำ" ของระดับ
+   ถัดไปในชีต Tier_Config เทียบกับ lifetimeSpend ของสมาชิก — ดึงสดผ่าน action getTierConfig ใน Code.gs
+   (ดู renderTierProgressHint_ ในสคริปต์ด้านล่าง) ไม่ hardcode ตัวเลขไว้ฝั่งนี้ */
+.tier-progress-hint{font-size:12.5px;color:#8a8f98;margin-top:10px;}
 /* Header "New & Update" แยก margin-bottom เป็นค่าของตัวเองต่างหาก (ไม่ใช้ -15px ร่วมกับ header แรกแล้ว)
    เพราะค่าติดลบแบบเดิมไปดึงภาพ banner ด้านล่างขึ้นมาทับตัวหนังสือ ตั้งเป็นค่าบวกแทนกันภาพทับข้อความ
    ปรับตัวเลขนี้ได้อิสระจาก header แรกเลย ไม่กระทบกัน */
@@ -127,18 +141,21 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
    สมัคร) ออกทั้งหมดตามที่ขอ เหลือแค่ตัวเลขคะแนน + คำว่า "คะแนน" กำกับด้านล่าง เรียงในแนวตั้งแทน
    ใช้ transform เลื่อนกล่องทั้งหมดขึ้นด้านบนประมาณ 1 ซม. (~38px ที่ความละเอียดจอมือถือทั่วไป) จาก
    ตำแหน่งเดิม */
-.mcard-top{display:flex;flex-direction:column;align-items:flex-start;gap:0;position:absolute;left:18px;
-  bottom:38%;z-index:1;}
-/* เดิมตรงนี้เป็นรูปโปรไฟล์ LINE ทรงกลม (.mcard-avatar) — เอาออกแล้ว แทนที่ด้วยตัวเลขคะแนนสะสม
-   (.mcard-points-badge) ตามตำแหน่งเดิมแทน (ดูเหตุผลใน renderMemberCard) */
-.mcard-points-badge{font-size:26px;font-weight:800;line-height:1;flex-shrink:0;
-  text-shadow:0 1px 4px rgba(0,0,0,.55);}
-/* คำว่า "คะแนน" กำกับใต้ตัวเลข — เพิ่มใหม่ตามที่ขอ */
-.mcard-points-label{font-size:11px;font-weight:600;opacity:.95;margin-top:2px;
-  text-shadow:0 1px 4px rgba(0,0,0,.55);}
+/* คอมเมนต์เดิม: 1cm≈38px ที่ความละเอียดจอมือถือทั่วไป (อ้างอิงใช้คำนวณระยะ 0.5cm ของ .mcard-multiplier
+   ด้านล่าง) — ตัวกล่องคำทักทายเดิม (.mcard-top) ย้ายออกไปไว้เหนือบัตรแล้ว ดู .member-greeting-bar */
+/* ย้ายคำทักทาย "สวัสดี, ชื่อไลน์" + "สมาชิกเอมโอชา" ออกมาไว้เหนือบัตร (.mcard) แทนที่จะอยู่ในตัวบัตร
+   ตามภาพอ้างอิงที่ขอ (มีโลโก้อยู่ข้างซ้ายด้วย) — ไม่ได้อยู่บนพื้นรูปภาพบัตรอีกต่อไปแล้ว จึงใช้สีเข้มธรรมดา
+   แทน text-shadow สีขาวแบบเดิม (ตอนอยู่ในบัตรต้องกันพื้นหลังรูปกลืนกับตัวอักษร ตอนนี้ไม่จำเป็นแล้ว) */
+.member-greeting-bar{display:flex;align-items:center;gap:10px;margin:0 0 14px;}
+.member-greeting-logo{width:44px;height:44px;object-fit:contain;flex-shrink:0;border-radius:10px;}
+.mcard-greeting-name{font-size:18px;font-weight:800;line-height:1.25;color:var(--td);}
+.mcard-greeting-sub{font-size:13px;font-weight:500;color:var(--g6);margin-top:1px;}
 .mcard-body{position:absolute;bottom:16px;right:16px;text-align:right;z-index:1;}
-/* เดิมตรงนี้มีเลขคะแนนสะสมซ้ำอีกจุด (.mcard-points) — เอาออกแล้ว เหลือแค่ตัวคูณแต้ม (ถ้ามี) */
-.mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.55);}
+/* เลื่อนข้อความสิทธิพิเศษ (เช่น "รับคะแนน x1.5 / x2 ทุกการสั่งซื้อ" สำหรับบัตร love/vip) ขึ้นด้านบน
+   ครึ่ง ซม. (~19px คำนวณจากอัตราส่วนเดียวกับคอมเมนต์ 1cm≈38px ด้านบนใน .mcard-top) ตามที่ขอ — บัตร
+   start/fan ไม่มีข้อความนี้อยู่แล้ว (mult ไม่เกิน 1) จึงไม่ได้รับผลกระทบ */
+.mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;
+  text-shadow:0 1px 4px rgba(0,0,0,.55);transform:translateY(-19px);}
 
 /* ==================== วันเกิด: เลือกวัน/เดือน/ปี แยก 3 ช่อง (แทน input type=date ที่หน้าตาไม่นิ่งข้ามอุปกรณ์) ==================== */
 .date-select-row{display:flex;gap:8px;}
@@ -198,6 +215,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .list-item .row2{font-size:12px;color:var(--g6);margin-top:3px;}
 .empty{text-align:center;color:var(--g6);font-size:13px;padding:24px 0;}
 .info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:14px;}
+.terms-content p{font-size:13.5px;line-height:1.6;color:var(--g8);margin:0 0 10px;}
 .info-row span:first-child{color:var(--g6);}
 .info-row span:last-child{font-weight:600;}
 </style>
@@ -269,18 +287,35 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 
     <div id="memberCardState" class="sh">
 
-      <div class="mcard" id="mcard">
-        <div class="mcard-top">
-          <div class="mcard-points-badge" id="mcardPointsBadge">0</div>
-          <div class="mcard-points-label">คะแนน</div>
+      <div class="member-greeting-bar">
+        <img class="member-greeting-logo" src="brand-logo.png" alt="Em-O-Cha">
+        <div>
+          <div class="mcard-greeting-name" id="mcardGreetingName">สวัสดี</div>
+          <div class="mcard-greeting-sub">สมาชิกเอมโอชา</div>
         </div>
+      </div>
+
+      <div class="mcard" id="mcard">
         <div class="mcard-body" id="mcardBody">
           <div class="mcard-multiplier" id="mcardMultiplier"></div>
         </div>
       </div>
 
       <div class="lower-section">
-        <h2 class="menu-section-title" id="menuSectionTitle">สิทธิพิเศษสมาชิก</h2>
+        <h2 class="menu-section-title" id="menuSectionTitle">สิทธิพิเศษสมาชิก<span class="tier-info-icon" onclick="openPanel('terms')" title="เงื่อนไขสิทธิพิเศษสมาชิก">ⓘ</span></h2>
+
+        <div class="tier-progress-boxes">
+          <div class="tier-progress-box">
+            <div class="tier-progress-label">ยอดใช้จ่ายสะสม</div>
+            <div class="tier-progress-value" id="tierSpendValue">0 บาท</div>
+          </div>
+          <div class="tier-progress-box">
+            <div class="tier-progress-label">คะแนนสะสมของคุณ</div>
+            <div class="tier-progress-value" id="tierPointsValue">0 คะแนน</div>
+          </div>
+        </div>
+        <div class="tier-progress-hint" id="tierProgressHint"></div>
+
         <div class="menu-grid">
           <div class="menu-item" onclick="openPanel('points')">
             <div class="icon">💰</div><div class="txt">คะแนน<br>สะสม</div>
@@ -349,6 +384,7 @@ var LIFF_ID = '2010892131-hMnmdrmH';
 var API_URL = 'https://script.google.com/macros/s/AKfycby_bfO-sR2d3l55SMu62IoPQ1PkwO2AXHOKU562gEk9PhLDCR4Ml9uG2re89unqJbE/exec';
 var currentIdToken = null;
 var currentLinePicture = '';
+var currentLineName = ''; // ชื่อไลน์ (จาก liff.getDecodedIDToken().name) ใช้แสดง "สวัสดี, ชื่อไลน์" บนบัตรสมาชิก
 var brandLogoDataUrl = ''; // เก็บ src ของโลโก้ (ตัวเดียวกับที่ใช้ใน header) ไว้ใช้ซ้ำในบัตรสมาชิก
 
 function showState(id){
@@ -466,12 +502,17 @@ function renderMemberCard(member){
   currentTierSuffix = TIER_FILE_SUFFIX_[tierKey] || 'start';
   decorateMemberMenu();
 
-  // เดิมตรงนี้โชว์รูปโปรไฟล์ LINE (mcardAvatar) — เอาออกตามที่ขอ แทนที่ด้วยตัวเลขคะแนนสะสมแทน
-  // และเอาชื่อ (ทั้งชื่อไลน์และชื่อที่กรอกตอนสมัคร) ออกทั้งหมดตามที่ขอด้วย เหลือแค่ตัวเลขคะแนนอย่างเดียว
-  document.getElementById('mcardPointsBadge').textContent = (member.points || 0).toLocaleString('th-TH');
+  // เดิมตรงนี้โชว์รูปโปรไฟล์ LINE (mcardAvatar) แล้วเปลี่ยนเป็นตัวเลขคะแนนสะสม — ตอนนี้เอาออกจากบัตรแล้ว
+  // ตามที่ขอ (คะแนนย้ายไปโชว์ในกล่องสีเทาด้านล่างแทน) เปลี่ยนมาโชว์คำทักทาย "สวัสดี, ชื่อไลน์" แทน
+  document.getElementById('mcardGreetingName').textContent = 'สวัสดี, ' + (currentLineName || '');
 
   var mult = parseFloat(member.pointMultiplier) || 1;
   document.getElementById('mcardMultiplier').textContent = mult > 1 ? ('รับคะแนน x' + mult + ' ทุกการสั่งซื้อ 🌟') : '';
+
+  // กล่องสีเทา "ยอดใช้จ่ายสะสม" + "คะแนนสะสมของคุณ" ใต้หัวข้อ "สิทธิพิเศษสมาชิก" (ตามภาพอ้างอิงที่ขอ)
+  document.getElementById('tierSpendValue').textContent = (member.lifetimeSpend || 0).toLocaleString('th-TH') + ' บาท';
+  document.getElementById('tierPointsValue').textContent = (member.points || 0).toLocaleString('th-TH') + ' คะแนน';
+  renderTierProgressHint_(member);
 
   // พื้นหลังทั้งหน้า (นอกกล่องการ์ด) + เมนู 8 ช่องด้านล่าง — ทาสีตาม tierColor ที่ตั้งไว้ในชีต Tier_Config
   // โดยตรง (แก้สีในชีต แล้วจะเปลี่ยนตรงนี้ทันที) ไอคอน SVG อย่าง "คูปอง" ก็ใช้ currentColor จึงเปลี่ยนสี
@@ -630,6 +671,40 @@ var MENU_ICON_BASE_FILES = {
 // อยู่แล้ว (tierKey ที่เก็บจริงคือ start/fan/love/vip แต่ชื่อไฟล์อยากให้อ่านง่ายเป็น start/silver/gold/
 // platinum) ค่าเริ่มต้นก่อนรู้ระดับสมาชิกจริง (ตอนหน้าเพิ่งโหลด ยังไม่ login เสร็จ) คือ 'start' ไปก่อน
 var TIER_FILE_SUFFIX_ = { start: 'start', fan: 'silver', love: 'gold', vip: 'platinum' };
+
+// ⚠️ เดิมตรงนี้เคย hardcode ตัวเลขขั้นต่ำแต่ละระดับไว้ตรงๆ (เสี่ยงคลาดเคลื่อนถ้าแก้ตัวเลขในชีตแล้วลืมมาแก้
+// ที่นี่ด้วย) ตอนนี้เปลี่ยนมาดึงสดจาก action "getTierConfig" ที่มีอยู่แล้วใน Code.gs แทน (ไม่ต้องใช้ idToken
+// เพราะ action นี้เป็นข้อมูลสาธารณะ ไม่ผูกกับสมาชิกคนใดคนหนึ่ง) แคชผลไว้ในตัวแปรนี้ระหว่างที่หน้าเว็บเปิดอยู่
+// กันยิง API ซ้ำทุกครั้งที่เปิดบัตร — ถ้าแก้ตัวเลขในชีต Tier_Config ผลจะอัปเดตเองอัตโนมัติทันทีที่เปิดหน้าใหม่
+// โดยไม่ต้องแก้โค้ดฝั่งนี้เลย
+var tierConfigCache_ = null;
+
+// ข้อความ "สะสมอีก X บาทเพื่อเลื่อนขั้น" ใต้กล่องสีเทา — เทียบ lifetimeSpend ของสมาชิกกับ minSpend ของ
+// ระดับถัดไปในชีต Tier_Config (ผ่าน action getTierConfig) ถ้าอยู่ระดับสูงสุดแล้วให้โชว์ข้อความยินดีแทน
+function renderTierProgressHint_(member){
+  var hintEl = document.getElementById('tierProgressHint');
+  var tierKey = member.tierKey || 'start';
+  var lifetimeSpend = member.lifetimeSpend || 0;
+
+  var render = function(tiers){
+    var idx = tiers.findIndex(function(t){ return t.key === tierKey; });
+    if (idx === -1 || idx === tiers.length - 1) {
+      hintEl.textContent = 'คุณอยู่ในระดับสมาชิกสูงสุดแล้ว 🎉';
+      return;
+    }
+    var remaining = Math.max(0, (tiers[idx + 1].minSpend || 0) - lifetimeSpend);
+    hintEl.textContent = 'สะสมอีก ' + remaining.toLocaleString('th-TH') + ' บาทเพื่อเลื่อนขั้น';
+  };
+
+  if (tierConfigCache_) { render(tierConfigCache_); return; }
+  hintEl.textContent = '';
+  callApi('getTierConfig', {}).then(function(r){
+    if (r && r.success && Array.isArray(r.tiers)) {
+      tierConfigCache_ = r.tiers;
+      render(tierConfigCache_);
+    }
+  }).catch(function(){ /* โหลดไม่สำเร็จ เงียบไว้ ไม่ต้องโชว์ error รบกวนลูกค้า แค่ไม่มีข้อความนี้ */ });
+}
 var currentTierSuffix = 'start';
 
 function menuIcon(type, className){
@@ -667,12 +742,16 @@ var PANEL_TITLES = {
   privileges: { icon: '👑', label: 'สิทธิ์พิเศษ' },
   info: { icon: '👤', label: 'ข้อมูลสมาชิก' },
   history: { icon: '<img src="icon-history.png" alt="">', label: 'ประวัติการสั่งซื้อ' },
-  coupons: { icon: '<img src="icon-coupon.png" alt="">', label: 'คูปอง' }
+  coupons: { icon: '<img src="icon-coupon.png" alt="">', label: 'คูปอง' },
+  terms: { icon: 'ⓘ', label: 'เงื่อนไขสิทธิพิเศษสมาชิก' }
 };
 
 function openPanel(type){
   var t = PANEL_TITLES[type];
-  document.getElementById('panelTitle').innerHTML = t ? (menuIcon(type, 'panel-menu-icon') + '<span>' + esc(t.label) + '</span>') : '';
+  // แผง "terms" (เงื่อนไขสิทธิพิเศษสมาชิก) ไม่มีไฟล์ไอคอนตามระดับสมาชิกใน icons/ เหมือนเมนูอื่นๆ
+  // (เปิดจากจุด ⓘ ไม่ใช่จากเมนู 8 ช่อง) จึงใช้ตัวอักษร ⓘ ตรงๆ แทนการเรียก menuIcon() ที่จะหาไฟล์ภาพไม่เจอ
+  var iconHtml = (type === 'terms') ? '<span class="panel-menu-icon" aria-hidden="true">ⓘ</span>' : (t ? menuIcon(type, 'panel-menu-icon') : '');
+  document.getElementById('panelTitle').innerHTML = t ? (iconHtml + '<span>' + esc(t.label) + '</span>') : '';
   document.getElementById('panelBody').innerHTML = '<div class="empty">กำลังโหลด...</div>';
   document.getElementById('panelOverlay').classList.remove('sh');
 
@@ -682,9 +761,22 @@ function openPanel(type){
   else if (type === 'info') loadMemberInfoPanel();
   else if (type === 'history') loadHistoryPanel();
   else if (type === 'coupons') loadCouponsPanel();
+  else if (type === 'terms') loadTermsPanel();
 }
 function closePanel(){
   document.getElementById('panelOverlay').classList.add('sh');
+}
+
+// แผง "เงื่อนไขสิทธิพิเศษสมาชิก" — เปิดจากจุด ⓘ ข้างหัวข้อ "สิทธิพิเศษสมาชิก" เนื้อหาเป็นข้อความคงที่
+// (ไม่ได้ยิง API เหมือนแผงอื่นๆ) ⚠️ ข้อความด้านล่างเป็นตัวอย่างชั่วคราวเท่านั้น รอเนื้อหาเงื่อนไขจริงจากพี่ Toi
+// มาแทนที่ก่อนใช้งานจริง
+function loadTermsPanel(){
+  var body = document.getElementById('panelBody');
+  body.innerHTML = '<div class="terms-content">'
+    + '<p>• คะแนนสะสมคำนวณจากยอดซื้อ ตามอัตราคูณของแต่ละระดับสมาชิก</p>'
+    + '<p>• ระดับสมาชิกคำนวณจากยอดใช้จ่ายสะสมตลอดการเป็นสมาชิก</p>'
+    + '<p>• สิทธิประโยชน์ อัตราคะแนน และเงื่อนไขต่างๆ อาจมีการเปลี่ยนแปลงโดยไม่แจ้งล่วงหน้า</p>'
+    + '</div>';
 }
 
 var rewardsCatalogCache = [];
@@ -1122,6 +1214,7 @@ function initLiff(){
       currentLinePicture = profile.picture;
       document.getElementById('avatar').innerHTML = '<img src="' + profile.picture + '">';
     }
+    if (profile && profile.name) currentLineName = profile.name;
     brandLogoDataUrl = document.querySelector('.brand-logo') ? document.querySelector('.brand-logo').src : '';
     var welcomeLogoEl = document.getElementById('welcomeLogo');
     if (welcomeLogoEl && brandLogoDataUrl) welcomeLogoEl.src = brandLogoDataUrl;
