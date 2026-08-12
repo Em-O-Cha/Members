@@ -979,6 +979,16 @@ function confirmRedeem(){
     redeemInFlight = false;
     if (r && r.success) {
       currentPointsBalance = r.newPoints;
+      // อัปเดตกล่องคะแนนบนบัตรสมาชิก "ทันที" แบบ synchronous ตรงนี้เลย ก่อนเรียก alert()/checkStatus()
+      // ใดๆ ทั้งสิ้น — เพราะ r.newPoints เป็นค่าล่าสุดที่ถูกต้องอยู่แล้วจาก Code.gs (หักคะแนนเสร็จก่อนตอบ
+      // กลับมาเสมอ) ไม่ต้องรอยิง API รอบใหม่ ไม่ต้องพึ่งลำดับการทำงานของ alert()/checkStatus() เลย —
+      // เดิมที่ยังไม่ real-time เพราะโค้ดรอบก่อนไปเรียก checkStatus() (ต้องยิง API รอบใหม่ + รอ alert()
+      // ที่เป็นคำสั่ง "บล็อก" การทำงานของ JS ทั้งหน้าจนกว่าจะกดตกลง) ก่อนถึงจะอัปเดตตัวเลข ทำให้ดูเหมือน
+      // ไม่ขยับ/ขยับช้า วิธีนี้แก้ปัญหาตรงจุดโดยอัปเดต DOM ตรงๆ ก่อนเลย ไม่ต้องพึ่งพาจังหวะใดๆ ทั้งสิ้น
+      var tierPointsEl = document.getElementById('tierPointsValue');
+      if (tierPointsEl) tierPointsEl.textContent = r.newPoints.toLocaleString('th-TH') + ' คะแนน';
+      if (lastMemberData) lastMemberData.points = r.newPoints;
+
       var msg = (r.category === 'coupon' || r.category === 'buy_product')
         ? 'ใช้ส่วนลดได้ทันทีตอนสั่งซื้อครั้งถัดไป'
         : (r.category === 'tier_upgrade' ? 'ระดับสมาชิกของคุณอัปเดตแล้ว' : 'ทีมงานจะติดต่อกลับเพื่อจัดส่ง/ดำเนินการให้เร็วๆ นี้');
@@ -986,12 +996,9 @@ function confirmRedeem(){
       var body = document.getElementById('panelBody');
       body.innerHTML = '<div class="empty" style="padding:20px 0">🎉<br><b>แลก "' + esc(r.rewardName) + '" สำเร็จ!</b><br>' + esc(msg) + '<br>เหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน</div>'
         + '<button class="btn btn-block" onclick="loadPrivilegesPanel()">กลับไปหน้าสิทธิ์พิเศษ</button>';
-      // ดึงข้อมูลสมาชิกใหม่ทั้งชุดจาก Apps Script ทันที เพื่อให้ตัวเลขคะแนน (กล่องสีเทาบนบัตร) อัปเดต
-      // real-time โดยไม่ต้องปิดหน้าแล้วเปิดใหม่เอง — เดิมอัปเดตแค่ currentPointsBalance ที่ใช้แสดงผลใน
-      // popup แลกของรางวัลนี้เท่านั้น ไม่ได้ไปแตะตัวเลขบนบัตรสมาชิกด้านหลังเลย จึงดูเหมือนคะแนนไม่ขยับ
-      // (panelOverlay เป็นกล่องลอยแยกต่างหาก ไม่ได้อยู่ในชุด state ที่ checkStatus()/showState() จัดการ
-      // จึงเรียก checkStatus() ตรงนี้ได้เลยโดยไม่ทำให้ popup แลกของรางวัลที่กำลังเปิดอยู่ปิดไปด้วย — ถ้า
-      // แลกหมวด tier_upgrade ระดับสมาชิกเปลี่ยน สีบัตร/ไอคอน/ตัวคูณแต้มก็จะอัปเดตตามไปด้วยในตัว)
+      // ดึงข้อมูลสมาชิกใหม่ทั้งชุดจาก Apps Script อีกครั้งเป็นการซิงค์เสริมเบื้องหลัง (ไม่ต้องรอผล) —
+      // ตัวเลขคะแนนอัปเดตไปแล้วด้านบน ส่วนนี้มีไว้เผื่อแลกหมวด tier_upgrade ที่ระดับสมาชิกเปลี่ยน จะได้
+      // อัปเดตสีบัตร/ไอคอน/ตัวคูณแต้มตามไปด้วยในตัว
       checkStatus();
     } else {
       if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันการแลก'; }
