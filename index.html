@@ -502,8 +502,15 @@ function renderMemberCard(member){
   // อัปเดตไอคอนเมนู 8 ช่องให้เป็นสีตามระดับสมาชิกด้วย (ไฟล์ที่ผู้ใช้จะเพิ่มเองใน GitHub ตามระดับ) — ตอน
   // หน้าเว็บเพิ่งโหลด ยังไม่รู้ระดับสมาชิกจริง เลยใช้ไอคอนชุด "start" ไปก่อนเป็นค่าเริ่มต้น พอรู้ระดับจริง
   // จากตรงนี้แล้ว จึงอัปเดต currentTierSuffix แล้วสั่งวาดไอคอนใหม่อีกรอบให้ตรงกับระดับจริง
-  currentTierSuffix = TIER_FILE_SUFFIX_[tierKey] || 'start';
-  decorateMemberMenu();
+  // ⚡ วาดใหม่ (query DOM + สร้าง element ใหม่ทั้ง 8 ช่อง) เฉพาะตอนที่ระดับเปลี่ยนจริงๆ เท่านั้น — เดิมสั่ง
+  // วาดใหม่ทุกครั้งที่ renderMemberCard() ทำงาน แม้ระดับจะเหมือนเดิมเป๊ะก็ตาม (เช่นตอนซิงค์ข้อมูลเบื้องหลัง
+  // หลังแลกคะแนนที่เพิ่งแก้ไปให้เรียก checkStatus() บ่อยขึ้น) ผลลัพธ์ที่ได้ (ไอคอนที่โชว์) เหมือนเดิมทุก
+  // ประการ แค่ข้ามงานที่ไม่จำเป็นออกไปเท่านั้น
+  var newTierSuffix_ = TIER_FILE_SUFFIX_[tierKey] || 'start';
+  if (newTierSuffix_ !== currentTierSuffix) {
+    currentTierSuffix = newTierSuffix_;
+    decorateMemberMenu();
+  }
 
   // เดิมตรงนี้โชว์รูปโปรไฟล์ LINE (mcardAvatar) แล้วเปลี่ยนเป็นตัวเลขคะแนนสะสม — ตอนนี้เอาออกจากบัตรแล้ว
   // ตามที่ขอ (คะแนนย้ายไปโชว์ในกล่องสีเทาด้านล่างแทน) เปลี่ยนมาโชว์คำทักทาย "สวัสดี, ชื่อไลน์" แทน
@@ -1251,6 +1258,16 @@ function initLiff(){
     showErrorState('liff.init() ล้มเหลว: ' + (e && e.message ? e.message : String(e)));
   });
 }
+
+// ⚡ ยิง getTierConfig ล่วงหน้าทันทีตั้งแต่หน้าเว็บโหลด ให้ทำงานขนานไปกับขั้นตอน liff.init()/LINE login
+// ด้านล่าง (ไม่ต้องรอ เพราะ action นี้เป็นข้อมูลสาธารณะ ไม่ใช้ idToken เลย) ผลลัพธ์เก็บเข้า tierConfigCache_
+// ตัวเดียวกับที่ renderTierProgressHint_ ใช้อยู่แล้ว — ถ้ายิงเสร็จก่อนบัตรสมาชิก render (ปกติจะเสร็จก่อน
+// เพราะไม่ต้องรอ LINE login) ข้อความ "สะสมอีก X บาท..." จะขึ้นได้ทันทีโดยไม่ต้องรอ API อีกรอบซ้อนต่อคิว
+// ถ้ายิงไม่ทัน renderTierProgressHint_ จะยิงเองอีกทีตามปกติ (เช็ค tierConfigCache_ กันยิงซ้ำอยู่แล้ว ไม่มี
+// ผลข้างเคียงอะไรแม้ยิงซ้อนกันพอดี เพราะเป็นแค่ GET ข้อมูลอ่านอย่างเดียว)
+callApi('getTierConfig', {}).then(function(r){
+  if (r && r.success && Array.isArray(r.tiers)) tierConfigCache_ = r.tiers;
+}).catch(function(){ /* พลาดก็ไม่เป็นไร renderTierProgressHint_ จะลองยิงเองอีกทีตอนต้องใช้จริง */ });
 
 initLiff();
 </script>
