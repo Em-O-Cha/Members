@@ -110,12 +110,15 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .menu-section-title{font-size:15px;font-weight:700;text-align:left;margin:0 0 -15px;}
 /* ไอคอนข้อมูล (ⓘ) ต่อท้ายหัวข้อ "สิทธิพิเศษสมาชิก" กดแล้วเปิด popup เงื่อนไขสิทธิพิเศษสมาชิก
    (ดู PANEL_TITLES.terms + loadTermsPanel ในสคริปต์ด้านล่าง) */
-.tier-info-icon{font-size:13px;font-weight:400;margin-left:6px;cursor:pointer;opacity:.75;vertical-align:middle;}
+.tier-info-icon{font-size:13px;font-weight:600;margin-left:6px;cursor:pointer;opacity:1;
+  display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;
+  border-radius:50%;border:1.6px solid currentColor;vertical-align:middle;}
 /* กล่องสีเทา "ยอดใช้จ่ายสะสม" + "คะแนนสะสมของคุณ" ใต้หัวข้อ "สิทธิพิเศษสมาชิก" ตามภาพอ้างอิงที่ขอ —
    margin-top ชดเชย margin-bottom ติดลบของ .menu-section-title ด้านบน (-15px) ให้มีระยะห่างที่พอดี
    ไม่ทับหัวข้อ */
 .tier-progress-boxes{display:flex;gap:10px;margin:28px 0 0;}
-.tier-progress-box{flex:1;background:#f3f4f6;border-radius:14px;padding:12px 14px;}
+.tier-progress-box{flex:1;background:#fff;border-radius:14px;padding:12px 14px;
+  box-shadow:0 1px 5px rgba(0,0,0,.07);border:1px solid #edeef0;}
 .tier-progress-label{font-size:12px;color:#8a8f98;margin-bottom:4px;}
 .tier-progress-value{font-size:18px;font-weight:800;color:#1a1a1a;}
 /* ข้อความ "สะสมอีก X บาทเพื่อเลื่อนขั้น" ใต้กล่องสีเทา คำนวณจากคอลัมน์ "ยอดซื้อสะสมขั้นต่ำ" ของระดับ
@@ -692,8 +695,9 @@ function renderTierProgressHint_(member){
       hintEl.textContent = 'คุณอยู่ในระดับสมาชิกสูงสุดแล้ว 🎉';
       return;
     }
-    var remaining = Math.max(0, (tiers[idx + 1].minSpend || 0) - lifetimeSpend);
-    hintEl.textContent = 'สะสมอีก ' + remaining.toLocaleString('th-TH') + ' บาทเพื่อเลื่อนขั้น';
+    var nextTier = tiers[idx + 1];
+    var remaining = Math.max(0, (nextTier.minSpend || 0) - lifetimeSpend);
+    hintEl.textContent = 'สะสมอีก ' + remaining.toLocaleString('th-TH') + ' บาท เพื่อเลื่อนขั้นเป็น ' + nextTier.name;
   };
 
   if (tierConfigCache_) { render(tierConfigCache_); return; }
@@ -767,15 +771,24 @@ function closePanel(){
   document.getElementById('panelOverlay').classList.add('sh');
 }
 
-// แผง "เงื่อนไขสิทธิพิเศษสมาชิก" — เปิดจากจุด ⓘ ข้างหัวข้อ "สิทธิพิเศษสมาชิก" เนื้อหาเป็นข้อความคงที่
-// (ไม่ได้ยิง API เหมือนแผงอื่นๆ) ⚠️ ข้อความด้านล่างเป็นตัวอย่างชั่วคราวเท่านั้น รอเนื้อหาเงื่อนไขจริงจากพี่ Toi
-// มาแทนที่ก่อนใช้งานจริง
+// ==================================================================================
+// ✏️ แก้ข้อความ "เงื่อนไขสิทธิพิเศษสมาชิก" (popup ที่เปิดจากจุด ⓘ ข้างหัวข้อ "สิทธิพิเศษสมาชิก")
+// ได้ตรงนี้เลย — แก้/เพิ่ม/ลบข้อความแต่ละบรรทัดในลิสต์ด้านล่างได้อิสระ แต่ละบรรทัดในลิสต์ = 1 ข้อ (จะขึ้น
+// บรรทัดใหม่พร้อมเครื่องหมาย • นำหน้าให้เองอัตโนมัติ ไม่ต้องพิมพ์ • เอง) ไม่ต้องแก้ที่อื่นเลย
+// ⚠️ ข้อความชุดนี้เป็นตัวอย่างชั่วคราว รอเนื้อหาเงื่อนไขจริงมาแทนที่ก่อนใช้งานจริง
+// ==================================================================================
+var TERMS_CONTENT_ = [
+  'คะแนนสะสมคำนวณจากยอดซื้อ ตามอัตราคูณของแต่ละระดับสมาชิก',
+  'ระดับสมาชิกคำนวณจากยอดใช้จ่ายสะสมตลอดการเป็นสมาชิก',
+  'สิทธิประโยชน์ อัตราคะแนน และเงื่อนไขต่างๆ อาจมีการเปลี่ยนแปลงโดยไม่แจ้งล่วงหน้า'
+];
+
+// แผง "เงื่อนไขสิทธิพิเศษสมาชิก" — เปิดจากจุด ⓘ ข้างหัวข้อ "สิทธิพิเศษสมาชิก" เนื้อหาดึงจาก
+// TERMS_CONTENT_ ด้านบน (ไม่ได้ยิง API เหมือนแผงอื่นๆ เพราะเป็นข้อความคงที่)
 function loadTermsPanel(){
   var body = document.getElementById('panelBody');
   body.innerHTML = '<div class="terms-content">'
-    + '<p>• คะแนนสะสมคำนวณจากยอดซื้อ ตามอัตราคูณของแต่ละระดับสมาชิก</p>'
-    + '<p>• ระดับสมาชิกคำนวณจากยอดใช้จ่ายสะสมตลอดการเป็นสมาชิก</p>'
-    + '<p>• สิทธิประโยชน์ อัตราคะแนน และเงื่อนไขต่างๆ อาจมีการเปลี่ยนแปลงโดยไม่แจ้งล่วงหน้า</p>'
+    + TERMS_CONTENT_.map(function(t){ return '<p>• ' + esc(t) + '</p>'; }).join('')
     + '</div>';
 }
 
@@ -973,6 +986,13 @@ function confirmRedeem(){
       var body = document.getElementById('panelBody');
       body.innerHTML = '<div class="empty" style="padding:20px 0">🎉<br><b>แลก "' + esc(r.rewardName) + '" สำเร็จ!</b><br>' + esc(msg) + '<br>เหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน</div>'
         + '<button class="btn btn-block" onclick="loadPrivilegesPanel()">กลับไปหน้าสิทธิ์พิเศษ</button>';
+      // ดึงข้อมูลสมาชิกใหม่ทั้งชุดจาก Apps Script ทันที เพื่อให้ตัวเลขคะแนน (กล่องสีเทาบนบัตร) อัปเดต
+      // real-time โดยไม่ต้องปิดหน้าแล้วเปิดใหม่เอง — เดิมอัปเดตแค่ currentPointsBalance ที่ใช้แสดงผลใน
+      // popup แลกของรางวัลนี้เท่านั้น ไม่ได้ไปแตะตัวเลขบนบัตรสมาชิกด้านหลังเลย จึงดูเหมือนคะแนนไม่ขยับ
+      // (panelOverlay เป็นกล่องลอยแยกต่างหาก ไม่ได้อยู่ในชุด state ที่ checkStatus()/showState() จัดการ
+      // จึงเรียก checkStatus() ตรงนี้ได้เลยโดยไม่ทำให้ popup แลกของรางวัลที่กำลังเปิดอยู่ปิดไปด้วย — ถ้า
+      // แลกหมวด tier_upgrade ระดับสมาชิกเปลี่ยน สีบัตร/ไอคอน/ตัวคูณแต้มก็จะอัปเดตตามไปด้วยในตัว)
+      checkStatus();
     } else {
       if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันการแลก'; }
       var errEl = document.getElementById('redeemErrBox');
