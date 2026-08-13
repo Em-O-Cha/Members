@@ -160,6 +160,13 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;
   text-shadow:0 1px 4px rgba(0,0,0,.55);transform:translateY(-19px);}
 
+/* ปุ่ม "สั่งซื้อสินค้า" ใต้บัตรสมาชิกเลย ให้เห็นชัด กดแล้วไปหน้าสั่งซื้อ (LIFF อีกตัว) ได้ทันทีตามที่ขอ —
+   ใช้สีเขียวเข้ม (--gm) เด่นกว่าไอคอนในเมนู 8 ช่องด้านล่าง เพราะเป็น action หลักที่อยากให้ลูกค้ากดบ่อยที่สุด */
+.shop-cta-btn{display:block;width:100%;height:48px;line-height:48px;text-align:center;
+  border-radius:12px;background:var(--gm);color:#fff;font-size:15px;font-weight:700;
+  text-decoration:none;margin:14px 0 0;box-shadow:0 4px 14px rgba(46,125,50,.25);}
+.shop-cta-btn:active{opacity:.85;}
+
 /* ==================== วันเกิด: เลือกวัน/เดือน/ปี แยก 3 ช่อง (แทน input type=date ที่หน้าตาไม่นิ่งข้ามอุปกรณ์) ==================== */
 .date-select-row{display:flex;gap:8px;}
 .date-select-row select{flex:1;height:46px;padding:0 8px;border:1.5px solid #eee;border-radius:10px;
@@ -303,6 +310,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
           <div class="mcard-multiplier" id="mcardMultiplier"></div>
         </div>
       </div>
+
+      <!-- ปุ่มสั่งซื้อสินค้า — ลิงก์ตรงไปหน้าสั่งซื้อ (LIFF ของ toinatadee/Order) ตามที่ขอ -->
+      <a class="shop-cta-btn" href="https://liff.line.me/2010892131-3XYQXNzq">🛒 สั่งซื้อสินค้า</a>
 
       <div class="lower-section">
         <h2 class="menu-section-title" id="menuSectionTitle">สิทธิพิเศษสมาชิก<span class="tier-info-icon" onclick="openPanel('terms')" title="เงื่อนไขสิทธิพิเศษสมาชิก">ⓘ</span></h2>
