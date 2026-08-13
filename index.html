@@ -312,7 +312,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
       </div>
 
       <!-- ปุ่มสั่งซื้อสินค้า — ลิงก์ตรงไปหน้าสั่งซื้อ (LIFF ของ toinatadee/Order) ตามที่ขอ -->
-      <a class="shop-cta-btn" href="https://liff.line.me/2010892131-3XYQXNzq">🛒 สั่งซื้อสินค้า</a>
+      <a class="shop-cta-btn" id="shopCtaBtn" href="https://liff.line.me/2010892131-3XYQXNzq">🛒 สั่งซื้อสินค้า</a>
 
       <div class="lower-section">
         <h2 class="menu-section-title" id="menuSectionTitle">สิทธิพิเศษสมาชิก<span class="tier-info-icon" onclick="openPanel('terms')" title="เงื่อนไขสิทธิพิเศษสมาชิก">ⓘ</span></h2>
@@ -500,6 +500,12 @@ function renderMemberCard(member){
   var cardImageMap = { start: 'member-card-start.png', fan: 'member-card-silver.png', love: 'member-card-gold.png', vip: 'member-card-platinum.png' };
   mcardEl.style.backgroundImage = "url('" + (cardImageMap[tierKey] || cardImageMap.start) + "?v=" + CARD_IMAGE_VERSION + "')";
   mcardEl.style.color = textColor;
+
+  // ปุ่ม "สั่งซื้อสินค้า" ใต้บัตร — ใช้สีระดับสมาชิก (tierColor) เป็นพื้นหลังตรงๆ เหมือนกับที่ header
+  // "สิทธิพิเศษสมาชิก" ใช้ (ดู applyThemeColor_ ด้านล่าง) ให้เข้าธีมเดียวกับบัตรของแต่ละคนตามที่ขอ ส่วนสี
+  // ตัวอักษรใช้ tierTextColor คู่กัน (ตัวเดียวกับที่ใช้บนบัตร) เพื่อให้อ่านง่ายพอกับพื้นหลังนั้นเสมอ
+  var shopBtnEl = document.getElementById('shopCtaBtn');
+  if (shopBtnEl) { shopBtnEl.style.background = baseColor; shopBtnEl.style.color = textColor; }
 
   // พื้นหลังทั้งกล่อง .card (พื้นหลังใหญ่ที่ครอบทั้งหน้า ไม่ใช่แค่ตัวบัตร) ก็เปลี่ยนตามระดับสมาชิกด้วย
   // ตามที่ขอ — ไฟล์ชื่อคงที่ตามระดับเหมือนกับภาพบัตร เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน
