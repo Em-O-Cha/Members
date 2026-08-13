@@ -154,6 +154,11 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .mcard-greeting-name{font-size:18px;font-weight:800;line-height:1.25;color:var(--td);}
 .mcard-greeting-sub{font-size:13px;font-weight:500;color:var(--g6);margin-top:1px;}
 .mcard-body{position:absolute;bottom:16px;right:16px;text-align:right;z-index:1;}
+/* รหัสสมาชิก — มุมล่างซ้ายของบัตร (ตรงข้ามกับ .mcard-body ที่อยู่มุมล่างขวา) ตามที่ขอ ไม่ตั้งสีไว้ตรงนี้
+   เพราะรับสีตัวอักษรมาจาก #mcard ที่ครอบอยู่โดยอัตโนมัติ (renderMemberCard ตั้ง mcardEl.style.color =
+   textColor ตาม Tier_Config อยู่แล้ว) จึงเปลี่ยนสีตามระดับสมาชิกไปเองโดยไม่ต้องเซ็ตซ้ำ */
+.mcard-code{position:absolute;bottom:16px;left:16px;z-index:1;font-size:11px;letter-spacing:.3px;
+  opacity:.95;text-shadow:0 1px 4px rgba(0,0,0,.55);}
 /* เลื่อนข้อความสิทธิพิเศษ (เช่น "รับคะแนน x1.5 / x2 ทุกการสั่งซื้อ" สำหรับบัตร love/vip) ขึ้นด้านบน
    ครึ่ง ซม. (~19px คำนวณจากอัตราส่วนเดียวกับคอมเมนต์ 1cm≈38px ด้านบนใน .mcard-top) ตามที่ขอ — บัตร
    start/fan ไม่มีข้อความนี้อยู่แล้ว (mult ไม่เกิน 1) จึงไม่ได้รับผลกระทบ */
@@ -306,6 +311,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
       </div>
 
       <div class="mcard" id="mcard">
+        <div class="mcard-code" id="mcardCode"></div>
         <div class="mcard-body" id="mcardBody">
           <div class="mcard-multiplier" id="mcardMultiplier"></div>
         </div>
@@ -527,6 +533,11 @@ function renderMemberCard(member){
     currentTierSuffix = newTierSuffix_;
     decorateMemberMenu();
   }
+
+  // รหัสสมาชิก มุมล่างซ้ายของบัตร (ตัวเลขนี้มาจาก checkMemberStatus ฝั่ง Code.gs) — สมาชิกที่สมัครก่อน
+  // ฟีเจอร์นี้จะยังไม่มีรหัส (ช่องว่าง) จนกว่าจะมีการ backfill ย้อนหลังในชีต ไม่ได้ทำอัตโนมัติตรงนี้
+  var codeEl = document.getElementById('mcardCode');
+  if (codeEl) codeEl.textContent = member.memberCode || '';
 
   // เดิมตรงนี้โชว์รูปโปรไฟล์ LINE (mcardAvatar) แล้วเปลี่ยนเป็นตัวเลขคะแนนสะสม — ตอนนี้เอาออกจากบัตรแล้ว
   // ตามที่ขอ (คะแนนย้ายไปโชว์ในกล่องสีเทาด้านล่างแทน) เปลี่ยนมาโชว์คำทักทาย "สวัสดี, ชื่อไลน์" แทน
