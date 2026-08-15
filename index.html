@@ -781,9 +781,15 @@ function renderTierProgressHint_(member){
     }
     var nextTier = tiers[idx + 1];
     var remaining = Math.max(0, (nextTier.minSpend || 0) - lifetimeSpend);
-    var span = Math.max(1, (nextTier.minSpend || 0) - (currentTier.minSpend || 0));
-    var progressed = Math.min(Math.max(lifetimeSpend - (currentTier.minSpend || 0), 0), span);
-    var percent = Math.round((progressed / span) * 100);
+    // % ของแถบคำนวณจาก "ยอดใช้จ่ายสะสมจริง เทียบกับเกณฑ์ขั้นต่ำของระดับถัดไปตรงๆ" (ไม่ใช่เทียบช่วงระหว่าง
+    // เกณฑ์ของระดับปัจจุบัน→ระดับถัดไปแบบเดิม) เพราะสูตรเดิมมีบั๊ก: ถ้าสมาชิกได้ระดับปัจจุบันมาจากการแลก
+    // ของรางวัล (tier_upgrade) ไม่ใช่ไต่ระดับจากยอดใช้จ่ายจริง ยอดใช้จ่ายสะสม (lifetimeSpend) จะน้อยกว่า
+    // เกณฑ์ขั้นต่ำของระดับปัจจุบัน (currentTier.minSpend) ทำให้ lifetimeSpend - currentTier.minSpend
+    // ติดลบ แล้วถูก clamp เหลือ 0 เสมอ แถบเลยไม่ขึ้นสีเลยทั้งที่มียอดสะสมอยู่จริง (ตามที่แจ้งมา) สูตรใหม่
+    // นี้อิงจากยอดใช้จ่ายสะสมตรงๆ จึงขึ้นสีตามยอดเงินเสมอ ไม่ว่าจะได้ระดับปัจจุบันมาจากการซื้อสะสมหรือ
+    // แลกของรางวัลก็ตาม
+    var nextThreshold = Math.max(1, nextTier.minSpend || 0);
+    var percent = Math.min(100, Math.max(0, Math.round((lifetimeSpend / nextThreshold) * 100)));
     buildCard('⭐', 'อีก ' + remaining.toLocaleString('th-TH') + ' บาท เพื่อเลื่อนขั้นเป็น ' + nextTier.name,
       percent, currentTier.name, nextTier.name);
   };
