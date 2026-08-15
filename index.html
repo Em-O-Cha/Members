@@ -249,6 +249,27 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .terms-content p{font-size:13.5px;line-height:1.6;color:var(--g8);margin:0 0 10px;}
 .info-row span:first-child{color:var(--g6);}
 .info-row span:last-child{font-weight:600;}
+/* ==================== ป็อปอัพแจ้งเตือนแบบกำหนดเอง (แทน alert() เดิมของเบราว์เซอร์) ====================
+   alert() ของเบราว์เซอร์เดิมโชว์กล่องระบบเทาๆ พร้อมชื่อโดเมนขึ้นต้น ("toinatadee.github.io says") ดูไม่
+   สวยงาม/ไม่ตรงธีมแอปเลย — เปลี่ยนมาใช้ป็อปอัพที่ออกแบบเองแทน (การ์ดโค้งมนกลางจอ ไอคอนวงกลมสี + ข้อความ
+   + ปุ่มตกลง) ครอบคลุมทุกหน้า/ทุกจุดที่เคยเรียก alert() โดยอัตโนมัติ เพราะวิธีที่ใช้คือ "แทนที่"
+   window.alert ทั้งฟังก์ชันเลย (ดู showCustomAlert_/closeCustomAlert_ + window.alert = ... ท้ายสคริปต์)
+   ไม่ต้องไล่แก้ทีละจุดที่เรียก alert() และ alert() ตัวใหม่ที่จะเพิ่มในอนาคตก็ได้ป็อปอัพนี้ไปโดยอัตโนมัติด้วย */
+.custom-alert-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;
+  align-items:center;justify-content:center;padding:24px;}
+.custom-alert-overlay.sh{display:none;}
+.custom-alert-box{background:#fff;border-radius:20px;max-width:320px;width:100%;padding:28px 22px 22px;
+  text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);animation:alertPop .22s cubic-bezier(.34,1.56,.64,1);}
+@keyframes alertPop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+/* สีพื้นหลังไอคอนเปลี่ยนตามประเภทข้อความ (สำเร็จ/ผิดพลาด/ทั่วไป) — ดูฟังก์ชัน classifyAlert_ ว่าตัดสิน
+   ประเภทจากคำในข้อความอย่างไร (ไม่ได้ผูกกับ tierColor เพราะป็อปอัพนี้ใช้ทั่วทั้งแอป ไม่ใช่แค่หน้าบัตรสมาชิก) */
+.custom-alert-icon{width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:flex;
+  align-items:center;justify-content:center;font-size:28px;}
+.custom-alert-icon.success{background:#e8f5e9;}
+.custom-alert-icon.error{background:#ffebee;}
+.custom-alert-icon.info{background:#e3f2fd;}
+.custom-alert-text{font-size:14px;line-height:1.7;color:var(--td);white-space:pre-line;margin-bottom:20px;}
+.custom-alert-ok{border-radius:999px;}
 </style>
 </head>
 <body>
@@ -390,6 +411,14 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
     <div id="panelBody"></div>
   </div>
 </div>
+<!-- ==================== ป็อปอัพแจ้งเตือนแบบกำหนดเอง (แทนที่ window.alert เดิม) ==================== -->
+<div class="custom-alert-overlay sh" id="customAlertOverlay" onclick="if(event.target===this)closeCustomAlert_()">
+  <div class="custom-alert-box">
+    <div class="custom-alert-icon" id="customAlertIcon"></div>
+    <div class="custom-alert-text" id="customAlertText"></div>
+    <button class="btn custom-alert-ok" id="customAlertOkBtn" onclick="closeCustomAlert_()">ตกลง</button>
+  </div>
+</div>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 // ⚠️ ใส่ LIFF ID ของตัวเองตรงนี้
@@ -420,6 +449,42 @@ function showErrorState(msg){
   showState('errorState');
 }
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// ==================== ป็อปอัพแจ้งเตือนแบบกำหนดเอง (แทน window.alert เดิม) ====================
+// ตัดสินใจว่าข้อความควรโชว์เป็นโทนสำเร็จ/ผิดพลาด/ทั่วไป จากคำสำคัญในข้อความเอง (ไม่ต้องแก้จุดที่เรียก
+// alert() เดิมเลยสักที่เดียว) — เรียงลำดับเช็ค "ผิดพลาด" ก่อน "สำเร็จ" เพราะข้อความ error บางอันอาจมีคำว่า
+// "ไม่สำเร็จ" ปนอยู่ (มีคำว่า "สำเร็จ" อยู่ในนั้นด้วย) ต้องกันไม่ให้ตีความผิดเป็นโทนสำเร็จ
+function classifyAlert_(message){
+  var m = String(message);
+  if (/ผิดพลาด|error|ไม่สำเร็จ|failed/i.test(m)) return 'error';
+  if (/สำเร็จ|ยินดี/.test(m)) return 'success';
+  return 'info';
+}
+// ตัดอิโมจิที่มักพิมพ์นำหน้าข้อความ alert() เดิมออกจากบรรทัดแรก (เช่น "🎉 แลก...") เพราะป็อปอัพใหม่มี
+// ไอคอนวงกลมของตัวเองอยู่แล้วด้านบน โชว์ซ้ำสองที่จะดูรก — ไม่ใช้ regex แบบ \p{Emoji} เพราะเบราว์เซอร์ใน
+// แอป LINE (โดยเฉพาะ Android เก่าๆ) บางตัวยังไม่รองรับ Unicode property escapes จึงเทียบจากลิสต์ตรงๆ แทน
+var ALERT_LEADING_ICONS_ = ['🎉','⚠️','✅','ℹ️','❌','🔔','📦'];
+function stripLeadingIcon_(text){
+  for (var i = 0; i < ALERT_LEADING_ICONS_.length; i++) {
+    if (text.indexOf(ALERT_LEADING_ICONS_[i]) === 0) return text.slice(ALERT_LEADING_ICONS_[i].length).trim();
+  }
+  return text;
+}
+function showCustomAlert_(message){
+  var type = classifyAlert_(message);
+  var iconMap = { success: '🎉', error: '⚠️', info: 'ℹ️' };
+  var lines = String(message).split('\n');
+  lines[0] = stripLeadingIcon_(lines[0]);
+  document.getElementById('customAlertIcon').className = 'custom-alert-icon ' + type;
+  document.getElementById('customAlertIcon').textContent = iconMap[type];
+  document.getElementById('customAlertText').textContent = lines.join('\n');
+  document.getElementById('customAlertOverlay').classList.remove('sh');
+}
+function closeCustomAlert_(){
+  document.getElementById('customAlertOverlay').classList.add('sh');
+}
+// แทนที่ window.alert ทั้งฟังก์ชันเลย — ทุกจุดในไฟล์นี้ที่เรียก alert(...) (ทั้งที่มีอยู่แล้วและที่จะ
+// เพิ่มในอนาคต) จะได้ป็อปอัพนี้ไปโดยอัตโนมัติ ไม่ต้องไล่แก้ทีละจุด
+window.alert = function(message){ showCustomAlert_(message); };
 // เรียก Apps Script ผ่าน fetch() แบบ GET เสมอ (แม้แต่ action ที่เปลี่ยนแปลงข้อมูลอย่าง registerMember)
 // เพราะ Apps Script ตอบกลับด้วย HTTP redirect เสมอ ซึ่งเบราว์เซอร์ในแอป LINE (โดยเฉพาะ iOS)
 // มักบล็อก redirect ของ POST เนื่องจากกฎ CORS เข้มงวดกว่า — GET ไม่มีปัญหานี้ เสถียรกว่ามาก
