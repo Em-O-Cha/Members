@@ -2,10 +2,6 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<!-- บอกเบราว์เซอร์ให้เริ่มต่อเชื่อม (DNS + TLS handshake) กับเซิร์ฟเวอร์ LINE ล่วงหน้าทันทีที่เปิดหน้า
-     แทนที่จะรอจนกว่าจะโหลดถึงบรรทัด <script src="...line-scdn..."> ค่อยเริ่มต่อ — ช่วยลดเวลาที่ใช้
-     "เชื่อมต่อกับ LINE" ได้บ้าง (ตัดขั้นตอนต่อเชื่อมเบื้องต้นออกไปแล้วล่วงหน้า) แม้จะช่วยได้ไม่เยอะมาก
-     เพราะเวลาส่วนใหญ่ยังขึ้นอยู่กับความเร็วเซิร์ฟเวอร์ของ LINE เองซึ่งเราควบคุมไม่ได้ -->
 <link rel="preconnect" href="https://static.line-scdn.net">
 <link rel="preconnect" href="https://access.line.me">
 <link rel="dns-prefetch" href="https://static.line-scdn.net">
@@ -21,15 +17,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
   padding:0;position:relative;isolation:isolate;background:#f5f5f5;transition:background .3s ease;}
-/* พื้นหลังนอกการ์ด: เปลี่ยนจากภาพเบลอ (page-bg.jpg) เป็น "สีพื้นเรียบตามระดับสมาชิก" แทน
-   (ตั้งค่าจริงผ่าน JS ในฟังก์ชัน renderMemberCard — ดูเมธอด mixWithWhite) ไม่ใช้ไฟล์ page-bg.jpg อีกต่อไป */
 .wrap{max-width:400px;margin:0 auto;position:relative;z-index:1;}
-/* พื้นหลังของกล่องการ์ดใหญ่: กลับมาใช้ member-bg.png อีกครั้ง (สลับกับโซนเมนูตามที่ขอ) — ตอนนี้
-   member-bg.png เป็นพื้นหลังของโซนบัตรสมาชิก ส่วนโซนเมนู (.lower-section) เปลี่ยนเป็นพื้นสีขาวแทน
-   ถ้ายังไม่มีไฟล์ member-bg.png จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) — เอา
-   border-radius/box-shadow/margin-bottom ออก + body padding เป็น 0 ด้านบน เพื่อให้พื้นหลังนี้เต็มขอบจอ
-   ทั้ง 4 ด้าน ไม่มีขอบขาว/ช่องว่างล้อมรอบอีกต่อไปตามที่ขอ (ยังคง overflow:hidden ไว้ เพราะ .lower-section
-   ยังต้องใช้ margin ติดลบบวกกับตัวนี้เพื่อบานให้เต็มขอบเหมือนเดิม) */
 .card{background:#fff url('member-bg.png') center/cover no-repeat;border-radius:0;box-shadow:none;width:100%;overflow:hidden;margin-bottom:0;min-height:100vh;}
 .mascot-left{position:absolute;left:4px;bottom:4px;width:68px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
 .mascot-right{position:absolute;right:4px;bottom:4px;width:56px;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
@@ -41,19 +29,10 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .hd h1{font-size:19px;font-weight:600;}
 .hd p{font-size:13px;opacity:.9;margin-top:4px;}
 .bd{padding:28px 24px;}
-/* padding-top ลดลงเหลือน้อยมาก เฉพาะตอนโชว์บัตรสมาชิกเท่านั้น (ดูเหตุผลใน showState()) — ทำให้ลดระยะ
-   บนสุดได้อีกโดยไม่ต้องพึ่ง margin ติดลบมากๆ บน #memberCardState ที่เคยเสี่ยงโดนตัดขอบ */
 #bdArea.member-view{padding-top:15px;}
-/* ==================== หน้าต้อนรับ — เต็มจอจริงๆ ไม่ใช่กล่องเล็กๆ ในการ์ด ====================
-   position:fixed คลุมทั้งจอ ไม่ขึ้นกับ .wrap/.card เลย — ใช้รูปพื้นหลังชื่อไฟล์คงที่ "welcome-bg.jpg"
-   เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub ไม่ต้องแก้โค้ด
-   ขนาดภาพแนะนำ: 1080x1920px (แนวตั้ง 9:16 มาตรฐานจอมือถือ) ไฟล์ไม่ควรเกิน ~500KB —
-   ไม่จำเป็นต้องตรงเป๊ะเพราะใช้ background-size:cover ให้เต็มจอเสมอไม่ว่าอัตราส่วนจอจะต่างกันแค่ไหน */
 #welcomeState{position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;display:flex;flex-direction:column;
   height:100vh;background:#000;}
-#welcomeState.sh{display:none;} /* กันปัญหา specificity: ตัวเลือกแบบ ID (#welcomeState) แรงกว่า .sh
-  เฉยๆ เสมอ ถ้าไม่มีบรรทัดนี้ ปุ่ม "เข้าร่วมเป็นสมาชิก" จะกดแล้วไม่ไปหน้าลงทะเบียนเพราะหน้าต้อนรับ
-  ไม่ยอมซ่อนจริงๆ (ยังคง display:flex ทับอยู่บนสุดเสมอ) */
+#welcomeState.sh{display:none;}
 .welcome-topbar{flex-shrink:0;background:linear-gradient(135deg,var(--gd),#66bb6a);
   padding:14px 20px;display:flex;align-items:center;gap:10px;color:#fff;}
 .welcome-topbar img{width:28px;height:35px;object-fit:contain;}
@@ -83,128 +62,78 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .ok{background:#e8f5e9;color:var(--gd);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none;}
 .ok.show{display:block;}
 .sh{display:none;}
-/* ==================== เฟรมรูปภาพ (แยกต่างหาก ไม่ปนกับบัตรสมาชิก) ==================== */
 .promo-frame,.photo-frame{border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.12);
   background-size:cover;background-position:center;}
-/* ลำดับการแสดงผลตอนนี้เรียงตาม DOM ปกติแล้ว (ไม่ต้องใช้ flex order อีกต่อไป):
-   บัตรสมาชิก (พื้นขาว) -> เมนู 8 ช่อง -> ภาพสินค้า -> โปรโมชั่น (ทั้ง 3 อย่างหลังอยู่บน member-bg.png
-   ภายใน .lower-section) ดูรายละเอียดโซนพื้นหลังที่ .lower-section ด้านล่าง */
 #memberCardState{display:flex;flex-direction:column;}
 .photo-frame{height:100px;background-image:url('card-header-bg.png');margin-bottom:14px;}
 .promo-frame{height:110px;background-image:url('promo-banner.png');margin:4px 0 0;}
-/* ==================== โซนล่าง: เมนู + ภาพสินค้า + โปรโมชั่น (พื้นสีขาว เฟรมโค้งมนแบบยกขอบ) ====================
-   สลับพื้นหลังกับโซนบัตรตามที่ขอ — ตอนนี้โซนนี้เป็นสีขาวล้วน (ไม่ใช้ member-bg.png แล้ว) ใช้ margin
-   ติดลบเท่ากับ padding ซ้าย/ขวา/ล่างของ .bd (24px/24px/28px) เพื่อดึงพื้นขาวให้เต็มขอบกล่องการ์ด ส่วน
-   margin-top เป็นค่าบวก (24px) เว้นระยะห่างจากบัตรสมาชิกด้านบน ให้เห็นพื้นหลัง member-bg.png ของ .card
-   โผล่มาคั่นระหว่างบัตรกับเฟรมนี้ ไม่ให้ติดกันจนเกินไปตามที่ขอ มุมบนโค้งมนใหญ่ (28px) ให้ดูเป็นเฟรมลอย
-   แบบภาพอ้างอิงที่แนบมา ส่วนมุมล่างปล่อย 0 เพราะ .card มี overflow:hidden + border-radius:20px ครอบ
-   อยู่อีกที จะโค้งตามขอบการ์ดให้อัตโนมัติอยู่แล้ว */
 .lower-section{background:#f5f5f5;margin:10px -24px -28px;
   padding:20px 24px 28px;border-radius:28px 28px 0 0;}
-/* Header เหนือกลุ่มเมนู ชิดซ้าย ตามที่ขอ — สีตัวอักษรตั้งเป็นสีเดียวกับสีระดับสมาชิก (tierColor) ผ่าน JS
-   ในฟังก์ชัน applyThemeColor_ (ไม่ได้ fix สีไว้ตรงนี้ เพราะต้องเปลี่ยนตามระดับสมาชิกแต่ละคน) */
 .menu-section-title{font-size:15px;font-weight:700;text-align:left;margin:0 0 -15px;}
-/* ไอคอนข้อมูล (ⓘ) ต่อท้ายหัวข้อ "สิทธิพิเศษสมาชิก" กดแล้วเปิด popup เงื่อนไขสิทธิพิเศษสมาชิก
-   (ดู PANEL_TITLES.terms + loadTermsPanel ในสคริปต์ด้านล่าง) */
 .tier-info-icon{font-size:13px;font-weight:600;margin-left:6px;cursor:pointer;opacity:1;
   display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;
   border-radius:50%;border:1.6px solid currentColor;vertical-align:middle;}
-/* กล่องสีเทา "ยอดใช้จ่ายสะสม" + "คะแนนสะสมของคุณ" ใต้หัวข้อ "สิทธิพิเศษสมาชิก" ตามภาพอ้างอิงที่ขอ —
-   margin-top ชดเชย margin-bottom ติดลบของ .menu-section-title ด้านบน (-15px) ให้มีระยะห่างที่พอดี
-   ไม่ทับหัวข้อ */
 .tier-progress-boxes{display:flex;gap:10px;margin:28px 0 0;}
 .tier-progress-box{flex:1;background:#fff;border-radius:14px;padding:12px 14px;
   box-shadow:0 1px 5px rgba(0,0,0,.07);border:1px solid #edeef0;}
 .tier-progress-label{font-size:12px;color:#8a8f98;margin-bottom:4px;}
 .tier-progress-value{font-size:18px;font-weight:800;color:#1a1a1a;}
-/* ข้อความ "สะสมอีก X บาทเพื่อเลื่อนขั้น" ใต้กล่องสีเทา ตอนนี้แสดงเป็นการ์ด + แถบความคืบหน้า (progress bar)
-   ตามภาพอ้างอิงที่ขอ: บรรทัดข้อความอยู่บนสุด แถบความคืบหน้าอยู่กลาง แล้วชื่อระดับปัจจุบัน/ระดับถัดไป
-   อยู่ล่างซ้าย-ขวาของแถบตามลำดับ สีของแถบ (ส่วนที่คืบหน้าแล้ว) และป้ายชื่อระดับปัจจุบันใช้ tierColor ของ
-   สมาชิกแต่ละคนโดยตรง (ตั้งค่าผ่าน JS ในฟังก์ชัน renderTierProgressHint_ ด้านล่าง ไม่ fix สีไว้ตรงนี้)
-   % ความคืบหน้าคำนวณจาก lifetimeSpend เทียบระหว่างเกณฑ์ขั้นต่ำของระดับปัจจุบันกับระดับถัดไปในชีต
-   Tier_Config — ดึงสดผ่าน action getTierConfig ใน Code.gs เหมือนเดิมทุกประการ ไม่ได้เปลี่ยน logic การ
-   คำนวณยอดคงเหลือ เปลี่ยนแค่หน้าตา */
 .tier-progress-card{margin-top:16px;background:linear-gradient(180deg,#ffffff,#fcfcfc);
   border-radius:18px;padding:18px 18px 16px;box-shadow:0 8px 22px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04);
   border:1px solid rgba(0,0,0,.045);}
 .tier-progress-text{font-size:13.5px;font-weight:700;color:#2a2a2a;margin-bottom:14px;
   display:flex;align-items:center;letter-spacing:.1px;}
-/* ไอคอนดวงดาว/ธง หน้าข้อความ — ให้ดูมีน้ำหนักและพรีเมียมขึ้นกว่าตัวหนังสือเปล่าๆ */
 .tier-progress-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
   margin-right:7px;font-size:13px;flex-shrink:0;}
-/* แถบความคืบหน้า — สูงขึ้นเล็กน้อย ปลายมนเต็ม (pill) พื้นหลังเป็นสีอ่อนของ tierColor ตัวแถบที่คืบหน้า
-   แล้วไล่เฉดจากอ่อนไปเข้ม (ไม่ใช่สีทึบเรียบๆ) พร้อม glow เรืองแสงบางๆ รอบแถบให้ดูมีมิติ/พรีเมียมขึ้น */
-.tier-progress-track{position:relative;height:11px;border-radius:999px;overflow:hidden;
+/* ⚡ เอา overflow:hidden ออกจากแทร็ก (16/8/69) — เดิม overflow:hidden ใช้กันมุมโค้งของแถบ .tier-progress-fill
+   ล้นออกนอกกรอบตอนกว้าง 100% แต่พอจะเพิ่มโลโก้บริษัท (.tier-progress-marker) เป็นหมุดบอกตำแหน่งปลายแถบ
+   ต้องให้โลโก้ (วงกลมใหญ่กว่าความสูงแทร็ก 11px) โผล่พ้นแทร็กได้ ถ้ายังมี overflow:hidden อยู่จะถูกตัดเหลือ
+   แค่เสี้ยวบางๆ ตรงกลางเท่านั้น — เอาออกแล้วไม่กระทบมุมโค้งของแถบเดิมเลย เพราะ .tier-progress-fill มี
+   border-radius:999px ของตัวเองอยู่แล้ว ปัดมุมตัวเองได้โดยไม่ต้องพึ่ง overflow:hidden ของพ่อแม่ */
+.tier-progress-track{position:relative;height:11px;border-radius:999px;
   box-shadow:inset 0 1px 3px rgba(0,0,0,.07);}
 .tier-progress-fill{position:relative;height:100%;border-radius:999px;transition:width .4s ease;}
-/* เส้นมันวาวบางๆ ครึ่งบนของแถบ (glossy highlight) — ทำให้แถบดูเป็นแท่งนูนมีมิติแทนที่จะแบนราบ */
 .tier-progress-fill::after{content:'';position:absolute;top:0;left:0;right:0;height:55%;
   background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0));
   border-radius:999px 999px 0 0;}
+/* ⚡ เพิ่มใหม่ (16/8/69) — โลโก้บริษัท (Spunky Food) เป็น "หมุด" บอกตำแหน่งปลายสุดของระยะทางที่คืบหน้า
+   ไปแล้วบนแถบ tier-progress-track ขนาดเล็ก วงกลม พื้นขาว มีเงาบางๆ ให้ดูลอยเด่นจากแถบสี ไม่ใช่ส่วนหนึ่ง
+   ของแถบเอง — ตำแหน่งแนวนอน (left) คำนวณเป็น % เดียวกับความกว้างของ .tier-progress-fill เป๊ะๆ (ส่งมาจาก
+   ตัวแปร percent ใน renderTierProgressHint_) จัดกึ่งกลางแนวตั้งของแทร็กด้วย top:50% + translateY(-50%)
+   และเลื่อนแนวนอนด้วย translateX(-50%) ให้จุดศูนย์กลางโลโก้ตรงกับตำแหน่ง % นั้นพอดี (ไม่ใช่ขอบโลโก้) */
+.tier-progress-marker{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;
+  transform:translate(-50%,-50%);object-fit:contain;background:#fff;padding:2px;
+  box-shadow:0 2px 6px rgba(0,0,0,.28);border:1.5px solid #fff;z-index:2;}
 .tier-progress-labels{display:flex;justify-content:space-between;align-items:center;margin-top:13px;}
-/* ป้ายชื่อระดับ — เปลี่ยนจากตัวหนังสือเปล่าๆ เป็น "ชิป" (pill badge) ระดับปัจจุบันเป็นชิปทึบสีเข้ม
-   มี glow บางๆ ใต้ชิป ส่วนระดับถัดไปเป็นชิปขอบบาง (outline) สีเทาอ่อน ให้ดูเหมือน UI ระดับสมาชิกของ
-   แอปพรีเมียมทั่วไป */
 .tier-chip{font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;letter-spacing:.4px;}
 .tier-chip-current{color:#fff;}
 .tier-chip-next{background:transparent;color:#9a9a9a;border:1.3px solid #e4e4e4;}
-/* Header "New & Update" แยก margin-bottom เป็นค่าของตัวเองต่างหาก (ไม่ใช้ -15px ร่วมกับ header แรกแล้ว)
-   เพราะค่าติดลบแบบเดิมไปดึงภาพ banner ด้านล่างขึ้นมาทับตัวหนังสือ ตั้งเป็นค่าบวกแทนกันภาพทับข้อความ
-   ปรับตัวเลขนี้ได้อิสระจาก header แรกเลย ไม่กระทบกัน */
 #newUpdateTitle{margin-bottom:10px;margin-top:20px;}
-/* ลดระยะห่างด้านบนของโซนบัตรสมาชิกลงอีก (แคบกว่าเดิม) ใช้ margin-top ติดลบเฉพาะสถานะนี้ ไม่ไปแตะ
-   .bd padding ที่ใช้ร่วมกับหน้าอื่น (สมัครสมาชิก/สำเร็จ/error) เพื่อไม่ให้กระทบหน้าจออื่น */
 #memberCardState{margin-top:0;}
-/* ==================== บัตรสมาชิก (กล่องแยกต่างหาก อยู่บนสุด บนพื้นสีขาวของ .bd) ==================== */
-/* ขยายบัตรให้ใหญ่ขึ้นเล็กน้อยตามที่ขอ ให้ดูสมดุลกับเฟรมโค้งมนของ .lower-section ด้านล่าง:
-   margin ซ้าย/ขวาติดลบ 8px ทำให้บัตรกว้างกว่ากรอบเดิมเล็กน้อย (ยังอยู่ในขอบเขต .card ที่ overflow:hidden
-   ปลอดภัย ไม่ถูกตัด) และลด aspect-ratio จาก 1.5 เป็น 1.4 ทำให้บัตรสูงขึ้นตามสัดส่วนด้วย */
 .mcard{border-radius:20px;overflow:hidden;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.18);
   background-size:cover;background-position:center;aspect-ratio:1.48;margin:0 -8px;}
-/* เดิมตรงนี้เป็นแถวแนวนอน (รูปโปรไฟล์/ชื่อ + คะแนน) — ตอนนี้เอาชื่อ (ทั้งชื่อไลน์และชื่อที่กรอกตอน
-   สมัคร) ออกทั้งหมดตามที่ขอ เหลือแค่ตัวเลขคะแนน + คำว่า "คะแนน" กำกับด้านล่าง เรียงในแนวตั้งแทน
-   ใช้ transform เลื่อนกล่องทั้งหมดขึ้นด้านบนประมาณ 1 ซม. (~38px ที่ความละเอียดจอมือถือทั่วไป) จาก
-   ตำแหน่งเดิม */
-/* คอมเมนต์เดิม: 1cm≈38px ที่ความละเอียดจอมือถือทั่วไป (อ้างอิงใช้คำนวณระยะ 0.5cm ของ .mcard-multiplier
-   ด้านล่าง) — ตัวกล่องคำทักทายเดิม (.mcard-top) ย้ายออกไปไว้เหนือบัตรแล้ว ดู .member-greeting-bar */
-/* ย้ายคำทักทาย "สวัสดี, ชื่อไลน์" + "สมาชิกเอมโอชา" ออกมาไว้เหนือบัตร (.mcard) แทนที่จะอยู่ในตัวบัตร
-   ตามภาพอ้างอิงที่ขอ (มีโลโก้อยู่ข้างซ้ายด้วย) — ไม่ได้อยู่บนพื้นรูปภาพบัตรอีกต่อไปแล้ว จึงใช้สีเข้มธรรมดา
-   แทน text-shadow สีขาวแบบเดิม (ตอนอยู่ในบัตรต้องกันพื้นหลังรูปกลืนกับตัวอักษร ตอนนี้ไม่จำเป็นแล้ว) */
 .member-greeting-bar{display:flex;align-items:center;gap:10px;margin:0 0 14px;}
 .member-greeting-logo{width:44px;height:44px;object-fit:contain;flex-shrink:0;border-radius:10px;}
 .mcard-greeting-name{font-size:18px;font-weight:800;line-height:1.25;color:var(--td);}
 .mcard-greeting-sub{font-size:13px;font-weight:500;color:var(--g6);margin-top:1px;}
 .mcard-body{position:absolute;bottom:16px;right:16px;text-align:right;z-index:1;}
-/* รหัสสมาชิก — มุมล่างซ้ายของบัตร (ตรงข้ามกับ .mcard-body ที่อยู่มุมล่างขวา) ตามที่ขอ ไม่ตั้งสีไว้ตรงนี้
-   เพราะรับสีตัวอักษรมาจาก #mcard ที่ครอบอยู่โดยอัตโนมัติ (renderMemberCard ตั้ง mcardEl.style.color =
-   textColor ตาม Tier_Config อยู่แล้ว) จึงเปลี่ยนสีตามระดับสมาชิกไปเองโดยไม่ต้องเซ็ตซ้ำ */
 .mcard-code{position:absolute;bottom:16px;left:16px;z-index:1;font-size:11px;letter-spacing:.3px;
   opacity:.95;text-shadow:0 1px 4px rgba(0,0,0,.55);}
-/* เลื่อนข้อความสิทธิพิเศษ (เช่น "รับคะแนน x1.5 / x2 ทุกการสั่งซื้อ" สำหรับบัตร love/vip) ขึ้นด้านบน
-   ครึ่ง ซม. (~19px คำนวณจากอัตราส่วนเดียวกับคอมเมนต์ 1cm≈38px ด้านบนใน .mcard-top) ตามที่ขอ — บัตร
-   start/fan ไม่มีข้อความนี้อยู่แล้ว (mult ไม่เกิน 1) จึงไม่ได้รับผลกระทบ */
 .mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;
   text-shadow:0 1px 4px rgba(0,0,0,.55);transform:translateY(-19px);}
-/* ปุ่ม "สั่งซื้อสินค้า" ใต้บัตรสมาชิกเลย ให้เห็นชัด กดแล้วไปหน้าสั่งซื้อ (LIFF อีกตัว) ได้ทันทีตามที่ขอ —
-   ใช้สีเขียวเข้ม (--gm) เด่นกว่าไอคอนในเมนู 8 ช่องด้านล่าง เพราะเป็น action หลักที่อยากให้ลูกค้ากดบ่อยที่สุด */
 .shop-cta-btn{display:block;width:100%;height:48px;line-height:48px;text-align:center;
   border-radius:12px;background:var(--gm);color:#fff;font-size:15px;font-weight:700;
   text-decoration:none;margin:14px 0 0;box-shadow:0 4px 14px rgba(46,125,50,.25);}
 .shop-cta-btn:active{opacity:.85;}
-/* ==================== วันเกิด: เลือกวัน/เดือน/ปี แยก 3 ช่อง (แทน input type=date ที่หน้าตาไม่นิ่งข้ามอุปกรณ์) ==================== */
 .date-select-row{display:flex;gap:8px;}
 .date-select-row select{flex:1;height:46px;padding:0 8px;border:1.5px solid #eee;border-radius:10px;
   font-size:14px;font-family:'Sarabun',sans-serif;background:#fff;color:var(--td);}
 .date-select-row select:focus{outline:none;border-color:var(--gm);}
-/* ==================== เมนู 8 ช่อง (แถวละ 4 ไอคอน ตามที่ขอ — เดิมแถวละ 3) ==================== */
 .menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px;padding:18px 8px 0;}
 .menu-item{display:flex;flex-direction:column;align-items:center;gap:8px;padding:2px 0;
   border-radius:12px;background:transparent !important;box-shadow:none;cursor:pointer;text-decoration:none;
   color:#123d26;border:0;transition:transform .15s;}
 .menu-item:active{transform:scale(.96);background:transparent !important;}
-/* ไอคอนทุกแบบ (emoji/SVG/รูปโลโก้ Facebook-TikTok) บังคับให้อยู่ในกล่องขนาดเท่ากันเป๊ะ (20x20) และ
-   จัดกึ่งกลางแนวตั้งแบบเดียวกันหมด — กันปัญหาแถวไอคอนดูเยื้องไม่เป็นระเบียบ (เดิมรูป Facebook/TikTok
-   ใหญ่กว่า emoji/SVG ตัวอื่นอยู่ที่ 26px ทำให้แถวดูไม่เท่ากัน) */
 .menu-item .icon,.panel-menu-icon{width:60px;height:60px;display:inline-flex;align-items:center;justify-content:center;
   flex:0 0 auto;border-radius:50%;overflow:hidden;background:transparent;color:#20384b;box-shadow:none;}
 .menu-item .icon img,.panel-menu-icon img{width:100%;height:100%;display:block;object-fit:cover;}
@@ -212,15 +141,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
   stroke-linecap:round;stroke-linejoin:round;}
 .menu-item .icon svg .blue-fill,.panel-hd h2 .panel-menu-icon svg .blue-fill{fill:#9ed6f5;}
 .menu-item .icon svg .blue-stroke,.panel-hd h2 .panel-menu-icon svg .blue-stroke{stroke:#4b9dcd;}
-/* จุดสำคัญของข้อนี้: บังคับให้ "ตัวอักษร" (ไม่ใช่ไอคอน) อยู่ระดับเดียวกันทุกช่องเป๊ะๆ โดยจองพื้นที่สูง
-   คงที่ไว้เท่ากับ 2 บรรทัดเสมอ (min-height) แล้วเริ่มบรรทัดแรกชิดบนด้วย align-items:flex-start —
-   ทำให้บรรทัดแรกของทุกช่องเริ่มที่ตำแหน่งเดียวกันเป๊ะ ไม่ว่าป้ายชื่อจะยาว 1 หรือ 2 บรรทัดก็ตาม (ต่างจาก
-   ไอคอนที่ต่างชนิดกัน — emoji/SVG/รูปโลโก้แบรนด์ — ซึ่งมีเส้นขอบภาพในตัวเองไม่เท่ากันเป๊ะ ทำให้จัดให้
-   ระดับเดียวกัน 100% ไม่ได้จริงๆ จึงเน้นที่ตัวอักษรแทนตามที่ขอ) */
 .menu-item .txt{font-size:13px;font-weight:800;text-align:center;line-height:1.6;min-height:34px;
   display:flex;align-items:flex-start;justify-content:center;color:inherit;
   text-shadow:0 1px 2px rgba(255,255,255,.95);letter-spacing:.05px;}
-/* ==================== แผงข้อมูลย่อย (privileges/info/history/coupons) ==================== */
 .panel-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:flex-end;
   justify-content:center;}
 .panel-overlay.sh{display:none;}
@@ -249,20 +172,12 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .terms-content p{font-size:13.5px;line-height:1.6;color:var(--g8);margin:0 0 10px;}
 .info-row span:first-child{color:var(--g6);}
 .info-row span:last-child{font-weight:600;}
-/* ==================== ป็อปอัพแจ้งเตือนแบบกำหนดเอง (แทน alert() เดิมของเบราว์เซอร์) ====================
-   alert() ของเบราว์เซอร์เดิมโชว์กล่องระบบเทาๆ พร้อมชื่อโดเมนขึ้นต้น ("toinatadee.github.io says") ดูไม่
-   สวยงาม/ไม่ตรงธีมแอปเลย — เปลี่ยนมาใช้ป็อปอัพที่ออกแบบเองแทน (การ์ดโค้งมนกลางจอ ไอคอนวงกลมสี + ข้อความ
-   + ปุ่มตกลง) ครอบคลุมทุกหน้า/ทุกจุดที่เคยเรียก alert() โดยอัตโนมัติ เพราะวิธีที่ใช้คือ "แทนที่"
-   window.alert ทั้งฟังก์ชันเลย (ดู showCustomAlert_/closeCustomAlert_ + window.alert = ... ท้ายสคริปต์)
-   ไม่ต้องไล่แก้ทีละจุดที่เรียก alert() และ alert() ตัวใหม่ที่จะเพิ่มในอนาคตก็ได้ป็อปอัพนี้ไปโดยอัตโนมัติด้วย */
 .custom-alert-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;
   align-items:center;justify-content:center;padding:24px;}
 .custom-alert-overlay.sh{display:none;}
 .custom-alert-box{background:#fff;border-radius:20px;max-width:320px;width:100%;padding:28px 22px 22px;
   text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);animation:alertPop .22s cubic-bezier(.34,1.56,.64,1);}
 @keyframes alertPop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
-/* สีพื้นหลังไอคอนเปลี่ยนตามประเภทข้อความ (สำเร็จ/ผิดพลาด/ทั่วไป) — ดูฟังก์ชัน classifyAlert_ ว่าตัดสิน
-   ประเภทจากคำในข้อความอย่างไร (ไม่ได้ผูกกับ tierColor เพราะป็อปอัพนี้ใช้ทั่วทั้งแอป ไม่ใช่แค่หน้าบัตรสมาชิก) */
 .custom-alert-icon{width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:flex;
   align-items:center;justify-content:center;font-size:28px;}
 .custom-alert-icon.success{background:#e8f5e9;}
@@ -273,7 +188,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 </style>
 </head>
 <body>
-<!-- Reusable line icons: used by the menu and its matching detail-sheet title. -->
 <svg class="icon-defs" aria-hidden="true" focusable="false">
   <symbol id="icon-points" viewBox="0 0 48 48"><ellipse cx="19" cy="12" rx="11" ry="4.5"/><path d="M8 12v17c0 3 4.9 5.5 11 5.5 2.1 0 4-.3 5.6-.9M8 19c0 3 4.9 5.5 11 5.5 2 0 3.9-.3 5.4-.8M8 26c0 3 4.9 5.5 11 5.5 1.5 0 3-.2 4.2-.6"/><circle cx="33.5" cy="29.5" r="10.5"/><path d="m33.5 23.4 2.1 4.2 4.6.7-3.3 3.2.8 4.6-4.2-2.2-4.1 2.2.8-4.6-3.4-3.2 4.7-.7zM42 9v6m-3-3h6M5.5 30v6m-3-3h6"/></symbol>
   <symbol id="icon-rewards" viewBox="0 0 48 48"><path d="M8 18h25v19H8zM6 14h29v6H6zM20.5 14v23M20.5 14c-6 0-9.5-1.6-9.5-5.2 0-2 1.5-3.3 3.5-3.3 3.4 0 6 5.3 6 8.5M20.5 14c6 0 9.5-1.6 9.5-5.2 0-2-1.5-3.3-3.5-3.3-3.4 0-6 5.3-6 8.5"/><path d="M31 33.5a10.5 10.5 0 0 0 13.7-.3M44.5 30l.2 3.3-3.3.2M43 39a10.5 10.5 0 0 0-13.7.3M29.5 42l-.2-3.3 3.3-.2"/></symbol>
@@ -346,7 +260,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
           <div class="mcard-multiplier" id="mcardMultiplier"></div>
         </div>
       </div>
-      <!-- ปุ่มสั่งซื้อสินค้า — ลิงก์ตรงไปหน้าสั่งซื้อ (LIFF ของ toinatadee/Order) ตามที่ขอ -->
       <a class="shop-cta-btn" id="shopCtaBtn" href="https://liff.line.me/2010892131-3XYQXNzq">🛒 สั่งซื้อสินค้า</a>
       <div class="lower-section">
         <h2 class="menu-section-title" id="menuSectionTitle">สิทธิพิเศษสมาชิก<span class="tier-info-icon" onclick="openPanel('terms')" title="เงื่อนไขสิทธิพิเศษสมาชิก">ⓘ</span></h2>
@@ -401,7 +314,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
   </div>
 </div>
 </div>
-<!-- ==================== แผงข้อมูลย่อย (เปิดจากเมนู 4 ช่องแรก) ==================== -->
 <div class="panel-overlay sh" id="panelOverlay" onclick="if(event.target===this)closePanel()">
   <div class="panel-sheet">
     <div class="panel-hd">
@@ -411,7 +323,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
     <div id="panelBody"></div>
   </div>
 </div>
-<!-- ==================== ป็อปอัพแจ้งเตือนแบบกำหนดเอง (แทนที่ window.alert เดิม) ==================== -->
 <div class="custom-alert-overlay sh" id="customAlertOverlay" onclick="if(event.target===this)closeCustomAlert_()">
   <div class="custom-alert-box">
     <div class="custom-alert-icon" id="customAlertIcon"></div>
@@ -421,27 +332,17 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 </div>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-// ⚠️ ใส่ LIFF ID ของตัวเองตรงนี้
 var LIFF_ID = '2010892131-hMnmdrmH';
-// ⚠️ ใส่ Apps Script Web App URL ตรงนี้ (ลงท้ายด้วย /exec)
-// หน้านี้จะยิง fetch() ไปที่ URL นี้แทนการใช้ google.script.run (ซึ่งใช้ได้เฉพาะหน้าที่ Apps Script เสิร์ฟเองเท่านั้น)
 var API_URL = 'https://script.google.com/macros/s/AKfycbzfhB83ccV-gnji-A_-rNnGmM7K1O4XnV9w6NBcTRm_d_fN_raU6BjBwyOIWz-SIeL7Bw/exec';
 var currentIdToken = null;
 var currentLinePicture = '';
-var currentLineName = ''; // ชื่อไลน์ (จาก liff.getDecodedIDToken().name) ใช้แสดง "สวัสดี, ชื่อไลน์" บนบัตรสมาชิก
-var brandLogoDataUrl = ''; // เก็บ src ของโลโก้ (ตัวเดียวกับที่ใช้ใน header) ไว้ใช้ซ้ำในบัตรสมาชิก
+var currentLineName = '';
+var brandLogoDataUrl = '';
 function showState(id){
   ['loadingState','welcomeState','registerState','memberCardState','successState','errorState'].forEach(function(s){
     document.getElementById(s).classList.toggle('sh', s !== id);
   });
-  // ซ่อนหัวเขียว "เข้าร่วมเป็นสมาชิก" (พร้อมรูปโปรไฟล์/มาสคอต) หลังจากเป็นสมาชิกแล้ว — ไม่จำเป็นอีกต่อไป
-  // เพราะบัตรสมาชิกด้านล่างมีรูปโปรไฟล์และข้อมูลครบอยู่แล้ว โชว์ซ้ำจะดูรกเกินไป
   document.getElementById('hd').classList.toggle('sh', id === 'memberCardState');
-  // เพิ่มคลาส member-view ให้ .bd เฉพาะตอนโชว์บัตรสมาชิกเท่านั้น — ใช้ลด padding-top ของ .bd เฉพาะจุด
-  // นี้แยกจากหน้าอื่น (สมัคร/สำเร็จ/error ที่ยังต้องการ padding 28px เท่าเดิม) เพราะก่อนหน้านี้พยายามลด
-  // ระยะบนด้วย margin-top ติดลบบน #memberCardState อย่างเดียว แต่ติดเพดานที่ -28px (เท่ากับ padding-top
-  // เดิมของ .bd พอดี) ถ้าติดลบมากกว่านี้จะดันแถวโลโก้ทะลุขึ้นไปโดน overflow:hidden ตัดขอบ วิธีนี้ลด
-  // padding ที่ต้นตอแทน จะได้ไม่ต้องพึ่ง margin ติดลบมากเกินจำเป็นอีกต่อไป ปลอดภัยกว่า
   document.getElementById('bdArea').classList.toggle('member-view', id === 'memberCardState');
 }
 function showErrorState(msg){
@@ -449,19 +350,12 @@ function showErrorState(msg){
   showState('errorState');
 }
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-// ==================== ป็อปอัพแจ้งเตือนแบบกำหนดเอง (แทน window.alert เดิม) ====================
-// ตัดสินใจว่าข้อความควรโชว์เป็นโทนสำเร็จ/ผิดพลาด/ทั่วไป จากคำสำคัญในข้อความเอง (ไม่ต้องแก้จุดที่เรียก
-// alert() เดิมเลยสักที่เดียว) — เรียงลำดับเช็ค "ผิดพลาด" ก่อน "สำเร็จ" เพราะข้อความ error บางอันอาจมีคำว่า
-// "ไม่สำเร็จ" ปนอยู่ (มีคำว่า "สำเร็จ" อยู่ในนั้นด้วย) ต้องกันไม่ให้ตีความผิดเป็นโทนสำเร็จ
 function classifyAlert_(message){
   var m = String(message);
   if (/ผิดพลาด|error|ไม่สำเร็จ|failed/i.test(m)) return 'error';
   if (/สำเร็จ|ยินดี/.test(m)) return 'success';
   return 'info';
 }
-// ตัดอิโมจิที่มักพิมพ์นำหน้าข้อความ alert() เดิมออกจากบรรทัดแรก (เช่น "🎉 แลก...") เพราะป็อปอัพใหม่มี
-// ไอคอนวงกลมของตัวเองอยู่แล้วด้านบน โชว์ซ้ำสองที่จะดูรก — ไม่ใช้ regex แบบ \p{Emoji} เพราะเบราว์เซอร์ใน
-// แอป LINE (โดยเฉพาะ Android เก่าๆ) บางตัวยังไม่รองรับ Unicode property escapes จึงเทียบจากลิสต์ตรงๆ แทน
 var ALERT_LEADING_ICONS_ = ['🎉','⚠️','✅','ℹ️','❌','🔔','📦'];
 function stripLeadingIcon_(text){
   for (var i = 0; i < ALERT_LEADING_ICONS_.length; i++) {
@@ -482,17 +376,7 @@ function showCustomAlert_(message){
 function closeCustomAlert_(){
   document.getElementById('customAlertOverlay').classList.add('sh');
 }
-// แทนที่ window.alert ทั้งฟังก์ชันเลย — ทุกจุดในไฟล์นี้ที่เรียก alert(...) (ทั้งที่มีอยู่แล้วและที่จะ
-// เพิ่มในอนาคต) จะได้ป็อปอัพนี้ไปโดยอัตโนมัติ ไม่ต้องไล่แก้ทีละจุด
 window.alert = function(message){ showCustomAlert_(message); };
-// เรียก Apps Script ผ่าน fetch() แบบ GET เสมอ (แม้แต่ action ที่เปลี่ยนแปลงข้อมูลอย่าง registerMember)
-// เพราะ Apps Script ตอบกลับด้วย HTTP redirect เสมอ ซึ่งเบราว์เซอร์ในแอป LINE (โดยเฉพาะ iOS)
-// มักบล็อก redirect ของ POST เนื่องจากกฎ CORS เข้มงวดกว่า — GET ไม่มีปัญหานี้ เสถียรกว่ามาก
-// เรียก Apps Script — พร้อมระบบ "ลองใหม่อัตโนมัติ" เมื่อเจอปัญหาชั่วคราว
-// ที่มา: Apps Script บางครั้งตอบกลับมาเป็นหน้า HTML ของ Google (หน้า login/error) แทนที่จะเป็น JSON
-// โดยไม่มีสาเหตุชัดเจน แล้วพอลองใหม่อีกครั้งก็หายเอง — เดิมระบบจะโยน error ดิบๆ ที่มีโค้ด HTML เต็มไป
-// หมดขึ้นหน้าจอทันที ลูกค้าอ่านไม่รู้เรื่องและต้องปิดแอปเปิดใหม่เอง จึงเปลี่ยนเป็นลองใหม่ให้เงียบๆ
-// สูงสุด 3 ครั้ง (เว้นระยะห่างขึ้นเรื่อยๆ) ก่อนจะยอมแพ้แล้วค่อยแจ้ง error แบบเข้าใจง่ายแทน
 function callApi(action, payload, _attempt){
   payload = payload || {};
   payload.action = action;
@@ -506,18 +390,15 @@ function callApi(action, payload, _attempt){
       try {
         return JSON.parse(text);
       } catch (parseErr) {
-        // ไม่ใช่ JSON = เจอปัญหาชั่วคราวของ Apps Script — ลองใหม่เงียบๆ ถ้ายังไม่ครบ 3 ครั้ง
         if (attempt < MAX_ATTEMPTS) {
           return new Promise(function(resolve){
             setTimeout(function(){ resolve(callApi(action, payload, attempt + 1)); }, attempt * 800);
           });
         }
-        // ลองครบ 3 ครั้งแล้วยังไม่ได้ — แจ้งข้อความที่ลูกค้าเข้าใจได้ (ไม่โชว์โค้ด HTML ดิบให้งง)
         throw new Error('ระบบไม่ตอบสนองชั่วคราว กรุณาลองใหม่อีกครั้งในสักครู่');
       }
     });
   }).catch(function(networkErr){
-    // เน็ตหลุด/ต่อไม่ติดชั่วคราว ก็ลองใหม่เหมือนกัน
     if (attempt < MAX_ATTEMPTS && networkErr.message.indexOf('ระบบไม่ตอบสนอง') === -1) {
       return new Promise(function(resolve){
         setTimeout(function(){ resolve(callApi(action, payload, attempt + 1)); }, attempt * 800);
@@ -526,8 +407,8 @@ function callApi(action, payload, _attempt){
     throw networkErr;
   });
 }
-var lastMemberData = null; // แคชข้อมูลสมาชิกล่าสุดที่ดึงมาได้ (จาก checkStatus) — ใช้ซ้ำได้ที่อื่นแทนการ
-var lastMemberDataTime = 0; // ยิง API ใหม่ทุกครั้ง โดยเฉพาะเมนู "ข้อมูลสมาชิก" ที่เพิ่งดึงมาหมาดๆ ตอนเปิดหน้าเลย
+var lastMemberData = null;
+var lastMemberDataTime = 0;
 function checkStatus(){
   callApi('checkMemberStatus', { idToken: currentIdToken })
     .then(function(r){
@@ -538,75 +419,40 @@ function checkStatus(){
         renderMemberCard(r.member);
         showState('memberCardState');
       } else {
-        showState('welcomeState'); // ยังไม่เป็นสมาชิก — โชว์หน้าต้อนรับก่อน กดปุ่มแล้วค่อยไปฟอร์มสมัคร
+        showState('welcomeState');
       }
     })
     .catch(function(e){ showErrorState('เรียก API ไม่สำเร็จ: ' + e.message); });
 }
-// วาดบัตรสมาชิกตามข้อมูลที่ได้จาก checkMemberStatus:
-// - รูปภาพสินค้า (.photo-frame) เป็นกล่องแยกต่างหากอยู่คนละกล่องกับบัตร ไม่ปนกันเลย ไม่ต้องเปลี่ยนสีอะไร
-// - บัตรสมาชิก (.mcard) ทั้งกล่องเป็นสีทึบเข้มของระดับ (ไม่ใช่สีจางๆ ทับรูป) ให้เด่นชัดเจนว่าอยู่ระดับไหน
-// - สีตัวอักษรทั้งกล่อง (ชื่อ/คะแนน) ใช้ tierTextColor ตามระดับ (กำหนดค่าไว้ใน TIER_CONFIG ฝั่ง Code.gs
-//   แก้สีตรงนั้นได้เลยถ้าอยากปรับทีหลัง)
 function renderMemberCard(member){
   var baseColor = member.tierColor || '#2e7d32';
   var textColor = member.tierTextColor || '#ffffff';
   var tierKey = member.tierKey || 'start';
-  // ใช้ภาพบัตรพรีเมียมจริงเป็นพื้นหลัง (แทนไล่สี CSS แบบเดิม) — ไฟล์ชื่อคงที่ตามระดับ เปลี่ยนภาพได้ตลอด
-  // แค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน GitHub (member-card-start.png / -silver.png / -gold.png / -platinum.png)
-  var CARD_IMAGE_VERSION = '2'; // ทุกครั้งที่เปลี่ยนภาพบัตรใหม่ ให้เพิ่มเลขนี้ขึ้นทีละ 1 เพื่อล้างแคชภาพ
+  var CARD_IMAGE_VERSION = '2';
   var mcardEl = document.getElementById('mcard');
   var cardImageMap = { start: 'member-card-start.png', fan: 'member-card-silver.png', love: 'member-card-gold.png', vip: 'member-card-platinum.png' };
   mcardEl.style.backgroundImage = "url('" + (cardImageMap[tierKey] || cardImageMap.start) + "?v=" + CARD_IMAGE_VERSION + "')";
   mcardEl.style.color = textColor;
-  // ปุ่ม "สั่งซื้อสินค้า" ใต้บัตร — ใช้สีระดับสมาชิก (tierColor) เป็นพื้นหลังตรงๆ เหมือนกับที่ header
-  // "สิทธิพิเศษสมาชิก" ใช้ (ดู applyThemeColor_ ด้านล่าง) ให้เข้าธีมเดียวกับบัตรของแต่ละคนตามที่ขอ ส่วนสี
-  // ตัวอักษรใช้ tierTextColor คู่กัน (ตัวเดียวกับที่ใช้บนบัตร) เพื่อให้อ่านง่ายพอกับพื้นหลังนั้นเสมอ
   var shopBtnEl = document.getElementById('shopCtaBtn');
   if (shopBtnEl) { shopBtnEl.style.background = baseColor; shopBtnEl.style.color = textColor; }
-  // พื้นหลังทั้งกล่อง .card (พื้นหลังใหญ่ที่ครอบทั้งหน้า ไม่ใช่แค่ตัวบัตร) ก็เปลี่ยนตามระดับสมาชิกด้วย
-  // ตามที่ขอ — ไฟล์ชื่อคงที่ตามระดับเหมือนกับภาพบัตร เปลี่ยนภาพได้ตลอดแค่เอาไฟล์ใหม่ไปทับชื่อเดิมบน
-  // GitHub (member-bg-start.png / -silver.png / -gold.png / -platinum.png) ถ้ายังไม่มีไฟล์ของระดับไหน
-  // จะเห็นพื้นสีขาวเหมือนเดิม (ไม่พังอะไร แค่ยังไม่มีรูปให้โชว์) ใช้เลขเวอร์ชันเดียวกับภาพบัตรด้านบน
   var cardEl = document.querySelector('.card');
   var bgImageMap = { start: 'member-bg-start.png', fan: 'member-bg-silver.png', love: 'member-bg-gold.png', vip: 'member-bg-platinum.png' };
   if (cardEl) cardEl.style.backgroundImage = "url('" + (bgImageMap[tierKey] || 'member-bg.png') + "?v=" + CARD_IMAGE_VERSION + "')";
-  // อัปเดตไอคอนเมนู 8 ช่องให้เป็นสีตามระดับสมาชิกด้วย (ไฟล์ที่ผู้ใช้จะเพิ่มเองใน GitHub ตามระดับ) — ตอน
-  // หน้าเว็บเพิ่งโหลด ยังไม่รู้ระดับสมาชิกจริง เลยใช้ไอคอนชุด "start" ไปก่อนเป็นค่าเริ่มต้น พอรู้ระดับจริง
-  // จากตรงนี้แล้ว จึงอัปเดต currentTierSuffix แล้วสั่งวาดไอคอนใหม่อีกรอบให้ตรงกับระดับจริง
-  // ⚡ วาดใหม่ (query DOM + สร้าง element ใหม่ทั้ง 8 ช่อง) เฉพาะตอนที่ระดับเปลี่ยนจริงๆ เท่านั้น — เดิมสั่ง
-  // วาดใหม่ทุกครั้งที่ renderMemberCard() ทำงาน แม้ระดับจะเหมือนเดิมเป๊ะก็ตาม (เช่นตอนซิงค์ข้อมูลเบื้องหลัง
-  // หลังแลกคะแนนที่เพิ่งแก้ไปให้เรียก checkStatus() บ่อยขึ้น) ผลลัพธ์ที่ได้ (ไอคอนที่โชว์) เหมือนเดิมทุก
-  // ประการ แค่ข้ามงานที่ไม่จำเป็นออกไปเท่านั้น
   var newTierSuffix_ = TIER_FILE_SUFFIX_[tierKey] || 'start';
   if (newTierSuffix_ !== currentTierSuffix) {
     currentTierSuffix = newTierSuffix_;
     decorateMemberMenu();
   }
-  // รหัสสมาชิก มุมล่างซ้ายของบัตร (ตัวเลขนี้มาจาก checkMemberStatus ฝั่ง Code.gs) — สมาชิกที่สมัครก่อน
-  // ฟีเจอร์นี้จะยังไม่มีรหัส (ช่องว่าง) จนกว่าจะมีการ backfill ย้อนหลังในชีต ไม่ได้ทำอัตโนมัติตรงนี้
   var codeEl = document.getElementById('mcardCode');
   if (codeEl) codeEl.textContent = member.memberCode || '';
-  // เดิมตรงนี้โชว์รูปโปรไฟล์ LINE (mcardAvatar) แล้วเปลี่ยนเป็นตัวเลขคะแนนสะสม — ตอนนี้เอาออกจากบัตรแล้ว
-  // ตามที่ขอ (คะแนนย้ายไปโชว์ในกล่องสีเทาด้านล่างแทน) เปลี่ยนมาโชว์คำทักทาย "สวัสดี, ชื่อไลน์" แทน
   document.getElementById('mcardGreetingName').textContent = 'สวัสดี, ' + (currentLineName || '');
   var mult = parseFloat(member.pointMultiplier) || 1;
   document.getElementById('mcardMultiplier').textContent = mult > 1 ? ('รับคะแนน x' + mult + ' ทุกการสั่งซื้อ 🌟') : '';
-  // กล่องสีเทา "ยอดใช้จ่ายสะสม" + "คะแนนสะสมของคุณ" ใต้หัวข้อ "สิทธิพิเศษสมาชิก" (ตามภาพอ้างอิงที่ขอ)
   document.getElementById('tierSpendValue').textContent = (member.lifetimeSpend || 0).toLocaleString('th-TH') + ' บาท';
   document.getElementById('tierPointsValue').textContent = (member.points || 0).toLocaleString('th-TH') + ' คะแนน';
   renderTierProgressHint_(member);
-  // พื้นหลังทั้งหน้า (นอกกล่องการ์ด) + เมนู 8 ช่องด้านล่าง — ทาสีตาม tierColor ที่ตั้งไว้ในชีต Tier_Config
-  // โดยตรง (แก้สีในชีต แล้วจะเปลี่ยนตรงนี้ทันที) ไอคอน SVG อย่าง "คูปอง" ก็ใช้ currentColor จึงเปลี่ยนสี
-  // ตามธีมนี้ไปโดยอัตโนมัติเช่นกัน ไม่ต้องเซ็ตสีแยกต่างหาก
-  // หมายเหตุ: ก่อนหน้านี้เคยลองอ่านสีเฉลี่ยจากรูปภาพบัตรจริงผ่าน canvas มาทับสีจากชีตอีกที แต่ทำให้แก้สี
-  // ในชีตแล้วไม่เห็นผล (เพราะรูปภาพไม่เปลี่ยน สีที่อ่านได้เลยเหมือนเดิมทุกครั้ง) เอาออกแล้วตามที่แจ้ง —
-  // ตอนนี้สีเมนูอ้างอิงจากค่าในชีตเพียงอย่างเดียวเท่านั้น
   applyThemeColor_(baseColor);
 }
-// ใช้สี (hex) ที่ส่งมาปรับพื้นหลังหน้าเว็บ + สีเมนู 8 ช่องให้เข้าธีมเดียวกัน
-// หมายเหตุ: เพิ่มความเข้มของสีพื้นหลังเมนูจาก .18 เป็น .45 (เดิมผสมสีขาวเยอะเกินไปจนแทบมองไม่เห็นว่า
-// เปลี่ยนสีจริง โดยเฉพาะกับสีโทนเข้ม/สีน้ำตาลอย่างระดับ Platinum) ให้เห็นสีของระดับสมาชิกชัดเจนขึ้น
 function applyThemeColor_(baseColor){
   document.body.style.background = mixWithWhite(baseColor, .12);
   var menuTextColor = shadeColor(baseColor, -10);
@@ -615,14 +461,10 @@ function applyThemeColor_(baseColor){
     el.style.background = menuBg;
     el.style.color = menuTextColor;
   });
-  // Header "สิทธิพิเศษสมาชิก" เหนือกลุ่มเมนู + Header "New & Update" เหนือภาพสินค้า — ใช้สีเดียวกับ
-  // tierColor ตรงๆ (สีระดับสมาชิกของแต่ละคน) ตามที่ขอ ไม่ผสมขาว/เข้มเหมือนสีเมนู เพื่อให้เห็นสีระดับ
-  // สมาชิกชัดเจนตรงตัว ทั้งสอง header ใช้คลาสเดียวกัน (.menu-section-title) จึงตั้งสีพร้อมกันได้เลย
   document.querySelectorAll('.menu-section-title').forEach(function(el){
     el.style.color = baseColor;
   });
 }
-// แปลงสี hex เป็น rgba() พร้อมกำหนดความโปร่งใส — ใช้ทำ overlay สีทับรูปพื้นหลังส่วนหัวบัตร
 function hexToRgba(hex, alpha){
   hex = hex.replace('#', '');
   if (hex.length === 3) hex = hex.split('').map(function(c){ return c + c; }).join('');
@@ -630,8 +472,6 @@ function hexToRgba(hex, alpha){
   var r = (num >> 16) & 0xFF, g = (num >> 8) & 0xFF, b = num & 0xFF;
   return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
 }
-// ผสมสี hex กับสีขาวตามสัดส่วน (ratio 0-1 ยิ่งน้อยยิ่งอ่อน) ได้สีทึบพาสเทลอ่อนๆ ของสีนั้น — ใช้ทำพื้นหลัง
-// ทั้งหน้าให้เป็นสีอ่อนๆ ตามระดับสมาชิก แทนสีเทาเรียบๆ เดิม โดยยังคงเป็นสีทึบ (ไม่ใช่โปร่งแสง) ให้ดูสะอาดตา
 function mixWithWhite(hex, ratio){
   hex = hex.replace('#', '');
   if (hex.length === 3) hex = hex.split('').map(function(c){ return c + c; }).join('');
@@ -640,7 +480,6 @@ function mixWithWhite(hex, ratio){
   var mix = function(c){ return Math.round(c * ratio + 255 * (1 - ratio)); };
   return 'rgb(' + mix(r) + ',' + mix(g) + ',' + mix(b) + ')';
 }
-// ปรับความสว่าง/เข้มของสี hex — percent ติดลบ = เข้มขึ้น, บวก = สว่างขึ้น ใช้ทำเกรเดียนต์บนบัตรสมาชิก
 function shadeColor(hex, percent){
   hex = hex.replace('#', '');
   if (hex.length === 3) hex = hex.split('').map(function(c){ return c + c; }).join('');
@@ -653,7 +492,6 @@ function shadeColor(hex, percent){
   b = Math.max(0, Math.min(255, b));
   return '#' + (r.toString(16).padStart(2,'0')) + (g.toString(16).padStart(2,'0')) + (b.toString(16).padStart(2,'0'));
 }
-// เติมตัวเลือกวัน/เดือน/ปี ลงใน dropdown วันเกิด — เรียกครั้งเดียวตอนโหลดหน้า
 function populateBirthdaySelects(){
   var daySel = document.getElementById('birthDaySelect');
   for (var d = 1; d <= 31; d++) {
@@ -672,7 +510,7 @@ function populateBirthdaySelects(){
   var thisYear = new Date().getFullYear();
   for (var y = thisYear; y >= thisYear - 90; y--) {
     var opt2 = document.createElement('option');
-    opt2.value = String(y); opt2.textContent = String(y + 543); // แสดงเป็น พ.ศ. ให้ลูกค้าคุ้นตา
+    opt2.value = String(y); opt2.textContent = String(y + 543);
     yearSel.appendChild(opt2);
   }
 }
@@ -687,7 +525,7 @@ function submitRegister(){
   errBox.classList.remove('show');
   if (!fullName) { errBox.textContent = 'กรุณากรอกชื่อ-นามสกุล'; errBox.classList.add('show'); return; }
   if (!bd || !bm || !by) { errBox.textContent = 'กรุณาเลือกวัน/เดือน/ปีเกิดให้ครบ'; errBox.classList.add('show'); return; }
-  var birthday = by + '-' + bm + '-' + bd; // เก็บเป็น YYYY-MM-DD (ปี ค.ศ.) ให้เรียงลำดับ/เทียบวันที่ได้ง่ายฝั่งเซิร์ฟเวอร์
+  var birthday = by + '-' + bm + '-' + bd;
   if (!/^0\d{9}$/.test(phone)) {
     errBox.textContent = 'กรุณากรอกเบอร์โทร 10 หลัก ขึ้นต้นด้วย 0';
     errBox.classList.add('show');
@@ -695,9 +533,6 @@ function submitRegister(){
   }
   var btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
-  // ตั้งเวลาไว้ 12 วินาที — ถ้ายังไม่ตอบกลับภายในนี้ ไม่ได้แปลว่าล้มเหลวเสมอไป (ระบบฝั่งเซิร์ฟเวอร์ของ
-  // Google Apps Script บางครั้งบันทึกข้อมูลเสร็จเรียบร้อยแล้วจริงๆ แต่การส่งผลลัพธ์กลับมาให้เบราว์เซอร์ล่าช้า
-  // เป็นเรื่องปกติของแพลตฟอร์มเอง) จึงเสนอปุ่ม "เช็คอีกครั้ง" แทนที่จะบอกว่าผิดพลาดเฉยๆ
   var didFinish = false;
   var slowTimer = setTimeout(function(){
     if (didFinish) return;
@@ -710,7 +545,7 @@ function submitRegister(){
       didFinish = true; clearTimeout(slowTimer);
       btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
       if (r && r.success) {
-        checkStatus(); // โหลดข้อมูลสมาชิกที่เพิ่งสมัครใหม่ มาแสดงเป็นบัตรทันที
+        checkStatus();
       } else {
         errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด'; errBox.classList.add('show');
       }
@@ -723,11 +558,6 @@ function submitRegister(){
       errBox.classList.add('show');
     });
 }
-// ==================== แผงข้อมูลย่อยของเมนู (8 ช่อง) ====================
-// ไอคอนหัวข้อแผงเมนู — ใช้ตัวเดียวกันเป๊ะกับไอคอนบนปุ่มเมนูหน้าแรก (รูปภาพจริงสำหรับคูปอง/ประวัติสั่งซื้อ
-// ไม่ใช่ emoji ประมาณเอาแบบเดิมแล้ว) ต้องใช้ innerHTML แทน textContent เพื่อให้ฝัง <img> ได้
-// ตอนนี้ไอคอนแยกไฟล์ตามระดับสมาชิกด้วย (ผู้ใช้จะเพิ่มไฟล์ภาพสีตามระดับเองใน GitHub) จึงเก็บแค่ "ชื่อฐาน"
-// ของไฟล์ไว้ตรงนี้ ส่วนคำต่อท้ายระดับ (currentTierSuffix) จะถูกต่อเข้าไปตอนสร้าง src จริงใน menuIcon()
 var MENU_ICON_BASE_FILES = {
   points: 'icon-points',
   rewards: 'icon-rewards',
@@ -738,34 +568,31 @@ var MENU_ICON_BASE_FILES = {
   facebook: 'icon-facebook',
   tiktok: 'icon-tiktok'
 };
-// คำต่อท้ายชื่อไฟล์ตามระดับสมาชิก — ใช้ชุดเดียวกับที่ cardImageMap/bgImageMap ใน renderMemberCard() ใช้
-// อยู่แล้ว (tierKey ที่เก็บจริงคือ start/fan/love/vip แต่ชื่อไฟล์อยากให้อ่านง่ายเป็น start/silver/gold/
-// platinum) ค่าเริ่มต้นก่อนรู้ระดับสมาชิกจริง (ตอนหน้าเพิ่งโหลด ยังไม่ login เสร็จ) คือ 'start' ไปก่อน
 var TIER_FILE_SUFFIX_ = { start: 'start', fan: 'silver', love: 'gold', vip: 'platinum' };
-// ⚠️ เดิมตรงนี้เคย hardcode ตัวเลขขั้นต่ำแต่ละระดับไว้ตรงๆ (เสี่ยงคลาดเคลื่อนถ้าแก้ตัวเลขในชีตแล้วลืมมาแก้
-// ที่นี่ด้วย) ตอนนี้เปลี่ยนมาดึงสดจาก action "getTierConfig" ที่มีอยู่แล้วใน Code.gs แทน (ไม่ต้องใช้ idToken
-// เพราะ action นี้เป็นข้อมูลสาธารณะ ไม่ผูกกับสมาชิกคนใดคนหนึ่ง) แคชผลไว้ในตัวแปรนี้ระหว่างที่หน้าเว็บเปิดอยู่
-// กันยิง API ซ้ำทุกครั้งที่เปิดบัตร — ถ้าแก้ตัวเลขในชีต Tier_Config ผลจะอัปเดตเองอัตโนมัติทันทีที่เปิดหน้าใหม่
-// โดยไม่ต้องแก้โค้ดฝั่งนี้เลย
 var tierConfigCache_ = null;
-// การ์ด "อีก X บาทเพื่อเลื่อนขั้น" ใต้กล่องสีเทา — ข้อความบน + แถบความคืบหน้า + ชื่อระดับปัจจุบัน/ถัดไป
-// ล่างซ้าย-ขวา ตามภาพอ้างอิงที่ขอ เทียบ lifetimeSpend ของสมาชิกกับช่วง minSpend ของระดับปัจจุบัน→ถัดไป
-// ในชีต Tier_Config (ผ่าน action getTierConfig) ถ้าอยู่ระดับสูงสุดแล้วให้โชว์แถบเต็ม + ข้อความยินดีแทน
-// สีของแถบที่คืบหน้าแล้ว + ป้ายชื่อระดับปัจจุบัน ใช้ tierColor ของสมาชิกคนนั้นๆ โดยตรง (member.tierColor
-// เดียวกับที่ renderMemberCard ใช้) ส่วนพื้นหลังแถบ (ส่วนที่ยังไม่คืบหน้า) ผสมสีนั้นกับขาวให้อ่อนลง
+// ⚡ เพิ่ม URL โลโก้บริษัท (16/8/69) — ใช้เป็นหมุดบอกตำแหน่งปลายแถบความคืบหน้า (.tier-progress-marker)
+// ใน renderTierProgressHint_ ด้านล่าง ตั้งเป็นตัวแปรแยกไว้ต่างหาก (ตามแพทเทิร์นเดียวกับไฟล์ภาพอื่นๆ ใน
+// หน้านี้ที่อ้างอิงชื่อไฟล์ตรงๆ เช่น brand-logo.png) ต้องอัปโหลดไฟล์ชื่อนี้ขึ้น GitHub Pages เดียวกับไฟล์
+// ภาพอื่นๆ ของหน้านี้ก่อนถึงจะเห็นโลโก้จริง — ถ้ายังไม่มีไฟล์ โลโก้จะแค่ไม่ขึ้น ไม่กระทบแถบ/ตัวเลขอื่นเลย
+var SPUNKY_LOGO_URL = 'spunky-logo.png';
 function renderTierProgressHint_(member){
   var hintEl = document.getElementById('tierProgressHint');
   var tierKey = member.tierKey || 'start';
   var lifetimeSpend = member.lifetimeSpend || 0;
   var baseColor = member.tierColor || '#2e7d32';
-  var lightColor = mixWithWhite(baseColor, .55); // ปลายอ่อนของไล่เฉดบนแถบคืบหน้า
-  var trackColor = mixWithWhite(baseColor, .12); // พื้นหลังแถบส่วนที่ยังไม่คืบหน้า (โทนอ่อนของ tierColor)
-  var glowColor = hexToRgba(baseColor, .35); // เงาเรืองแสงใต้แถบ/ชิประดับปัจจุบัน
+  var lightColor = mixWithWhite(baseColor, .55);
+  var trackColor = mixWithWhite(baseColor, .12);
+  var glowColor = hexToRgba(baseColor, .35);
   var buildCard = function(icon, text, percent, currentLabel, nextLabel){
     var nextChipHtml = nextLabel ? '<span class="tier-chip tier-chip-next">' + esc(nextLabel) + '</span>' : '<span></span>';
+    // ⚡ เพิ่ม <img class="tier-progress-marker"> ตรงนี้ (16/8/69) — วางไว้ในตัว .tier-progress-track เดียว
+    // กับแถบสี (.tier-progress-fill) โดยตรง ใช้ left:percent% ตัวเดียวกับที่กำหนดความกว้างแถบ (percent) พอดี
+    // เพื่อให้โลโก้ไปอยู่ "ตรงจุดปลายสุด" ของระยะทางที่คืบหน้าไปแล้วเป๊ะๆ ตามที่ขอ — onerror ซ่อนตัวเองถ้า
+    // ยังไม่มีไฟล์ spunky-logo.png อัปโหลดไว้ (ไม่กระทบแถบ/ตัวเลขส่วนอื่นเลย)
     hintEl.innerHTML = '<div class="tier-progress-text"><span class="tier-progress-icon">' + icon + '</span>' + esc(text) + '</div>'
       + '<div class="tier-progress-track" style="background:' + trackColor + '">'
       +   '<div class="tier-progress-fill" style="width:' + percent + '%;background:linear-gradient(90deg,' + lightColor + ',' + baseColor + ');box-shadow:0 0 10px ' + glowColor + '"></div>'
+      +   '<img class="tier-progress-marker" src="' + SPUNKY_LOGO_URL + '" style="left:' + percent + '%" onerror="this.style.display=\'none\'" alt="">'
       + '</div>'
       + '<div class="tier-progress-labels">'
       +   '<span class="tier-chip tier-chip-current" style="background:' + baseColor + ';box-shadow:0 3px 9px ' + glowColor + '">' + esc(currentLabel || '') + '</span>'
@@ -781,13 +608,6 @@ function renderTierProgressHint_(member){
     }
     var nextTier = tiers[idx + 1];
     var remaining = Math.max(0, (nextTier.minSpend || 0) - lifetimeSpend);
-    // % ของแถบคำนวณจาก "ยอดใช้จ่ายสะสมจริง เทียบกับเกณฑ์ขั้นต่ำของระดับถัดไปตรงๆ" (ไม่ใช่เทียบช่วงระหว่าง
-    // เกณฑ์ของระดับปัจจุบัน→ระดับถัดไปแบบเดิม) เพราะสูตรเดิมมีบั๊ก: ถ้าสมาชิกได้ระดับปัจจุบันมาจากการแลก
-    // ของรางวัล (tier_upgrade) ไม่ใช่ไต่ระดับจากยอดใช้จ่ายจริง ยอดใช้จ่ายสะสม (lifetimeSpend) จะน้อยกว่า
-    // เกณฑ์ขั้นต่ำของระดับปัจจุบัน (currentTier.minSpend) ทำให้ lifetimeSpend - currentTier.minSpend
-    // ติดลบ แล้วถูก clamp เหลือ 0 เสมอ แถบเลยไม่ขึ้นสีเลยทั้งที่มียอดสะสมอยู่จริง (ตามที่แจ้งมา) สูตรใหม่
-    // นี้อิงจากยอดใช้จ่ายสะสมตรงๆ จึงขึ้นสีตามยอดเงินเสมอ ไม่ว่าจะได้ระดับปัจจุบันมาจากการซื้อสะสมหรือ
-    // แลกของรางวัลก็ตาม
     var nextThreshold = Math.max(1, nextTier.minSpend || 0);
     var percent = Math.min(100, Math.max(0, Math.round((lifetimeSpend / nextThreshold) * 100)));
     buildCard('⭐', 'อีก ' + remaining.toLocaleString('th-TH') + ' บาท เพื่อเลื่อนขั้นเป็น ' + nextTier.name,
@@ -805,9 +625,6 @@ function renderTierProgressHint_(member){
 var currentTierSuffix = 'start';
 function menuIcon(type, className){
   var base = MENU_ICON_BASE_FILES[type];
-  // จัดเก็บไอคอนเป็นโฟลเดอร์แยกตามระดับสมาชิก (icons/start/, icons/silver/, icons/gold/,
-  // icons/platinum/) แทนการตั้งชื่อไฟล์ยาวๆ ปนกันหมดในโฟลเดอร์หลัก — ชื่อไฟล์ภายในแต่ละโฟลเดอร์ใช้ชื่อ
-  // เดิมง่ายๆ (เช่น icon-points.png) ซ้ำกันได้ในแต่ละโฟลเดอร์ เพราะแยกด้วย path ไม่ใช่ชื่อไฟล์แล้ว
   var src = 'icons/' + currentTierSuffix + '/' + base + '.png';
   return '<span class="' + (className || 'icon') + '" aria-hidden="true">'
     + '<img src="' + src + '" alt=""></span>';
@@ -839,8 +656,6 @@ var PANEL_TITLES = {
 };
 function openPanel(type){
   var t = PANEL_TITLES[type];
-  // แผง "terms" (เงื่อนไขสิทธิพิเศษสมาชิก) ไม่มีไฟล์ไอคอนตามระดับสมาชิกใน icons/ เหมือนเมนูอื่นๆ
-  // (เปิดจากจุด ⓘ ไม่ใช่จากเมนู 8 ช่อง) จึงใช้ตัวอักษร ⓘ ตรงๆ แทนการเรียก menuIcon() ที่จะหาไฟล์ภาพไม่เจอ
   var iconHtml = (type === 'terms') ? '<span class="panel-menu-icon" aria-hidden="true">ⓘ</span>' : (t ? menuIcon(type, 'panel-menu-icon') : '');
   document.getElementById('panelTitle').innerHTML = t ? (iconHtml + '<span>' + esc(t.label) + '</span>') : '';
   document.getElementById('panelBody').innerHTML = '<div class="empty">กำลังโหลด...</div>';
@@ -856,19 +671,11 @@ function openPanel(type){
 function closePanel(){
   document.getElementById('panelOverlay').classList.add('sh');
 }
-// ==================================================================================
-// ✏️ แก้ข้อความ "เงื่อนไขสิทธิพิเศษสมาชิก" (popup ที่เปิดจากจุด ⓘ ข้างหัวข้อ "สิทธิพิเศษสมาชิก")
-// ได้ตรงนี้เลย — แก้/เพิ่ม/ลบข้อความแต่ละบรรทัดในลิสต์ด้านล่างได้อิสระ แต่ละบรรทัดในลิสต์ = 1 ข้อ (จะขึ้น
-// บรรทัดใหม่พร้อมเครื่องหมาย • นำหน้าให้เองอัตโนมัติ ไม่ต้องพิมพ์ • เอง) ไม่ต้องแก้ที่อื่นเลย
-// ⚠️ ข้อความชุดนี้เป็นตัวอย่างชั่วคราว รอเนื้อหาเงื่อนไขจริงมาแทนที่ก่อนใช้งานจริง
-// ==================================================================================
 var TERMS_CONTENT_ = [
   'ทุก ๆ 25 บาท ได้รับ 1 คะแนน คะแนนสะสมคำนวณจากยอดซื้อ ตามอัตราคูณของแต่ละระดับสมาชิก',
   'ระดับสมาชิกคำนวณจากยอดใช้จ่ายสะสมตลอดการเป็นสมาชิก',
   'สิทธิประโยชน์ อัตราคะแนน และเงื่อนไขต่างๆ อาจมีการเปลี่ยนแปลงโดยไม่แจ้งล่วงหน้า'
 ];
-// แผง "เงื่อนไขสิทธิพิเศษสมาชิก" — เปิดจากจุด ⓘ ข้างหัวข้อ "สิทธิพิเศษสมาชิก" เนื้อหาดึงจาก
-// TERMS_CONTENT_ ด้านบน (ไม่ได้ยิง API เหมือนแผงอื่นๆ เพราะเป็นข้อความคงที่)
 function loadTermsPanel(){
   var body = document.getElementById('panelBody');
   body.innerHTML = '<div class="terms-content">'
@@ -879,8 +686,6 @@ var rewardsCatalogCache = [];
 var currentPointsBalance = 0;
 var redeemQty = 1;
 var redeemItemIdx = -1;
-// ==================== เมนู "คะแนนสะสม" (แยกออกมาจาก "สิทธิ์พิเศษ & คะแนน" เดิม) ====================
-// โชว์คะแนนคงเหลือ + ประวัติการรับคะแนน/แลกซื้อ (ดึงจาก action ใหม่ getPointsHistory ฝั่ง Code.gs)
 function loadPointsPanel(){
   var body = document.getElementById('panelBody');
   callApi('getPointsHistory', { idToken: currentIdToken }).then(function(r){
@@ -905,9 +710,6 @@ function loadPointsPanel(){
     body.innerHTML = h;
   }).catch(function(e){ body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
-// ==================== เมนู "แลกของรางวัล" (แยกออกมาจาก "สิทธิ์พิเศษ & คะแนน" เดิม) ====================
-// ใช้ API เดิม (getPrivilegesPanelData) และ logic การแสดงผล/แลกของรางวัลเดิมทุกประการ ไม่แก้ไข
-// เปลี่ยนแค่ว่าตอนนี้โชว์เฉพาะส่วนแคตตาล็อกของรางวัลอย่างเดียว (ไม่รวมสิทธิ์พิเศษและคะแนนคงเหลือแล้ว)
 function loadRewardsPanel(){
   var body = document.getElementById('panelBody');
   callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
@@ -942,9 +744,6 @@ function loadRewardsPanel(){
       + '\n\nstack:\n' + esc((e.stack || '').substring(0, 500)) + '</div>';
   });
 }
-// ==================== เมนู "สิทธิ์พิเศษ" (แยกออกมาจาก "สิทธิ์พิเศษ & คะแนน" เดิม) ====================
-// ใช้ API เดิม (getPrivilegesPanelData) เหมือนเดิมทุกประการ ไม่แก้ไข เปลี่ยนแค่ว่าตอนนี้โชว์เฉพาะ
-// ส่วนรายการสิทธิ์พิเศษอย่างเดียว (ไม่รวมคะแนนคงเหลือและของรางวัลแล้ว)
 function loadPrivilegesPanel(){
   var body = document.getElementById('panelBody');
   callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
@@ -966,8 +765,6 @@ function loadPrivilegesPanel(){
       + '\n\nstack:\n' + esc((e.stack || '').substring(0, 500)) + '</div>';
   });
 }
-// ข้อความอธิบายสั้นๆ ของรางวัลแต่ละชิ้น ตามหมวดหมู่ — coupon/buy_product โชว์เป็นมูลค่าส่วนลด
-// tier_upgrade โชว์ชื่อระดับเป้าหมาย ส่วนหมวดอื่น (free_product/premium/activity) โชว์รายละเอียดที่พิมพ์ไว้
 function rewardSubText_(item){
   if (item.category === 'coupon' || item.category === 'buy_product') {
     var valueText = item.type === 'percent' ? ('ลด ' + item.value + '%') : ('ลด ' + item.value + ' บาท');
@@ -978,7 +775,6 @@ function rewardSubText_(item){
   }
   return item.detail || '-';
 }
-// เปิดหน้าจอแลกของรางวัลชิ้นที่เลือก (เลือกจำนวน + ยืนยัน) — สไตล์เดียวกับหน้า "แลกของรางวัล" ของ ChocoCRM
 function showRedeemView(idx){
   redeemItemIdx = idx;
   redeemQty = 1;
@@ -995,7 +791,6 @@ function renderRedeemView(){
   var body = document.getElementById('panelBody');
   var totalCost = item.pointCost * redeemQty;
   var afford = currentPointsBalance >= totalCost;
-  // ของรางวัลที่ไม่ใช่คูปอง/สินค้าที่แลกซื้อ มักจะแลกได้แค่ครั้งละ 1 (เช่น เพิ่มระดับสมาชิก แลกซ้ำไม่มีประโยชน์)
   var allowMultiQty = (item.category === 'coupon' || item.category === 'buy_product' || item.category === 'free_product' || item.category === 'premium');
   var qtyRowHtml = allowMultiQty
     ? '<div class="info-row"><span>จำนวน</span><span>'
@@ -1025,17 +820,14 @@ function renderRedeemView(){
     + '<div class="err' + (afford ? '' : ' show') + '" id="redeemErrBox">' + (afford ? '' : 'คะแนนไม่พอสำหรับจำนวนนี้') + '</div>'
     + '<button class="btn btn-block" style="margin-top:10px" id="confirmRedeemBtn" onclick="confirmRedeem()"' + (afford ? '' : ' disabled') + '>✅ ยืนยันการแลก</button>';
 }
-var redeemInFlight = false; // กันกดปุ่ม "ยืนยันการแลก" ซ้ำระหว่างรอผลลัพธ์ (เคยเจอปัญหาแลกซ้ำ 2 รอบ เพราะ
-// Apps Script ตอบช้าแล้วผู้ใช้กดซ้ำก่อนได้รับผลลัพธ์รอบแรก ทำให้หักคะแนน/บันทึกคำขอแลกซ้ำ 2 รอบจริง)
+var redeemInFlight = false;
 function confirmRedeem(){
-  if (redeemInFlight) return; // กำลังมีคำขอค้างอยู่ ห้ามยิงซ้ำเด็ดขาด
+  if (redeemInFlight) return;
   redeemInFlight = true;
   var btn = document.getElementById('confirmRedeemBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังแลก...'; }
   var item = rewardsCatalogCache[redeemItemIdx];
   var didFinish = false;
-  // กันปุ่มค้างตลอดไปแบบไม่มีวันจบ ถ้ารอเกิน 15 วินาทีแล้วยังไม่ได้ผลลัพธ์ ให้แจ้งเตือนว่าอาจสำเร็จแล้ว
-  // จริงๆ (Apps Script บางครั้งบันทึกเสร็จแล้วแต่ส่งผลลัพธ์กลับมาช้า) แทนที่จะปล่อยให้ค้างเงียบๆ ไม่รู้จบ
   setTimeout(function(){
     if (didFinish) return;
     var errEl = document.getElementById('redeemErrBox');
@@ -1048,25 +840,16 @@ function confirmRedeem(){
     redeemInFlight = false;
     if (r && r.success) {
       currentPointsBalance = r.newPoints;
-      // อัปเดตกล่องคะแนนบนบัตรสมาชิก "ทันที" แบบ synchronous ตรงนี้เลย ก่อนเรียก alert()/checkStatus()
-      // ใดๆ ทั้งสิ้น — เพราะ r.newPoints เป็นค่าล่าสุดที่ถูกต้องอยู่แล้วจาก Code.gs (หักคะแนนเสร็จก่อนตอบ
-      // กลับมาเสมอ) ไม่ต้องรอยิง API รอบใหม่ ไม่ต้องพึ่งลำดับการทำงานของ alert()/checkStatus() เลย —
-      // เดิมที่ยังไม่ real-time เพราะโค้ดรอบก่อนไปเรียก checkStatus() (ต้องยิง API รอบใหม่ + รอ alert()
-      // ที่เป็นคำสั่ง "บล็อก" การทำงานของ JS ทั้งหน้าจนกว่าจะกดตกลง) ก่อนถึงจะอัปเดตตัวเลข ทำให้ดูเหมือน
-      // ไม่ขยับ/ขยับช้า วิธีนี้แก้ปัญหาตรงจุดโดยอัปเดต DOM ตรงๆ ก่อนเลย ไม่ต้องพึ่งพาจังหวะใดๆ ทั้งสิ้น
       var tierPointsEl = document.getElementById('tierPointsValue');
       if (tierPointsEl) tierPointsEl.textContent = r.newPoints.toLocaleString('th-TH') + ' คะแนน';
       if (lastMemberData) lastMemberData.points = r.newPoints;
       var msg = (r.category === 'coupon' || r.category === 'buy_product')
         ? 'ใช้ส่วนลดได้ทันทีตอนสั่งซื้อครั้งถัดไป'
         : (r.category === 'tier_upgrade' ? 'ระดับสมาชิกของคุณอัปเดตแล้ว' : 'ทีมงานจะติดต่อกลับเพื่อจัดส่ง/ดำเนินการให้เร็วๆ นี้');
-      alert('🎉 แลก "' + r.rewardName + '" สำเร็จ!\n' + msg + '\nเหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน'); // popup ยืนยันชัดเจนตามที่ขอ
+      alert('🎉 แลก "' + r.rewardName + '" สำเร็จ!\n' + msg + '\nเหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน');
       var body = document.getElementById('panelBody');
       body.innerHTML = '<div class="empty" style="padding:20px 0">🎉<br><b>แลก "' + esc(r.rewardName) + '" สำเร็จ!</b><br>' + esc(msg) + '<br>เหลือ ' + r.newPoints.toLocaleString('th-TH') + ' คะแนน</div>'
         + '<button class="btn btn-block" onclick="loadPrivilegesPanel()">กลับไปหน้าสิทธิ์พิเศษ</button>';
-      // ดึงข้อมูลสมาชิกใหม่ทั้งชุดจาก Apps Script อีกครั้งเป็นการซิงค์เสริมเบื้องหลัง (ไม่ต้องรอผล) —
-      // ตัวเลขคะแนนอัปเดตไปแล้วด้านบน ส่วนนี้มีไว้เผื่อแลกหมวด tier_upgrade ที่ระดับสมาชิกเปลี่ยน จะได้
-      // อัปเดตสีบัตร/ไอคอน/ตัวคูณแต้มตามไปด้วยในตัว
       checkStatus();
     } else {
       if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันการแลก'; }
@@ -1083,11 +866,8 @@ function confirmRedeem(){
     errEl.classList.add('show');
   });
 }
-// รายชื่อ 77 จังหวัดของไทย — ใช้ทั้งตอนแก้ไขที่อยู่ในหน้านี้
 var THAI_PROVINCES = ['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
 var THAI_MONTHS_CLIENT_ = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-// ใช้ข้อมูลแคชล่าสุดถ้าเพิ่งดึงมาไม่เกิน 20 วินาที (เช่น เพิ่งเปิดหน้ามาหมาดๆ บัตรสมาชิกก็ดึงมาแล้ว)
-// แทนที่จะยิง API ซ้ำอีกรอบให้เสียเวลารอโดยไม่จำเป็น — ถ้าแคชเก่าเกินไปหรือยังไม่มี ค่อยดึงใหม่ตามปกติ
 function loadMemberInfoPanel(){
   var body = document.getElementById('panelBody');
   var cacheAge = Date.now() - lastMemberDataTime;
@@ -1105,9 +885,8 @@ function loadMemberInfoPanel(){
 }
 function renderMemberInfoPanel_(m){
     var body = document.getElementById('panelBody');
-    var bParts = String(m.birthdayRaw || '').split('-'); // YYYY-MM-DD
+    var bParts = String(m.birthdayRaw || '').split('-');
     var by = bParts[0] || '', bm = bParts[1] || '', bd = bParts[2] || '';
-    // โหมดดูอย่างเดียว (ค่าเริ่มต้น) — มีปุ่มดินสอให้กดเข้าโหมดแก้ไขทีหลังถ้าต้องการ
     var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
       + '<span style="font-weight:600">ข้อมูลของคุณ</span>'
       + '<button type="button" onclick="toggleMemberEditMode()" id="editPencilBtn" style="background:none;border:none;font-size:18px;cursor:pointer" title="แก้ไขข้อมูล">✏️</button>'
@@ -1121,7 +900,6 @@ function renderMemberInfoPanel_(m){
       + '<div class="info-row"><span>คะแนนสะสม</span><span>' + (m.points || 0).toLocaleString('th-TH') + '</span></div>'
       + '<div class="info-row"><span>ยอดซื้อสะสม</span><span>฿' + (m.lifetimeSpend || 0).toLocaleString('th-TH') + '</span></div>'
       + '<div class="info-row"><span>สมัครเมื่อ</span><span>' + (m.joinDate ? new Date(m.joinDate).toLocaleDateString('th-TH') : '') + '</span></div>';
-    // โหมดแก้ไข — ซ่อนไว้ก่อน โผล่มาก็ต่อเมื่อกดปุ่มดินสอเท่านั้น
     h += '<div id="editFormWrap" class="sh" style="margin-top:16px;border-top:1px dashed var(--gb);padding-top:16px">';
     h += '<div class="err" id="editInfoErr"></div><div class="ok" id="editInfoOk"></div>';
     h += '<div class="fg"><label>ชื่อ-นามสกุล</label><input type="text" class="fc" id="editFullName" value="' + esc(m.fullName) + '"></div>';
@@ -1135,7 +913,6 @@ function renderMemberInfoPanel_(m){
     h += '<button class="btn btn-outline btn-block" style="margin-top:8px" onclick="toggleMemberEditMode()">ยกเลิก</button>';
     h += '</div>';
     body.innerHTML = h;
-    // เติมตัวเลือกวัน/เดือน/ปี แล้วเลือกค่าปัจจุบันไว้ล่วงหน้า
     var daySel = document.getElementById('editBirthDay');
     daySel.innerHTML = '<option value="">วัน</option>';
     for (var d = 1; d <= 31; d++) { var dv = String(d).padStart(2,'0'); daySel.innerHTML += '<option value="' + dv + '"' + (dv === bd ? ' selected' : '') + '>' + d + '</option>'; }
@@ -1146,12 +923,10 @@ function renderMemberInfoPanel_(m){
     yearSel.innerHTML = '<option value="">ปี</option>';
     var thisYear = new Date().getFullYear();
     for (var y = thisYear; y >= thisYear - 90; y--) { var yv = String(y); yearSel.innerHTML += '<option value="' + yv + '"' + (yv === by ? ' selected' : '') + '>' + (y+543) + '</option>'; }
-    // เติมตัวเลือกจังหวัด แล้วเลือกจังหวัดปัจจุบันไว้ล่วงหน้า
     var provSel = document.getElementById('editProvince');
     provSel.innerHTML = '<option value="">— เลือกจังหวัด —</option>';
     THAI_PROVINCES.forEach(function(p){ provSel.innerHTML += '<option value="' + p + '"' + (p === m.province ? ' selected' : '') + '>' + p + '</option>'; });
 }
-// สลับโหมดดู/แก้ไข — กดดินสอครั้งแรกเพื่อเข้าโหมดแก้ไข กดปุ่ม "ยกเลิก" หรือดินสออีกทีเพื่อกลับไปดูอย่างเดียว
 function toggleMemberEditMode(){
   var wrap = document.getElementById('editFormWrap');
   wrap.classList.toggle('sh');
@@ -1175,16 +950,14 @@ function saveMemberProfile(){
   callApi('updateMemberProfile', { idToken: currentIdToken, fullName: fullName, phone: phone, birthday: birthday, address: address, province: province })
     .then(function(r){
       if (r && r.success) {
-        // อัปเดตแคชด้วยค่าที่เพิ่งบันทึกไปตรงๆ เลย (รู้ค่าใหม่อยู่แล้วจากฟอร์ม) ไม่ต้องรอยิง API ไปดึงซ้ำ
-        // ให้กลับไปโหมดดูเห็นผลทันที ส่วน checkStatus() ที่เรียกคู่กันไว้ทีหลังจะซิงค์บัตรสมาชิกในพื้นหลังอีกที
         if (lastMemberData) {
           lastMemberData = Object.assign({}, lastMemberData, {
             fullName: fullName, phone: phone, address: address, province: province,
             birthdayRaw: birthday, birthday: (function(){ var p = birthday.split('-'); return p[2] + ' ' + THAI_MONTHS_CLIENT_[parseInt(p[1])-1] + ' ' + (parseInt(p[0])+543); })()
           });
         }
-        loadMemberInfoPanel(); // กลับไปโหมดดูอย่างเดียวพร้อมค่าที่อัปเดตแล้วทันที (ใช้แคชที่เพิ่งอัปเดต)
-        checkStatus(); // ซิงค์บัตรสมาชิกด้านหลังด้วย (เผื่อชื่อเปลี่ยน) — ไม่บล็อกการแสดงผลด้านบน
+        loadMemberInfoPanel();
+        checkStatus();
       } else {
         errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด'; errBox.classList.add('show');
       }
@@ -1218,9 +991,6 @@ function loadCouponsPanel(){
     body.innerHTML = h;
   }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
-// ถอดค่า exp (วันหมดอายุ) ออกจาก JWT idToken โดยไม่ต้องยิง API ไปถาม LINE — ใช้แค่ตรวจสอบฝั่ง client
-// ก่อนใช้งานเฉยๆ (การตรวจสอบจริงที่เชื่อถือได้ยังอยู่ที่ verifyLineIdToken_ ฝั่ง Code.gs เหมือนเดิมทุก
-// ประการ ไม่ได้ลดความปลอดภัยลง แค่กันไม่ให้ส่ง token ที่รู้อยู่แล้วว่าหมดอายุไปให้เสียเวลาเปล่าๆ)
 function decodeJwtExp_(token) {
   try {
     var parts = String(token).split('.');
@@ -1231,16 +1001,8 @@ function decodeJwtExp_(token) {
     return json.exp || null;
   } catch (e) { return null; }
 }
-// ป้องกันหน้า Members วนกลับไป LINE Login ไม่สิ้นสุดบน desktop browser (ดูรายละเอียดเหตุผลเดียวกับ
-// ที่แก้ไว้ในหน้าร้าน Shop_index.html — เบราว์เซอร์บล็อก third-party cookies ทำให้ session ไม่ถูกจำไว้
-// ถ้า login ซ้ำแล้วยังไม่ผ่านอีก จะหยุดวนแล้วบอกสาเหตุตรงๆ แทนที่จะวนไม่รู้จบ)
 function initLiff(){
   var guardKey = 'emocha.members.login-attempted';
-  // guard แยกต่างหากสำหรับกรณี "login ค้างอยู่ (LIFF session) แต่ idToken ที่เก็บไว้หมดอายุไปแล้ว" —
-  // liff.isLoggedIn() เช็คแค่ว่ามี session ค้างอยู่ไหม (อยู่ได้นานหลายสัปดาห์) ไม่ได้เช็คว่า idToken
-  // (อายุแค่ 1 ชม.) หมดอายุหรือยัง ทำให้ liff.getIDToken() อาจคืนโทเคนเดิมที่หมดอายุไปแล้วซ้ำๆ ได้แม้จะ
-  // ปิดแล้วเปิดหน้าใหม่กี่ครั้งก็ตาม (เพราะไม่ได้ไป login ใหม่จริงๆ) ต้องแยก guard คนละตัวกับด้านบน
-  // เพราะเป็นคนละสถานการณ์กัน (ยังไม่เคย login เลย VS login ค้างแต่โทเคนหมดอายุ)
   var refreshGuardKey = 'emocha.members.token-refresh-attempted';
   var initTimeout = setTimeout(function(){
     showErrorState('liff.init() ใช้เวลานานเกิน 10 วินาที — กรุณาตรวจ LIFF ID และ Endpoint URL');
@@ -1265,12 +1027,6 @@ function initLiff(){
       showErrorState('LINE Login สำเร็จ แต่ LIFF ไม่ส่ง ID token กลับมา — ตรวจ scope openid ใน LIFF settings');
       return;
     }
-    // เช็คว่า idToken ที่ LIFF เก็บ session ไว้ให้ตัวนี้หมดอายุไปแล้วหรือยัง (ดูเหตุผลที่ refreshGuardKey
-    // ด้านบน) ถ้าหมดอายุแล้ว (หรือถอดรหัสไม่ได้) ให้บังคับ logout แล้วรีโหลดหน้า (ไม่เรียก liff.login()
-    // ต่อทันทีในจังหวะเดียวกับ liff.logout() เพราะ LIFF SDK ต้องการให้หน้ารีเฟรชใหม่ก่อนสถานะ logout จะมีผล
-    // จริง — เดิมเรียก login() ต่อทันทีทำให้ค้างที่ "กำลังเชื่อมต่อกับ LINE..." ไม่ไปไหนเลย เพราะ SDK ยังเห็น
-    // สถานะ login เดิมค้างอยู่ในหน่วยความจำ) พอรีโหลดหน้าใหม่ initLiff() จะรันใหม่ตั้งแต่ต้น คราวนี้
-    // liff.isLoggedIn() จะเป็น false จริงๆ แล้ว ตกไปเข้า branch login ปกติที่ทำงานถูกต้องอยู่แล้วด้านบน
     var exp = decodeJwtExp_(currentIdToken);
     if (!exp || exp * 1000 < Date.now()) {
       if (sessionStorage.getItem(refreshGuardKey)) {
@@ -1298,12 +1054,6 @@ function initLiff(){
     showErrorState('liff.init() ล้มเหลว: ' + (e && e.message ? e.message : String(e)));
   });
 }
-// ⚡ ยิง getTierConfig ล่วงหน้าทันทีตั้งแต่หน้าเว็บโหลด ให้ทำงานขนานไปกับขั้นตอน liff.init()/LINE login
-// ด้านล่าง (ไม่ต้องรอ เพราะ action นี้เป็นข้อมูลสาธารณะ ไม่ใช้ idToken เลย) ผลลัพธ์เก็บเข้า tierConfigCache_
-// ตัวเดียวกับที่ renderTierProgressHint_ ใช้อยู่แล้ว — ถ้ายิงเสร็จก่อนบัตรสมาชิก render (ปกติจะเสร็จก่อน
-// เพราะไม่ต้องรอ LINE login) ข้อความ "สะสมอีก X บาท..." จะขึ้นได้ทันทีโดยไม่ต้องรอ API อีกรอบซ้อนต่อคิว
-// ถ้ายิงไม่ทัน renderTierProgressHint_ จะยิงเองอีกทีตามปกติ (เช็ค tierConfigCache_ กันยิงซ้ำอยู่แล้ว ไม่มี
-// ผลข้างเคียงอะไรแม้ยิงซ้อนกันพอดี เพราะเป็นแค่ GET ข้อมูลอ่านอย่างเดียว)
 callApi('getTierConfig', {}).then(function(r){
   if (r && r.success && Array.isArray(r.tiers)) tierConfigCache_ = r.tiers;
 }).catch(function(){ /* พลาดก็ไม่เป็นไร renderTierProgressHint_ จะลองยิงเองอีกทีตอนต้องใช้จริง */ });
