@@ -61,7 +61,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .err.show{display:block;}
 .ok{background:#e8f5e9;color:var(--gd);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none;}
 .ok.show{display:block;}
-.sh{display:none;}
+.sh{display:none !important;}
 .promo-frame,.photo-frame{border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.12);
   background-size:cover;background-position:center;}
 #memberCardState{display:flex;flex-direction:column;}
@@ -350,6 +350,17 @@ function showErrorState(msg){
   showState('errorState');
 }
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// ⚡ เพิ่ม (19/8/69) — สร้างข้อความอธิบายสิทธิ์/คูปองแต่ละประเภทให้อ่านง่ายและถูกต้องตามประเภทจริง (ของเดิม
+// เช็คแค่ 'percent' แล้ว fallback ไปแสดง "ลด X บาท" กับทุกประเภทที่เหลือ ทำให้สิทธิ์แบบ bogo (ซื้อครบแถม) ที่
+// value จริงๆ คือ "จำนวนที่ต้องซื้อครบ" ไม่ใช่จำนวนเงิน ถูกแสดงผิดเป็น "ลด 2 บาท" ทั้งที่ไม่มีส่วนลดเป็นเงินเลย)
+function privilegeValueText_(type, value, restriction, freeProduct, freeQty){
+  if (type === 'percent') return 'ลด ' + value + '%';
+  if (type === 'fixed') return 'ลด ' + value + ' บาท';
+  if (type === 'ship_percent') return 'ลดค่าส่ง ' + value + '%';
+  if (type === 'ship_fixed') return 'ลดค่าส่ง ' + value + ' บาท';
+  if (type === 'bogo') return 'ซื้อ' + (restriction ? esc(restriction) + ' ' : '') + 'ครบ ' + value + ' ชิ้น แถม ' + esc(freeProduct || '-') + (freeQty ? ' x' + freeQty : '');
+  return esc(type);
+}
 function classifyAlert_(message){
   var m = String(message);
   if (/ผิดพลาด|error|ไม่สำเร็จ|failed/i.test(m)) return 'error';
@@ -751,7 +762,7 @@ function loadPrivilegesPanel(){
     var h = '';
     if (r.privileges && r.privileges.length) {
       r.privileges.forEach(function(p){
-        var valueText = p.type === 'percent' ? ('ลด ' + p.value + '%') : ('ลด ' + p.value + ' บาท');
+        var valueText = privilegeValueText_(p.type, p.value, p.restriction, p.freeProduct, p.freeQty);
         h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span><span>' + valueText + '</span></div>'
           + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
       });
@@ -984,7 +995,7 @@ function loadCouponsPanel(){
     if (!r.results.length) { body.innerHTML = '<div class="empty">ยังไม่มีคูปองที่ใช้ได้ตอนนี้</div>'; return; }
     var h = '';
     r.results.forEach(function(c){
-      var valueText = c.type === 'percent' ? ('ลด ' + c.value + '%') : ('ลด ' + c.value + ' บาท');
+      var valueText = privilegeValueText_(c.type, c.value, c.restriction, c.freeProduct, c.freeQty);
       h += '<div class="list-item"><div class="row1"><span>' + esc(c.code) + '</span><span>' + valueText + '</span></div>'
         + '<div class="row2">' + (c.autoApply ? 'ใช้อัตโนมัติที่หน้าชำระเงิน' : 'พิมพ์โค้ดนี้ตอนชำระเงิน') + (c.expiry ? ' · หมดอายุ ' + esc(c.expiry) : '') + '</div></div>';
     });
