@@ -393,9 +393,16 @@ window.alert = function(message){ showCustomAlert_(message); };
 // ไม่ได้ทำให้เซิร์ฟเวอร์หยุดทำงานจริงๆ (Apps Script ยังรันจนจบอยู่ดี) แต่ฝั่ง client ทิ้งการเชื่อมต่อไปแล้ว
 // พอ backend ทำงานเสร็จสมบูรณ์ (เขียนข้อมูล/ส่ง LINE) แต่ client ไม่ได้รอฟังผลแล้ว หน้าจอเลยค้างไม่ไปไหนทั้งที่
 // งานสำเร็จแล้วจริง แถมยัง "retry" คำสั่งเดิมซ้ำ (สำหรับ action ที่เขียนข้อมูล เช่น registerMember/redeemReward)
-// ทำให้เกิดรายการซ้ำได้ (ยืนยันแล้วจากปัญหาเดียวกันที่เกิดกับ createShopOrder ในไฟล์ Order app) — ตอนนี้แก้โดย
-// (1) เอา AbortController ออกทั้งหมด ปล่อยให้ fetch() รอตามธรรมชาติ (2) ห้าม retry อัตโนมัติเด็ดขาดสำหรับ
-// action ที่ "เขียน/แก้ไขข้อมูล" (ไม่ idempotent) ทั้งกรณี parse error และ network error
+// ทำให้เกิดรายการซ้ำได้ (ยืนยันแล้วจากปัญหาเดียวกันที่เกิดกับ createShopOrder ในไฟล์ Order app)
+//
+// ⚡ แก้เพิ่ม (19/8/69 รอบ 2) — แต่การเอา AbortController ออกไป "ทั้งหมด" กลับสร้างปัญหาใหม่: ถ้าเซิร์ฟเวอร์
+// ค้าง/ไม่ตอบกลับเลย คำขอจะรอตลอดไปไม่มีวันจบ ไม่มี error ไม่มีทางออกให้ผู้ใช้เลย (ยืนยันจากภาพหน้าจอจริงที่
+// ค้างที่ "กำลังโหลด..." ไม่จบสักที และ error "ระบบไม่ตอบสนองชั่วคราว" ที่เกิดจากรอ parse JSON ไม่สำเร็จซ้ำๆ)
+// ตอนนี้ใส่ AbortController กลับมา แต่แยกพฤติกรรมชัดเจน:
+// - อ่านข้อมูล (isMutating=false): timeout 25 วิ/ครั้ง ปลอดภัยที่จะยกเลิก+ลองใหม่อัตโนมัติ (ไม่มีผลข้างเคียง)
+// - เขียนข้อมูล (isMutating=true): timeout 35 วิ/ครั้ง (ให้เวลามากกว่า) ถ้าครบเวลาแล้วยังไม่ตอบ จะ "หยุดรอฟังผล"
+//   ฝั่งเครื่องเฉยๆ (ไม่ได้ retry คำขอซ้ำ เซิร์ฟเวอร์ยังทำงานต่อจนจบตามปกติ ไม่ถูกยกเลิกจริง) แล้วแจ้งผู้ใช้ให้
+//   ตรวจสอบก่อนลองใหม่เอง
 var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'redeemReward', 'updateMemberProfile'];
 
 function callApi(action, payload, _attempt){
@@ -408,7 +415,12 @@ function callApi(action, payload, _attempt){
     return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
   }).join('&');
 
-  return fetch(API_URL + '?' + qs, { method: 'GET' }).then(function(res){
+  var timeoutMs = isMutating ? 35000 : 25000;
+  var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, timeoutMs) : null;
+
+  return fetch(API_URL + '?' + qs, { method: 'GET', signal: controller ? controller.signal : undefined }).then(function(res){
+    if (timeoutId) clearTimeout(timeoutId);
     return res.text().then(function(text){
       try {
         return JSON.parse(text);
@@ -424,15 +436,21 @@ function callApi(action, payload, _attempt){
       }
     });
   }).catch(function(networkErr){
-    if (!isMutating && attempt < MAX_ATTEMPTS && networkErr.message.indexOf('ระบบไม่ตอบสนอง') === -1) {
+    if (timeoutId) clearTimeout(timeoutId);
+    var isTimeout = networkErr && networkErr.name === 'AbortError';
+    var effectiveErr = isTimeout
+      ? new Error('คำขอใช้เวลานานเกินไป (เกิน ' + Math.round(timeoutMs / 1000) + ' วินาที)')
+      : networkErr;
+
+    if (!isMutating && attempt < MAX_ATTEMPTS) {
       return new Promise(function(resolve){
         setTimeout(function(){ resolve(callApi(action, payload, attempt + 1)); }, attempt * 800);
       });
     }
-    if (isMutating && networkErr.message.indexOf('อาจสำเร็จไปแล้ว') === -1) {
-      throw new Error('เชื่อมต่อไม่สำเร็จ — คำสั่งนี้อาจสำเร็จไปแล้วฝั่งเซิร์ฟเวอร์เพียงแต่ตอบกลับไม่ถึง กรุณาตรวจสอบสถานะก่อนลองใหม่ (อย่ากดซ้ำทันที): ' + networkErr.message);
+    if (isMutating) {
+      throw new Error('เชื่อมต่อไม่สำเร็จ — คำสั่งนี้อาจสำเร็จไปแล้วฝั่งเซิร์ฟเวอร์เพียงแต่ตอบกลับไม่ถึง กรุณาตรวจสอบสถานะก่อนลองใหม่ (อย่ากดซ้ำทันที): ' + effectiveErr.message);
     }
-    throw networkErr;
+    throw new Error('ระบบไม่ตอบสนองชั่วคราว (ลองแล้ว ' + MAX_ATTEMPTS + ' ครั้ง) กรุณาลองใหม่อีกครั้งในสักครู่: ' + effectiveErr.message);
   });
 }
 var lastMemberData = null;
