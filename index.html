@@ -388,32 +388,49 @@ function closeCustomAlert_(){
   document.getElementById('customAlertOverlay').classList.add('sh');
 }
 window.alert = function(message){ showCustomAlert_(message); };
+// ⚡ แก้ (19/8/69) — ยกเลิกการใช้ AbortController+retry-อัตโนมัติ-ตอน-timeout ที่เพิ่งเพิ่มไปก่อนหน้านี้
+// ทั้งหมด เพราะพิสูจน์แล้วจาก Executions log จริงว่าเป็นสาเหตุของบั๊กร้ายแรงกว่าเดิม: การ "ยกเลิกคำขอ" (abort)
+// ไม่ได้ทำให้เซิร์ฟเวอร์หยุดทำงานจริงๆ (Apps Script ยังรันจนจบอยู่ดี) แต่ฝั่ง client ทิ้งการเชื่อมต่อไปแล้ว
+// พอ backend ทำงานเสร็จสมบูรณ์ (เขียนข้อมูล/ส่ง LINE) แต่ client ไม่ได้รอฟังผลแล้ว หน้าจอเลยค้างไม่ไปไหนทั้งที่
+// งานสำเร็จแล้วจริง แถมยัง "retry" คำสั่งเดิมซ้ำ (สำหรับ action ที่เขียนข้อมูล เช่น registerMember/redeemReward)
+// ทำให้เกิดรายการซ้ำได้ (ยืนยันแล้วจากปัญหาเดียวกันที่เกิดกับ createShopOrder ในไฟล์ Order app) — ตอนนี้แก้โดย
+// (1) เอา AbortController ออกทั้งหมด ปล่อยให้ fetch() รอตามธรรมชาติ (2) ห้าม retry อัตโนมัติเด็ดขาดสำหรับ
+// action ที่ "เขียน/แก้ไขข้อมูล" (ไม่ idempotent) ทั้งกรณี parse error และ network error
+var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'redeemReward', 'updateMemberProfile'];
+
 function callApi(action, payload, _attempt){
   payload = payload || {};
   payload.action = action;
   var attempt = _attempt || 1;
   var MAX_ATTEMPTS = 3;
+  var isMutating = NON_IDEMPOTENT_ACTIONS_.indexOf(action) !== -1;
   var qs = Object.keys(payload).map(function(k){
     return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
   }).join('&');
+
   return fetch(API_URL + '?' + qs, { method: 'GET' }).then(function(res){
     return res.text().then(function(text){
       try {
         return JSON.parse(text);
       } catch (parseErr) {
-        if (attempt < MAX_ATTEMPTS) {
+        if (!isMutating && attempt < MAX_ATTEMPTS) {
           return new Promise(function(resolve){
             setTimeout(function(){ resolve(callApi(action, payload, attempt + 1)); }, attempt * 800);
           });
         }
-        throw new Error('ระบบไม่ตอบสนองชั่วคราว กรุณาลองใหม่อีกครั้งในสักครู่');
+        throw new Error(isMutating
+          ? 'ระบบตอบกลับไม่ถูกต้อง คำสั่งนี้อาจสำเร็จไปแล้วฝั่งเซิร์ฟเวอร์ กรุณาตรวจสอบก่อนลองใหม่ (อย่ากดซ้ำทันที)'
+          : 'ระบบไม่ตอบสนองชั่วคราว กรุณาลองใหม่อีกครั้งในสักครู่');
       }
     });
   }).catch(function(networkErr){
-    if (attempt < MAX_ATTEMPTS && networkErr.message.indexOf('ระบบไม่ตอบสนอง') === -1) {
+    if (!isMutating && attempt < MAX_ATTEMPTS && networkErr.message.indexOf('ระบบไม่ตอบสนอง') === -1) {
       return new Promise(function(resolve){
         setTimeout(function(){ resolve(callApi(action, payload, attempt + 1)); }, attempt * 800);
       });
+    }
+    if (isMutating && networkErr.message.indexOf('อาจสำเร็จไปแล้ว') === -1) {
+      throw new Error('เชื่อมต่อไม่สำเร็จ — คำสั่งนี้อาจสำเร็จไปแล้วฝั่งเซิร์ฟเวอร์เพียงแต่ตอบกลับไม่ถึง กรุณาตรวจสอบสถานะก่อนลองใหม่ (อย่ากดซ้ำทันที): ' + networkErr.message);
     }
     throw networkErr;
   });
@@ -421,7 +438,12 @@ function callApi(action, payload, _attempt){
 var lastMemberData = null;
 var lastMemberDataTime = 0;
 var checkStatusLoadingDefaultHtml_ = null;
+var checkStatusInFlight_ = false; // ⚡ เพิ่ม (19/8/69) กันเรียก checkMemberStatus ซ้อนกันหลายคำขอพร้อมกัน
+// (เช่น ผู้ใช้ใจร้อนกดปุ่ม "ลองโหลดอีกครั้ง" ซ้ำๆ ระหว่างที่คำขอแรกยังไม่ตอบกลับ) ยิ่งซ้อนกันยิ่งเพิ่มภาระให้
+// backend ที่ช้าอยู่แล้วให้ช้าลงไปอีก (ตัวเลขจาก Executions log ยืนยันว่ามีการเรียกฟังก์ชันเดียวกันซ้ำถี่ๆ จริง)
 function checkStatus(){
+  if (checkStatusInFlight_) return; // มีคำขอค้างอยู่แล้ว ไม่ต้องยิงซ้ำ รอให้อันเดิมจบก่อน
+  checkStatusInFlight_ = true;
   // ⚡ เพิ่ม (19/8/69) — เดิม checkStatus() ไม่มี loading indicator หรือข้อความแจ้งเตือนใดๆ ระหว่างรอผลเลย
   // ทำให้ตอนเรียกซ้ำหลังสมัครสมาชิกสำเร็จ (จาก submitRegister) หน้าจอค้างอยู่ที่ฟอร์มสมัครแบบไม่มีสัญญาณ
   // อะไรบอกว่ากำลังโหลดอยู่ ดูเหมือนกดแล้วไม่มีอะไรเกิดขึ้น (โดยเฉพาะถ้า checkMemberStatus ตอบช้า) — ตอนนี้
@@ -436,13 +458,12 @@ function checkStatus(){
   var slowTimer = setTimeout(function(){
     if (didFinish) return;
     loadingEl.innerHTML = '<div class="ico">⏳</div>'
-      + '<p style="color:var(--g6);font-size:14px">ระบบตอบกลับช้ากว่าปกติ กรุณารอสักครู่ หรือกดปุ่มด้านล่างเพื่อลองใหม่</p>'
-      + '<button class="btn btn-sm" style="margin-top:12px" onclick="checkStatus()">🔄 ลองโหลดอีกครั้ง</button>';
+      + '<p style="color:var(--g6);font-size:14px">ระบบตอบกลับช้ากว่าปกติ กรุณารอสักครู่ (ระบบกำลังทำงานอยู่ ไม่ต้องกดซ้ำ)</p>';
   }, 12000);
 
   callApi('checkMemberStatus', { idToken: currentIdToken })
     .then(function(r){
-      didFinish = true; clearTimeout(slowTimer);
+      didFinish = true; clearTimeout(slowTimer); checkStatusInFlight_ = false;
       if (!r || !r.success) { showErrorState('checkMemberStatus error: ' + (r ? r.error : 'ไม่ทราบสาเหตุ')); return; }
       if (r.isMember) {
         lastMemberData = r.member;
@@ -453,7 +474,7 @@ function checkStatus(){
         showState('welcomeState');
       }
     })
-    .catch(function(e){ didFinish = true; clearTimeout(slowTimer); showErrorState('เรียก API ไม่สำเร็จ: ' + e.message); });
+    .catch(function(e){ didFinish = true; clearTimeout(slowTimer); checkStatusInFlight_ = false; showErrorState('เรียก API ไม่สำเร็จ: ' + e.message); });
 }
 function renderMemberCard(member){
   var baseColor = member.tierColor || '#2e7d32';
