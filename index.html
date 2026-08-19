@@ -420,9 +420,29 @@ function callApi(action, payload, _attempt){
 }
 var lastMemberData = null;
 var lastMemberDataTime = 0;
+var checkStatusLoadingDefaultHtml_ = null;
 function checkStatus(){
+  // ⚡ เพิ่ม (19/8/69) — เดิม checkStatus() ไม่มี loading indicator หรือข้อความแจ้งเตือนใดๆ ระหว่างรอผลเลย
+  // ทำให้ตอนเรียกซ้ำหลังสมัครสมาชิกสำเร็จ (จาก submitRegister) หน้าจอค้างอยู่ที่ฟอร์มสมัครแบบไม่มีสัญญาณ
+  // อะไรบอกว่ากำลังโหลดอยู่ ดูเหมือนกดแล้วไม่มีอะไรเกิดขึ้น (โดยเฉพาะถ้า checkMemberStatus ตอบช้า) — ตอนนี้
+  // สลับไปโชว์หน้า "กำลังโหลด" ทุกครั้งที่เรียกฟังก์ชันนี้ พร้อมข้อความแจ้ง+ปุ่มลองใหม่ถ้าช้าเกิน 12 วินาที
+  // (แพทเทิร์นเดียวกับที่ submitRegister() ใช้อยู่แล้วตอนสมัครสมาชิก)
+  var loadingEl = document.getElementById('loadingState');
+  if (checkStatusLoadingDefaultHtml_ === null) checkStatusLoadingDefaultHtml_ = loadingEl.innerHTML;
+  loadingEl.innerHTML = checkStatusLoadingDefaultHtml_;
+  showState('loadingState');
+
+  var didFinish = false;
+  var slowTimer = setTimeout(function(){
+    if (didFinish) return;
+    loadingEl.innerHTML = '<div class="ico">⏳</div>'
+      + '<p style="color:var(--g6);font-size:14px">ระบบตอบกลับช้ากว่าปกติ กรุณารอสักครู่ หรือกดปุ่มด้านล่างเพื่อลองใหม่</p>'
+      + '<button class="btn btn-sm" style="margin-top:12px" onclick="checkStatus()">🔄 ลองโหลดอีกครั้ง</button>';
+  }, 12000);
+
   callApi('checkMemberStatus', { idToken: currentIdToken })
     .then(function(r){
+      didFinish = true; clearTimeout(slowTimer);
       if (!r || !r.success) { showErrorState('checkMemberStatus error: ' + (r ? r.error : 'ไม่ทราบสาเหตุ')); return; }
       if (r.isMember) {
         lastMemberData = r.member;
@@ -433,7 +453,7 @@ function checkStatus(){
         showState('welcomeState');
       }
     })
-    .catch(function(e){ showErrorState('เรียก API ไม่สำเร็จ: ' + e.message); });
+    .catch(function(e){ didFinish = true; clearTimeout(slowTimer); showErrorState('เรียก API ไม่สำเร็จ: ' + e.message); });
 }
 function renderMemberCard(member){
   var baseColor = member.tierColor || '#2e7d32';
