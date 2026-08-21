@@ -1047,6 +1047,14 @@ function loadHistoryPanel(){
     body.innerHTML = h;
   }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
+// ⚡ แก้ (21/8/69) — เพิ่มฟังก์ชันนี้แยกจาก privilegeValueText_() สำหรับแสดงในรายการคูปองโดยเฉพาะ เพราะ
+// privilegeValueText_() แบบเดิมสำหรับ bogo จะประกอบชื่อสินค้าที่ต้องซื้อ (restriction) + ชื่อสินค้าที่แถม
+// (freeProduct) เข้าไปในประโยคด้วย ทำให้ยาวเกินไปเวลาคูปองมีสินค้าหลายรายการคั่นด้วยจุลภาค — ที่นี่ตัดชื่อ
+// สินค้าออก เหลือแค่ "ซื้อครบ X แถม Y" สั้นๆ พอ ส่วนประเภทอื่น (percent/fixed/ship_*) ใช้ข้อความเดิม (สั้นอยู่แล้ว)
+function couponValueTextCompact_(c){
+  if (c.type === 'bogo') return 'ซื้อครบ ' + c.value + ' แถม ' + (c.freeQty || 1);
+  return privilegeValueText_(c.type, c.value, c.restriction, c.freeProduct, c.freeQty);
+}
 function loadCouponsPanel(){
   callApi('getActiveCoupons', {}).then(function(r){
     var body = document.getElementById('panelBody');
@@ -1054,7 +1062,7 @@ function loadCouponsPanel(){
     if (!r.results.length) { body.innerHTML = '<div class="empty">ยังไม่มีคูปองที่ใช้ได้ตอนนี้</div>'; return; }
     var h = '';
     r.results.forEach(function(c){
-      var valueText = privilegeValueText_(c.type, c.value, c.restriction, c.freeProduct, c.freeQty);
+      var valueText = couponValueTextCompact_(c);
       h += '<div class="list-item"><div class="row1"><span>' + esc(c.code) + '</span><span>' + valueText + '</span></div>'
         + '<div class="row2">' + (c.autoApply ? 'ใช้อัตโนมัติที่หน้าชำระเงิน' : 'พิมพ์โค้ดนี้ตอนชำระเงิน') + (c.expiry ? ' · หมดอายุ ' + esc(c.expiry) : '') + '</div></div>';
     });
