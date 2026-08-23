@@ -819,13 +819,23 @@ function loadPrivilegesPanel(){
   callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
     if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
     var h = '';
+    // ⚡ เพิ่ม (23/8/69) — โปรแต้มสะสมทั้งร้าน (คูณแต้ม / ซื้อซ้ำในเดือน) ที่กำลังใช้งานอยู่ตอนนี้ เดิมหน้านี้
+    // แสดงแค่สิทธิ์รายบุคคลเท่านั้น ไม่เคยดึงโปรแบบทั้งร้านมาแสดงเลย ทำให้ลูกค้าไม่เห็นว่ามีโปรคูณแต้ม/ซื้อซ้ำ
+    // อยู่ (ทำงานเบื้องหลังแต่ไม่มีที่ไหนบอกล่วงหน้า) — แสดงแยกหัวข้อไว้บนสุดก่อนสิทธิ์รายบุคคล
+    if (r.pointsPromos && r.pointsPromos.length) {
+      h += '<div style="font-size:13px;font-weight:700;color:var(--gd);margin-bottom:8px">🎯 โปรแต้มสะสมพิเศษตอนนี้</div>';
+      r.pointsPromos.forEach(function(p){
+        h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span></div></div>';
+      });
+      h += '<div style="height:14px"></div>';
+    }
     if (r.privileges && r.privileges.length) {
       r.privileges.forEach(function(p){
         var valueText = privilegeValueText_(p.type, p.value, p.restriction, p.freeProduct, p.freeQty);
         h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span><span>' + valueText + '</span></div>'
           + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
       });
-    } else {
+    } else if (!(r.pointsPromos && r.pointsPromos.length)) {
       h += '<div class="empty" style="padding:12px 0">ยังไม่มีสิทธิ์พิเศษในตอนนี้</div>';
     }
     body.innerHTML = h;
