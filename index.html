@@ -835,8 +835,22 @@ function loadPrivilegesPanel(){
         h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span><span>' + valueText + '</span></div>'
           + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
       });
-    } else if (!(r.pointsPromos && r.pointsPromos.length)) {
+    } else if (!(r.pointsPromos && r.pointsPromos.length) && !(r.tierPerks && r.tierPerks.length)) {
       h += '<div class="empty" style="padding:12px 0">ยังไม่มีสิทธิ์พิเศษในตอนนี้</div>';
+    }
+    // ⚡ เพิ่ม (23/8/69) — สิทธิ์ตามระดับสมาชิก (ข้อความล้วน ไม่มีผลต่อราคา/แต้ม) แสดงทุกรายการที่เปิดใช้งาน
+    // ทั้งที่ปลดล็อคแล้วและยังไม่ปลดล็อค (โชว์รายการที่ยังไม่ถึงด้วยเพื่อจูงใจให้อยากเลื่อนระดับ)
+    if (r.tierPerks && r.tierPerks.length) {
+      h += '<div style="font-size:13px;font-weight:700;color:var(--gd);margin:16px 0 8px">🌟 สิทธิ์ตามระดับสมาชิก</div>';
+      r.tierPerks.forEach(function(p){
+        if (p.unlocked) {
+          h += '<div class="list-item"><div class="row1"><span>✅ ' + esc(p.text) + '</span></div>'
+            + '<div class="row2">ปลดล็อคแล้ว (' + esc(p.tierName) + ')</div></div>';
+        } else {
+          h += '<div class="list-item" style="opacity:.55"><div class="row1"><span>🔒 ' + esc(p.text) + '</span></div>'
+            + '<div class="row2">ปลดล็อคเมื่อเป็น ' + esc(p.tierName) + '</div></div>';
+        }
+      });
     }
     body.innerHTML = h;
   }).catch(function(e){
