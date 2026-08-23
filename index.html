@@ -830,9 +830,10 @@ function loadPrivilegesPanel(){
       h += '<div style="height:14px"></div>';
     }
     if (r.privileges && r.privileges.length) {
+      // ⚡ แก้ (23/8/69) — ตัดรายละเอียดยาวๆ (โดยเฉพาะ bogo ที่มีรายชื่อสินค้ายาวมาก) ออก เหลือแค่หัวข้อชื่อ
+      // สิทธิ์ + วันหมดอายุพอ ตามที่ขอ ไม่ต้องมีรายละเอียดของสินค้า/มูลค่าอีกต่อไป
       r.privileges.forEach(function(p){
-        var valueText = privilegeValueText_(p.type, p.value, p.restriction, p.freeProduct, p.freeQty);
-        h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span><span>' + valueText + '</span></div>'
+        h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span></div>'
           + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
       });
     } else if (!(r.pointsPromos && r.pointsPromos.length) && !(r.tierPerks && r.tierPerks.length)) {
