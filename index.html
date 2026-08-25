@@ -107,7 +107,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .mcard-greeting-name{font-size:18px;font-weight:800;line-height:1.25;color:var(--td);}
 .mcard-greeting-sub{font-size:13px;font-weight:500;color:var(--g6);margin-top:1px;}
 .mcard-body{position:absolute;bottom:16px;right:16px;text-align:right;z-index:1;}
-.mcard-code{position:absolute;bottom:16px;left:16px;z-index:1;font-size:13px;letter-spacing:.3px;
+.mcard-code{position:absolute;bottom:16px;left:16px;z-index:1;font-size:11px;letter-spacing:.3px;
   opacity:.95;text-shadow:0 1px 4px rgba(0,0,0,.55);}
 .mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;
   text-shadow:0 1px 4px rgba(0,0,0,.55);transform:translateY(-19px);}
@@ -175,7 +175,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .custom-alert-icon.info{background:#e3f2fd;}
 .custom-alert-text{font-size:14px;line-height:1.7;color:var(--td);white-space:pre-line;margin-bottom:20px;}
 .custom-alert-ok{border-radius:999px;}
-.invite-link-box{background:var(--gp);border-radius:12px;padding:14px;font-size:12.5px;word-break:break-all;color:var(--gd);margin-bottom:12px;border:1.5px dashed var(--gb);}
 </style>
 </head>
 <body>
@@ -217,7 +216,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
     </div>
     <div id="registerState" class="sh">
       <div class="err" id="errBox"></div>
-      <div id="referralBanner" class="ok sh" style="margin-bottom:16px"></div>
       <div class="fg">
         <label>ชื่อ-นามสกุล</label>
         <input type="text" class="fc" id="fullNameInput" placeholder="เช่น สมชาย ใจดี">
@@ -235,6 +233,11 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
         <label>เบอร์โทรศัพท์</label>
         <input type="tel" class="fc" id="phoneInput" placeholder="08X-XXX-XXXX" maxlength="10">
         <div class="hint">ใช้ผูกกับประวัติการสั่งซื้อของคุณ</div>
+      </div>
+      <div class="fg sh" id="referrerCodeField">
+        <label>รหัสสมาชิกผู้แนะนำ (ถ้ามี)</label>
+        <input type="text" class="fc" id="referrerCodeInput" placeholder="เช่น EM-20260825001" style="text-transform:uppercase">
+        <div class="hint">ถ้ามีเพื่อนแนะนำให้คุณมาสมัคร กรอกรหัสสมาชิกของเพื่อนตรงนี้ได้เลย (ไม่มีก็เว้นว่างได้)</div>
       </div>
       <button class="btn" id="submitBtn" onclick="submitRegister()">✅ สมัครสมาชิก</button>
     </div>
@@ -285,9 +288,6 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
           <div class="menu-item" onclick="openPanel('history')">
             <div class="icon"><img src="icon-history.png" alt="ประวัติสั่งซื้อ"></div><div class="txt">ประวัติ<br>สั่งซื้อ</div>
           </div>
-          <div class="menu-item" onclick="openPanel('invite')">
-            <div class="icon">🤝</div><div class="txt">เชิญ<br>เพื่อน</div>
-          </div>
           <a class="menu-item" href="https://www.facebook.com/emocha.official/" target="_blank">
             <img class="icon" src="icon-facebook.png" alt="Facebook"><div class="txt">Facebook</div>
           </a>
@@ -334,41 +334,12 @@ var currentLinePicture = '';
 var currentLineName = '';
 var brandLogoDataUrl = '';
 
-// ⚡ เพิ่ม (25/8/69) — ระบบแนะนำเพื่อน (MGM): อ่านค่า ?ref=รหัสสมาชิก จาก URL ตอนเปิดหน้าครั้งแรก แล้วเก็บไว้
-// ใน sessionStorage กันเผื่อ URL เปลี่ยนระหว่างขั้นตอน LINE Login redirect (query string บางครั้งถูกตัด/
-// เรียงใหม่ระหว่าง redirect ไปกลับ) ตัวแปรนี้จะถูกส่งแนบไปกับ registerMember ตอนสมัครสมาชิกจริง เพื่อให้
-// ฝั่ง Code.gs รู้ว่าใครแนะนำใคร (ระบบจะเช็คว่ารหัสนี้ตรงกับสมาชิกจริงในฐานข้อมูลหรือไม่อีกที ถ้าไม่ตรง/ไม่มี
-// ก็แค่สมัครตามปกติ ไม่มีผลกระทบอะไร)
-var REFERRER_STORAGE_KEY_ = 'emocha.members.referrer-code';
-(function captureReferrerCode_(){
-  try {
-    var urlRef = new URLSearchParams(location.search).get('ref');
-    if (urlRef) sessionStorage.setItem(REFERRER_STORAGE_KEY_, urlRef.trim());
-  } catch (e) { /* เบราว์เซอร์เก่ามากๆ ไม่รองรับ URLSearchParams — ข้ามไปเงียบๆ ไม่กระทบการสมัครปกติ */ }
-})();
-function getReferrerCode_(){
-  try { return sessionStorage.getItem(REFERRER_STORAGE_KEY_) || ''; } catch (e) { return ''; }
-}
-
 function showState(id){
   ['loadingState','welcomeState','registerState','memberCardState','successState','errorState'].forEach(function(s){
     document.getElementById(s).classList.toggle('sh', s !== id);
   });
   document.getElementById('hd').classList.toggle('sh', id === 'memberCardState');
   document.getElementById('bdArea').classList.toggle('member-view', id === 'memberCardState');
-  // ⚡ เพิ่ม (25/8/69) — ตอนเปิดหน้าฟอร์มสมัคร ถ้ามีรหัสผู้แนะนำอยู่ ให้โชว์แบนเนอร์บอกลูกค้าว่ามาจากการ
-  // แนะนำของเพื่อน (สร้างความมั่นใจว่าลิงก์ที่กดมาใช้งานได้จริง เห็นผลตั้งแต่ก่อนกดสมัครเลย)
-  if (id === 'registerState') {
-    var banner = document.getElementById('referralBanner');
-    var refCode = getReferrerCode_();
-    if (refCode) {
-      banner.textContent = '🤝 คุณกำลังสมัครผ่านลิงก์แนะนำจากเพื่อน (รหัส ' + refCode + ') — สมัครสำเร็จแล้วทั้งคุณและเพื่อนอาจได้รับสิทธิพิเศษเพิ่มเติมนะคะ';
-      banner.classList.remove('sh');
-      banner.classList.add('show');
-    } else {
-      banner.classList.add('sh');
-    }
-  }
 }
 function showErrorState(msg){
   document.getElementById('errorState').innerHTML = '<div class="ico">⚠️</div><div id="errorMsg">' + msg.replace(/</g,'&lt;') + '</div>';
@@ -610,9 +581,11 @@ function submitRegister(){
       + '<button class="btn btn-sm" style="margin-top:8px" onclick="checkStatus()">🔄 เช็คสถานะอีกครั้ง</button>';
     errBox.classList.add('show');
   }, 12000);
-  // ⚡ แก้ (25/8/69) — แนบ referrerCode (ถ้ามี จากลิงก์ ?ref= ที่เพื่อนแชร์มา) ไปกับคำขอสมัครสมาชิกด้วย
+  // ⚡ แก้ (25/8/69) — เปลี่ยนจากดักจับรหัสผู้แนะนำผ่านลิงก์ ?ref= อัตโนมัติ มาเป็นให้ผู้สมัคร (B) พิมพ์รหัส
+  // สมาชิกของผู้แนะนำ (A) เข้ามาเองในฟอร์ม (เหมือนแพทเทิร์นเดียวกับช่องกรอกรหัสแนะนำที่หน้าชำระเงินฝั่งร้านค้า)
   // Code.gs ฝั่งเซิร์ฟเวอร์จะเป็นคนตรวจสอบเองว่ารหัสนี้ตรงกับสมาชิกจริงหรือไม่ ถ้าไม่ตรง/ไม่มี ก็สมัครได้ปกติ
-  callApi('registerMember', { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday, referrerCode: getReferrerCode_() })
+  var referrerCode = document.getElementById('referrerCodeInput').value.trim();
+  callApi('registerMember', { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday, referrerCode: referrerCode })
     .then(function(r){
       didFinish = true; clearTimeout(slowTimer);
       btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
@@ -716,12 +689,11 @@ var PANEL_TITLES = {
   info: { icon: '👤', label: 'ข้อมูลสมาชิก' },
   history: { icon: '<img src="icon-history.png" alt="">', label: 'ประวัติการสั่งซื้อ' },
   coupons: { icon: '<img src="icon-coupon.png" alt="">', label: 'คูปอง' },
-  invite: { icon: '🤝', label: 'เชิญเพื่อน' },
   terms: { icon: 'ⓘ', label: 'เงื่อนไขสิทธิพิเศษสมาชิก' }
 };
 function openPanel(type){
   var t = PANEL_TITLES[type];
-  var iconHtml = (type === 'terms' || type === 'invite') ? ('<span class="panel-menu-icon" aria-hidden="true">' + (t ? t.icon : 'ⓘ') + '</span>') : (t ? menuIcon(type, 'panel-menu-icon') : '');
+  var iconHtml = (type === 'terms') ? ('<span class="panel-menu-icon" aria-hidden="true">' + (t ? t.icon : 'ⓘ') + '</span>') : (t ? menuIcon(type, 'panel-menu-icon') : '');
   document.getElementById('panelTitle').innerHTML = t ? (iconHtml + '<span>' + esc(t.label) + '</span>') : '';
   document.getElementById('panelBody').innerHTML = '<div class="empty">กำลังโหลด...</div>';
   document.getElementById('panelOverlay').classList.remove('sh');
@@ -731,7 +703,6 @@ function openPanel(type){
   else if (type === 'info') loadMemberInfoPanel();
   else if (type === 'history') loadHistoryPanel();
   else if (type === 'coupons') loadCouponsPanel();
-  else if (type === 'invite') loadInvitePanel();
   else if (type === 'terms') loadTermsPanel();
 }
 function closePanel(){
@@ -747,73 +718,6 @@ function loadTermsPanel(){
   body.innerHTML = '<div class="terms-content">'
     + TERMS_CONTENT_.map(function(t){ return '<p>• ' + esc(t) + '</p>'; }).join('')
     + '</div>';
-}
-// ⚡ เพิ่ม (25/8/69) — แผงเชิญเพื่อน (MGM): แสดงลิงก์เชิญของสมาชิกคนนี้ (ใช้รหัสสมาชิกของตัวเองเป็นรหัสอ้างอิง
-// ไม่ต้องสร้างรหัสใหม่) พร้อมปุ่มคัดลอกลิงก์ ให้ลูกค้าเอาไปแชร์ต่อให้เพื่อนใน LINE ได้เลย — ถ้า liff รองรับ
-// shareTargetPicker (แชร์ตรงเข้าแชท LINE ได้) จะโชว์ปุ่มนั้นเพิ่มให้สะดวกกว่าการคัดลอกเอง
-function loadInvitePanel(){
-  var body = document.getElementById('panelBody');
-  var render = function(member){
-    var code = member.memberCode || '';
-    if (!code) {
-      body.innerHTML = '<div class="empty">ไม่พบรหัสสมาชิกของคุณ กรุณาลองใหม่อีกครั้ง</div>';
-      return;
-    }
-    var inviteUrl = 'https://liff.line.me/' + LIFF_ID + '?ref=' + encodeURIComponent(code);
-    var canShare = (typeof liff !== 'undefined' && liff.isApiAvailable && liff.isApiAvailable('shareTargetPicker'));
-    var h = '<p style="font-size:13.5px;color:var(--g8);line-height:1.6;margin-bottom:14px">'
-      + '🤝 แชร์ลิงก์นี้ให้เพื่อน เมื่อเพื่อนสมัครสมาชิกผ่านลิงก์ของคุณ ทั้งคุณและเพื่อนอาจได้รับสิทธิพิเศษเพิ่มเติม'
-      + ' (ขึ้นอยู่กับโปรโมชั่นที่ร้านตั้งไว้ในขณะนั้น)</p>';
-    h += '<div class="invite-link-box" id="inviteLinkText">' + esc(inviteUrl) + '</div>';
-    if (canShare) {
-      h += '<button class="btn btn-block" onclick="shareInviteViaLine_(\'' + inviteUrl.replace(/'/g, "\\'") + '\')">📤 แชร์ให้เพื่อนใน LINE</button>';
-      h += '<button class="btn btn-outline btn-block" style="margin-top:8px" onclick="copyInviteLink_(\'' + inviteUrl.replace(/'/g, "\\'") + '\')">📋 คัดลอกลิงก์</button>';
-    } else {
-      h += '<button class="btn btn-block" onclick="copyInviteLink_(\'' + inviteUrl.replace(/'/g, "\\'") + '\')">📋 คัดลอกลิงก์</button>';
-    }
-    h += '<div class="ok" id="inviteCopyOk" style="margin-top:12px"></div>';
-    body.innerHTML = h;
-  };
-  if (lastMemberData && lastMemberData.memberCode) { render(lastMemberData); return; }
-  callApi('checkMemberStatus', { idToken: currentIdToken }).then(function(r){
-    if (!r || !r.success || !r.isMember) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
-    lastMemberData = r.member;
-    lastMemberDataTime = Date.now();
-    render(r.member);
-  }).catch(function(e){ body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
-}
-function copyInviteLink_(url){
-  var okBox = document.getElementById('inviteCopyOk');
-  var done = function(){
-    if (okBox) { okBox.textContent = '✅ คัดลอกลิงก์แล้ว วางส่งให้เพื่อนได้เลย'; okBox.classList.add('show'); }
-  };
-  var fail = function(){
-    // เบราว์เซอร์บางตัวไม่รองรับ Clipboard API — ให้ผู้ใช้กดคัดลอกเองจากกล่องข้อความแทน
-    if (okBox) { okBox.textContent = 'กรุณากดค้างที่ลิงก์ด้านบนเพื่อคัดลอกด้วยตัวเอง'; okBox.classList.add('show'); }
-  };
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(done).catch(fail);
-    } else {
-      var ta = document.createElement('textarea');
-      ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      var ok = document.execCommand('copy');
-      document.body.removeChild(ta);
-      ok ? done() : fail();
-    }
-  } catch (e) { fail(); }
-}
-function shareInviteViaLine_(url){
-  try {
-    liff.shareTargetPicker([{ type: 'text', text: '🤝 มาเป็นสมาชิก Em-O-Cha กับฉันสิ! สมัครผ่านลิงก์นี้เลย\n' + url }])
-      .then(function(res){
-        if (res) showCustomAlert_('✅ ส่งลิงก์เชิญให้เพื่อนเรียบร้อยแล้ว');
-      })
-      .catch(function(){ /* ผู้ใช้กดยกเลิกการแชร์เอง ไม่ต้องแจ้ง error */ });
-  } catch (e) {
-    copyInviteLink_(url);
-  }
 }
 var rewardsCatalogCache = [];
 var currentPointsBalance = 0;
@@ -1212,6 +1116,14 @@ function initLiff(){
 callApi('getTierConfig', {}).then(function(r){
   if (r && r.success && Array.isArray(r.tiers)) tierConfigCache_ = r.tiers;
 }).catch(function(){ /* พลาดก็ไม่เป็นไร renderTierProgressHint_ จะลองยิงเองอีกทีตอนต้องใช้จริง */ });
+// ⚡ เพิ่ม (25/8/69) — เช็คว่าระบบแนะนำเพื่อนสมัครสมาชิก (MGM) เปิดใช้งานอยู่หรือไม่ตอนโหลดหน้า ถ้าปิดอยู่
+// ช่องกรอก "รหัสสมาชิกผู้แนะนำ" ในฟอร์มสมัครจะไม่โชว์เลย (ค่าเริ่มต้นซ่อนไว้ก่อนด้วย class="sh" ใน HTML)
+// เอ็นด์พอยต์นี้เป็นแบบสาธารณะ ไม่ต้องใช้ idToken/PIN คืนแค่ true/false เท่านั้น
+callApi('getReferralPublicStatus', {}).then(function(r){
+  if (r && r.success && r.enabled) {
+    document.getElementById('referrerCodeField').classList.remove('sh');
+  }
+}).catch(function(){ /* เช็คไม่สำเร็จ ปล่อยให้ช่องซ่อนไว้ต่อไปเงียบๆ ไม่กระทบการสมัครสมาชิกปกติ */ });
 initLiff();
 </script>
 </body>
