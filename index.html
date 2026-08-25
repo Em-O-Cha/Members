@@ -85,22 +85,12 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
   display:flex;align-items:center;letter-spacing:.1px;}
 .tier-progress-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
   margin-right:7px;font-size:13px;flex-shrink:0;}
-/* ⚡ เอา overflow:hidden ออกจากแทร็ก (16/8/69) — เดิม overflow:hidden ใช้กันมุมโค้งของแถบ .tier-progress-fill
-   ล้นออกนอกกรอบตอนกว้าง 100% แต่พอจะเพิ่มโลโก้บริษัท (.tier-progress-marker) เป็นหมุดบอกตำแหน่งปลายแถบ
-   ต้องให้โลโก้ (วงกลมใหญ่กว่าความสูงแทร็ก 11px) โผล่พ้นแทร็กได้ ถ้ายังมี overflow:hidden อยู่จะถูกตัดเหลือ
-   แค่เสี้ยวบางๆ ตรงกลางเท่านั้น — เอาออกแล้วไม่กระทบมุมโค้งของแถบเดิมเลย เพราะ .tier-progress-fill มี
-   border-radius:999px ของตัวเองอยู่แล้ว ปัดมุมตัวเองได้โดยไม่ต้องพึ่ง overflow:hidden ของพ่อแม่ */
 .tier-progress-track{position:relative;height:11px;border-radius:999px;
   box-shadow:inset 0 1px 3px rgba(0,0,0,.07);}
 .tier-progress-fill{position:relative;height:100%;border-radius:999px;transition:width .4s ease;}
 .tier-progress-fill::after{content:'';position:absolute;top:0;left:0;right:0;height:55%;
   background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0));
   border-radius:999px 999px 0 0;}
-/* ⚡ เพิ่มใหม่ (16/8/69) — โลโก้บริษัท (Spunky Food) เป็น "หมุด" บอกตำแหน่งปลายสุดของระยะทางที่คืบหน้า
-   ไปแล้วบนแถบ tier-progress-track ขนาดเล็ก วงกลม พื้นขาว มีเงาบางๆ ให้ดูลอยเด่นจากแถบสี ไม่ใช่ส่วนหนึ่ง
-   ของแถบเอง — ตำแหน่งแนวนอน (left) คำนวณเป็น % เดียวกับความกว้างของ .tier-progress-fill เป๊ะๆ (ส่งมาจาก
-   ตัวแปร percent ใน renderTierProgressHint_) จัดกึ่งกลางแนวตั้งของแทร็กด้วย top:50% + translateY(-50%)
-   และเลื่อนแนวนอนด้วย translateX(-50%) ให้จุดศูนย์กลางโลโก้ตรงกับตำแหน่ง % นั้นพอดี (ไม่ใช่ขอบโลโก้) */
 .tier-progress-marker{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;
   transform:translate(-50%,-50%);object-fit:contain;background:#fff;padding:2px;
   box-shadow:0 2px 6px rgba(0,0,0,.28);border:1.5px solid #fff;z-index:2;}
@@ -185,6 +175,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .custom-alert-icon.info{background:#e3f2fd;}
 .custom-alert-text{font-size:14px;line-height:1.7;color:var(--td);white-space:pre-line;margin-bottom:20px;}
 .custom-alert-ok{border-radius:999px;}
+.invite-link-box{background:var(--gp);border-radius:12px;padding:14px;font-size:12.5px;word-break:break-all;color:var(--gd);margin-bottom:12px;border:1.5px dashed var(--gb);}
 </style>
 </head>
 <body>
@@ -226,6 +217,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
     </div>
     <div id="registerState" class="sh">
       <div class="err" id="errBox"></div>
+      <div id="referralBanner" class="ok sh" style="margin-bottom:16px"></div>
       <div class="fg">
         <label>ชื่อ-นามสกุล</label>
         <input type="text" class="fc" id="fullNameInput" placeholder="เช่น สมชาย ใจดี">
@@ -293,6 +285,9 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
           <div class="menu-item" onclick="openPanel('history')">
             <div class="icon"><img src="icon-history.png" alt="ประวัติสั่งซื้อ"></div><div class="txt">ประวัติ<br>สั่งซื้อ</div>
           </div>
+          <div class="menu-item" onclick="openPanel('invite')">
+            <div class="icon">🤝</div><div class="txt">เชิญ<br>เพื่อน</div>
+          </div>
           <a class="menu-item" href="https://www.facebook.com/emocha.official/" target="_blank">
             <img class="icon" src="icon-facebook.png" alt="Facebook"><div class="txt">Facebook</div>
           </a>
@@ -338,21 +333,48 @@ var currentIdToken = null;
 var currentLinePicture = '';
 var currentLineName = '';
 var brandLogoDataUrl = '';
+
+// ⚡ เพิ่ม (25/8/69) — ระบบแนะนำเพื่อน (MGM): อ่านค่า ?ref=รหัสสมาชิก จาก URL ตอนเปิดหน้าครั้งแรก แล้วเก็บไว้
+// ใน sessionStorage กันเผื่อ URL เปลี่ยนระหว่างขั้นตอน LINE Login redirect (query string บางครั้งถูกตัด/
+// เรียงใหม่ระหว่าง redirect ไปกลับ) ตัวแปรนี้จะถูกส่งแนบไปกับ registerMember ตอนสมัครสมาชิกจริง เพื่อให้
+// ฝั่ง Code.gs รู้ว่าใครแนะนำใคร (ระบบจะเช็คว่ารหัสนี้ตรงกับสมาชิกจริงในฐานข้อมูลหรือไม่อีกที ถ้าไม่ตรง/ไม่มี
+// ก็แค่สมัครตามปกติ ไม่มีผลกระทบอะไร)
+var REFERRER_STORAGE_KEY_ = 'emocha.members.referrer-code';
+(function captureReferrerCode_(){
+  try {
+    var urlRef = new URLSearchParams(location.search).get('ref');
+    if (urlRef) sessionStorage.setItem(REFERRER_STORAGE_KEY_, urlRef.trim());
+  } catch (e) { /* เบราว์เซอร์เก่ามากๆ ไม่รองรับ URLSearchParams — ข้ามไปเงียบๆ ไม่กระทบการสมัครปกติ */ }
+})();
+function getReferrerCode_(){
+  try { return sessionStorage.getItem(REFERRER_STORAGE_KEY_) || ''; } catch (e) { return ''; }
+}
+
 function showState(id){
   ['loadingState','welcomeState','registerState','memberCardState','successState','errorState'].forEach(function(s){
     document.getElementById(s).classList.toggle('sh', s !== id);
   });
   document.getElementById('hd').classList.toggle('sh', id === 'memberCardState');
   document.getElementById('bdArea').classList.toggle('member-view', id === 'memberCardState');
+  // ⚡ เพิ่ม (25/8/69) — ตอนเปิดหน้าฟอร์มสมัคร ถ้ามีรหัสผู้แนะนำอยู่ ให้โชว์แบนเนอร์บอกลูกค้าว่ามาจากการ
+  // แนะนำของเพื่อน (สร้างความมั่นใจว่าลิงก์ที่กดมาใช้งานได้จริง เห็นผลตั้งแต่ก่อนกดสมัครเลย)
+  if (id === 'registerState') {
+    var banner = document.getElementById('referralBanner');
+    var refCode = getReferrerCode_();
+    if (refCode) {
+      banner.textContent = '🤝 คุณกำลังสมัครผ่านลิงก์แนะนำจากเพื่อน (รหัส ' + refCode + ') — สมัครสำเร็จแล้วทั้งคุณและเพื่อนอาจได้รับสิทธิพิเศษเพิ่มเติมนะคะ';
+      banner.classList.remove('sh');
+      banner.classList.add('show');
+    } else {
+      banner.classList.add('sh');
+    }
+  }
 }
 function showErrorState(msg){
   document.getElementById('errorState').innerHTML = '<div class="ico">⚠️</div><div id="errorMsg">' + msg.replace(/</g,'&lt;') + '</div>';
   showState('errorState');
 }
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-// ⚡ เพิ่ม (19/8/69) — สร้างข้อความอธิบายสิทธิ์/คูปองแต่ละประเภทให้อ่านง่ายและถูกต้องตามประเภทจริง (ของเดิม
-// เช็คแค่ 'percent' แล้ว fallback ไปแสดง "ลด X บาท" กับทุกประเภทที่เหลือ ทำให้สิทธิ์แบบ bogo (ซื้อครบแถม) ที่
-// value จริงๆ คือ "จำนวนที่ต้องซื้อครบ" ไม่ใช่จำนวนเงิน ถูกแสดงผิดเป็น "ลด 2 บาท" ทั้งที่ไม่มีส่วนลดเป็นเงินเลย)
 function privilegeValueText_(type, value, restriction, freeProduct, freeQty){
   if (type === 'percent') return 'ลด ' + value + '%';
   if (type === 'fixed') return 'ลด ' + value + ' บาท';
@@ -388,21 +410,6 @@ function closeCustomAlert_(){
   document.getElementById('customAlertOverlay').classList.add('sh');
 }
 window.alert = function(message){ showCustomAlert_(message); };
-// ⚡ แก้ (19/8/69) — ยกเลิกการใช้ AbortController+retry-อัตโนมัติ-ตอน-timeout ที่เพิ่งเพิ่มไปก่อนหน้านี้
-// ทั้งหมด เพราะพิสูจน์แล้วจาก Executions log จริงว่าเป็นสาเหตุของบั๊กร้ายแรงกว่าเดิม: การ "ยกเลิกคำขอ" (abort)
-// ไม่ได้ทำให้เซิร์ฟเวอร์หยุดทำงานจริงๆ (Apps Script ยังรันจนจบอยู่ดี) แต่ฝั่ง client ทิ้งการเชื่อมต่อไปแล้ว
-// พอ backend ทำงานเสร็จสมบูรณ์ (เขียนข้อมูล/ส่ง LINE) แต่ client ไม่ได้รอฟังผลแล้ว หน้าจอเลยค้างไม่ไปไหนทั้งที่
-// งานสำเร็จแล้วจริง แถมยัง "retry" คำสั่งเดิมซ้ำ (สำหรับ action ที่เขียนข้อมูล เช่น registerMember/redeemReward)
-// ทำให้เกิดรายการซ้ำได้ (ยืนยันแล้วจากปัญหาเดียวกันที่เกิดกับ createShopOrder ในไฟล์ Order app)
-//
-// ⚡ แก้เพิ่ม (19/8/69 รอบ 2) — แต่การเอา AbortController ออกไป "ทั้งหมด" กลับสร้างปัญหาใหม่: ถ้าเซิร์ฟเวอร์
-// ค้าง/ไม่ตอบกลับเลย คำขอจะรอตลอดไปไม่มีวันจบ ไม่มี error ไม่มีทางออกให้ผู้ใช้เลย (ยืนยันจากภาพหน้าจอจริงที่
-// ค้างที่ "กำลังโหลด..." ไม่จบสักที และ error "ระบบไม่ตอบสนองชั่วคราว" ที่เกิดจากรอ parse JSON ไม่สำเร็จซ้ำๆ)
-// ตอนนี้ใส่ AbortController กลับมา แต่แยกพฤติกรรมชัดเจน:
-// - อ่านข้อมูล (isMutating=false): timeout 25 วิ/ครั้ง ปลอดภัยที่จะยกเลิก+ลองใหม่อัตโนมัติ (ไม่มีผลข้างเคียง)
-// - เขียนข้อมูล (isMutating=true): timeout 35 วิ/ครั้ง (ให้เวลามากกว่า) ถ้าครบเวลาแล้วยังไม่ตอบ จะ "หยุดรอฟังผล"
-//   ฝั่งเครื่องเฉยๆ (ไม่ได้ retry คำขอซ้ำ เซิร์ฟเวอร์ยังทำงานต่อจนจบตามปกติ ไม่ถูกยกเลิกจริง) แล้วแจ้งผู้ใช้ให้
-//   ตรวจสอบก่อนลองใหม่เอง
 var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'redeemReward', 'updateMemberProfile'];
 
 function callApi(action, payload, _attempt){
@@ -456,17 +463,10 @@ function callApi(action, payload, _attempt){
 var lastMemberData = null;
 var lastMemberDataTime = 0;
 var checkStatusLoadingDefaultHtml_ = null;
-var checkStatusInFlight_ = false; // ⚡ เพิ่ม (19/8/69) กันเรียก checkMemberStatus ซ้อนกันหลายคำขอพร้อมกัน
-// (เช่น ผู้ใช้ใจร้อนกดปุ่ม "ลองโหลดอีกครั้ง" ซ้ำๆ ระหว่างที่คำขอแรกยังไม่ตอบกลับ) ยิ่งซ้อนกันยิ่งเพิ่มภาระให้
-// backend ที่ช้าอยู่แล้วให้ช้าลงไปอีก (ตัวเลขจาก Executions log ยืนยันว่ามีการเรียกฟังก์ชันเดียวกันซ้ำถี่ๆ จริง)
+var checkStatusInFlight_ = false;
 function checkStatus(){
-  if (checkStatusInFlight_) return; // มีคำขอค้างอยู่แล้ว ไม่ต้องยิงซ้ำ รอให้อันเดิมจบก่อน
+  if (checkStatusInFlight_) return;
   checkStatusInFlight_ = true;
-  // ⚡ เพิ่ม (19/8/69) — เดิม checkStatus() ไม่มี loading indicator หรือข้อความแจ้งเตือนใดๆ ระหว่างรอผลเลย
-  // ทำให้ตอนเรียกซ้ำหลังสมัครสมาชิกสำเร็จ (จาก submitRegister) หน้าจอค้างอยู่ที่ฟอร์มสมัครแบบไม่มีสัญญาณ
-  // อะไรบอกว่ากำลังโหลดอยู่ ดูเหมือนกดแล้วไม่มีอะไรเกิดขึ้น (โดยเฉพาะถ้า checkMemberStatus ตอบช้า) — ตอนนี้
-  // สลับไปโชว์หน้า "กำลังโหลด" ทุกครั้งที่เรียกฟังก์ชันนี้ พร้อมข้อความแจ้ง+ปุ่มลองใหม่ถ้าช้าเกิน 12 วินาที
-  // (แพทเทิร์นเดียวกับที่ submitRegister() ใช้อยู่แล้วตอนสมัครสมาชิก)
   var loadingEl = document.getElementById('loadingState');
   if (checkStatusLoadingDefaultHtml_ === null) checkStatusLoadingDefaultHtml_ = loadingEl.innerHTML;
   loadingEl.innerHTML = checkStatusLoadingDefaultHtml_;
@@ -610,7 +610,9 @@ function submitRegister(){
       + '<button class="btn btn-sm" style="margin-top:8px" onclick="checkStatus()">🔄 เช็คสถานะอีกครั้ง</button>';
     errBox.classList.add('show');
   }, 12000);
-  callApi('registerMember', { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday })
+  // ⚡ แก้ (25/8/69) — แนบ referrerCode (ถ้ามี จากลิงก์ ?ref= ที่เพื่อนแชร์มา) ไปกับคำขอสมัครสมาชิกด้วย
+  // Code.gs ฝั่งเซิร์ฟเวอร์จะเป็นคนตรวจสอบเองว่ารหัสนี้ตรงกับสมาชิกจริงหรือไม่ ถ้าไม่ตรง/ไม่มี ก็สมัครได้ปกติ
+  callApi('registerMember', { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday, referrerCode: getReferrerCode_() })
     .then(function(r){
       didFinish = true; clearTimeout(slowTimer);
       btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
@@ -640,10 +642,6 @@ var MENU_ICON_BASE_FILES = {
 };
 var TIER_FILE_SUFFIX_ = { start: 'start', fan: 'silver', love: 'gold', vip: 'platinum' };
 var tierConfigCache_ = null;
-// ⚡ เพิ่ม URL โลโก้บริษัท (16/8/69) — ใช้เป็นหมุดบอกตำแหน่งปลายแถบความคืบหน้า (.tier-progress-marker)
-// ใน renderTierProgressHint_ ด้านล่าง ตั้งเป็นตัวแปรแยกไว้ต่างหาก (ตามแพทเทิร์นเดียวกับไฟล์ภาพอื่นๆ ใน
-// หน้านี้ที่อ้างอิงชื่อไฟล์ตรงๆ เช่น brand-logo.png) ต้องอัปโหลดไฟล์ชื่อนี้ขึ้น GitHub Pages เดียวกับไฟล์
-// ภาพอื่นๆ ของหน้านี้ก่อนถึงจะเห็นโลโก้จริง — ถ้ายังไม่มีไฟล์ โลโก้จะแค่ไม่ขึ้น ไม่กระทบแถบ/ตัวเลขอื่นเลย
 var SPUNKY_LOGO_URL = 'spunky-logo.png';
 function renderTierProgressHint_(member){
   var hintEl = document.getElementById('tierProgressHint');
@@ -655,10 +653,6 @@ function renderTierProgressHint_(member){
   var glowColor = hexToRgba(baseColor, .35);
   var buildCard = function(icon, text, percent, currentLabel, nextLabel){
     var nextChipHtml = nextLabel ? '<span class="tier-chip tier-chip-next">' + esc(nextLabel) + '</span>' : '<span></span>';
-    // ⚡ เพิ่ม <img class="tier-progress-marker"> ตรงนี้ (16/8/69) — วางไว้ในตัว .tier-progress-track เดียว
-    // กับแถบสี (.tier-progress-fill) โดยตรง ใช้ left:percent% ตัวเดียวกับที่กำหนดความกว้างแถบ (percent) พอดี
-    // เพื่อให้โลโก้ไปอยู่ "ตรงจุดปลายสุด" ของระยะทางที่คืบหน้าไปแล้วเป๊ะๆ ตามที่ขอ — onerror ซ่อนตัวเองถ้า
-    // ยังไม่มีไฟล์ spunky-logo.png อัปโหลดไว้ (ไม่กระทบแถบ/ตัวเลขส่วนอื่นเลย)
     hintEl.innerHTML = '<div class="tier-progress-text"><span class="tier-progress-icon">' + icon + '</span>' + esc(text) + '</div>'
       + '<div class="tier-progress-track" style="background:' + trackColor + '">'
       +   '<div class="tier-progress-fill" style="width:' + percent + '%;background:linear-gradient(90deg,' + lightColor + ',' + baseColor + ');box-shadow:0 0 10px ' + glowColor + '"></div>'
@@ -722,11 +716,12 @@ var PANEL_TITLES = {
   info: { icon: '👤', label: 'ข้อมูลสมาชิก' },
   history: { icon: '<img src="icon-history.png" alt="">', label: 'ประวัติการสั่งซื้อ' },
   coupons: { icon: '<img src="icon-coupon.png" alt="">', label: 'คูปอง' },
+  invite: { icon: '🤝', label: 'เชิญเพื่อน' },
   terms: { icon: 'ⓘ', label: 'เงื่อนไขสิทธิพิเศษสมาชิก' }
 };
 function openPanel(type){
   var t = PANEL_TITLES[type];
-  var iconHtml = (type === 'terms') ? '<span class="panel-menu-icon" aria-hidden="true">ⓘ</span>' : (t ? menuIcon(type, 'panel-menu-icon') : '');
+  var iconHtml = (type === 'terms' || type === 'invite') ? ('<span class="panel-menu-icon" aria-hidden="true">' + (t ? t.icon : 'ⓘ') + '</span>') : (t ? menuIcon(type, 'panel-menu-icon') : '');
   document.getElementById('panelTitle').innerHTML = t ? (iconHtml + '<span>' + esc(t.label) + '</span>') : '';
   document.getElementById('panelBody').innerHTML = '<div class="empty">กำลังโหลด...</div>';
   document.getElementById('panelOverlay').classList.remove('sh');
@@ -736,6 +731,7 @@ function openPanel(type){
   else if (type === 'info') loadMemberInfoPanel();
   else if (type === 'history') loadHistoryPanel();
   else if (type === 'coupons') loadCouponsPanel();
+  else if (type === 'invite') loadInvitePanel();
   else if (type === 'terms') loadTermsPanel();
 }
 function closePanel(){
@@ -751,6 +747,73 @@ function loadTermsPanel(){
   body.innerHTML = '<div class="terms-content">'
     + TERMS_CONTENT_.map(function(t){ return '<p>• ' + esc(t) + '</p>'; }).join('')
     + '</div>';
+}
+// ⚡ เพิ่ม (25/8/69) — แผงเชิญเพื่อน (MGM): แสดงลิงก์เชิญของสมาชิกคนนี้ (ใช้รหัสสมาชิกของตัวเองเป็นรหัสอ้างอิง
+// ไม่ต้องสร้างรหัสใหม่) พร้อมปุ่มคัดลอกลิงก์ ให้ลูกค้าเอาไปแชร์ต่อให้เพื่อนใน LINE ได้เลย — ถ้า liff รองรับ
+// shareTargetPicker (แชร์ตรงเข้าแชท LINE ได้) จะโชว์ปุ่มนั้นเพิ่มให้สะดวกกว่าการคัดลอกเอง
+function loadInvitePanel(){
+  var body = document.getElementById('panelBody');
+  var render = function(member){
+    var code = member.memberCode || '';
+    if (!code) {
+      body.innerHTML = '<div class="empty">ไม่พบรหัสสมาชิกของคุณ กรุณาลองใหม่อีกครั้ง</div>';
+      return;
+    }
+    var inviteUrl = 'https://liff.line.me/' + LIFF_ID + '?ref=' + encodeURIComponent(code);
+    var canShare = (typeof liff !== 'undefined' && liff.isApiAvailable && liff.isApiAvailable('shareTargetPicker'));
+    var h = '<p style="font-size:13.5px;color:var(--g8);line-height:1.6;margin-bottom:14px">'
+      + '🤝 แชร์ลิงก์นี้ให้เพื่อน เมื่อเพื่อนสมัครสมาชิกผ่านลิงก์ของคุณ ทั้งคุณและเพื่อนอาจได้รับสิทธิพิเศษเพิ่มเติม'
+      + ' (ขึ้นอยู่กับโปรโมชั่นที่ร้านตั้งไว้ในขณะนั้น)</p>';
+    h += '<div class="invite-link-box" id="inviteLinkText">' + esc(inviteUrl) + '</div>';
+    if (canShare) {
+      h += '<button class="btn btn-block" onclick="shareInviteViaLine_(\'' + inviteUrl.replace(/'/g, "\\'") + '\')">📤 แชร์ให้เพื่อนใน LINE</button>';
+      h += '<button class="btn btn-outline btn-block" style="margin-top:8px" onclick="copyInviteLink_(\'' + inviteUrl.replace(/'/g, "\\'") + '\')">📋 คัดลอกลิงก์</button>';
+    } else {
+      h += '<button class="btn btn-block" onclick="copyInviteLink_(\'' + inviteUrl.replace(/'/g, "\\'") + '\')">📋 คัดลอกลิงก์</button>';
+    }
+    h += '<div class="ok" id="inviteCopyOk" style="margin-top:12px"></div>';
+    body.innerHTML = h;
+  };
+  if (lastMemberData && lastMemberData.memberCode) { render(lastMemberData); return; }
+  callApi('checkMemberStatus', { idToken: currentIdToken }).then(function(r){
+    if (!r || !r.success || !r.isMember) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
+    lastMemberData = r.member;
+    lastMemberDataTime = Date.now();
+    render(r.member);
+  }).catch(function(e){ body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+}
+function copyInviteLink_(url){
+  var okBox = document.getElementById('inviteCopyOk');
+  var done = function(){
+    if (okBox) { okBox.textContent = '✅ คัดลอกลิงก์แล้ว วางส่งให้เพื่อนได้เลย'; okBox.classList.add('show'); }
+  };
+  var fail = function(){
+    // เบราว์เซอร์บางตัวไม่รองรับ Clipboard API — ให้ผู้ใช้กดคัดลอกเองจากกล่องข้อความแทน
+    if (okBox) { okBox.textContent = 'กรุณากดค้างที่ลิงก์ด้านบนเพื่อคัดลอกด้วยตัวเอง'; okBox.classList.add('show'); }
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done).catch(fail);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      ok ? done() : fail();
+    }
+  } catch (e) { fail(); }
+}
+function shareInviteViaLine_(url){
+  try {
+    liff.shareTargetPicker([{ type: 'text', text: '🤝 มาเป็นสมาชิก Em-O-Cha กับฉันสิ! สมัครผ่านลิงก์นี้เลย\n' + url }])
+      .then(function(res){
+        if (res) showCustomAlert_('✅ ส่งลิงก์เชิญให้เพื่อนเรียบร้อยแล้ว');
+      })
+      .catch(function(){ /* ผู้ใช้กดยกเลิกการแชร์เอง ไม่ต้องแจ้ง error */ });
+  } catch (e) {
+    copyInviteLink_(url);
+  }
 }
 var rewardsCatalogCache = [];
 var currentPointsBalance = 0;
@@ -819,9 +882,6 @@ function loadPrivilegesPanel(){
   callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
     if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
     var h = '';
-    // ⚡ เพิ่ม (23/8/69) — โปรแต้มสะสมทั้งร้าน (คูณแต้ม / ซื้อซ้ำในเดือน) ที่กำลังใช้งานอยู่ตอนนี้ เดิมหน้านี้
-    // แสดงแค่สิทธิ์รายบุคคลเท่านั้น ไม่เคยดึงโปรแบบทั้งร้านมาแสดงเลย ทำให้ลูกค้าไม่เห็นว่ามีโปรคูณแต้ม/ซื้อซ้ำ
-    // อยู่ (ทำงานเบื้องหลังแต่ไม่มีที่ไหนบอกล่วงหน้า) — แสดงแยกหัวข้อไว้บนสุดก่อนสิทธิ์รายบุคคล
     if (r.pointsPromos && r.pointsPromos.length) {
       h += '<div style="font-size:13px;font-weight:700;color:var(--gd);margin-bottom:8px">🎯 โปรแต้มสะสมพิเศษตอนนี้</div>';
       r.pointsPromos.forEach(function(p){
@@ -830,8 +890,6 @@ function loadPrivilegesPanel(){
       h += '<div style="height:14px"></div>';
     }
     if (r.privileges && r.privileges.length) {
-      // ⚡ แก้ (23/8/69) — ตัดรายละเอียดยาวๆ (โดยเฉพาะ bogo ที่มีรายชื่อสินค้ายาวมาก) ออก เหลือแค่หัวข้อชื่อ
-      // สิทธิ์ + วันหมดอายุพอ ตามที่ขอ ไม่ต้องมีรายละเอียดของสินค้า/มูลค่าอีกต่อไป
       r.privileges.forEach(function(p){
         h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span></div>'
           + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
@@ -839,8 +897,6 @@ function loadPrivilegesPanel(){
     } else if (!(r.pointsPromos && r.pointsPromos.length) && !(r.tierPerks && r.tierPerks.length)) {
       h += '<div class="empty" style="padding:12px 0">ยังไม่มีสิทธิ์พิเศษในตอนนี้</div>';
     }
-    // ⚡ เพิ่ม (23/8/69) — สิทธิ์ตามระดับสมาชิก (ข้อความล้วน ไม่มีผลต่อราคา/แต้ม) แสดงทุกรายการที่เปิดใช้งาน
-    // ทั้งที่ปลดล็อคแล้วและยังไม่ปลดล็อค (โชว์รายการที่ยังไม่ถึงด้วยเพื่อจูงใจให้อยากเลื่อนระดับ)
     if (r.tierPerks && r.tierPerks.length) {
       h += '<div style="font-size:13px;font-weight:700;color:var(--gd);margin:16px 0 8px">🌟 สิทธิ์ตามระดับสมาชิก</div>';
       r.tierPerks.forEach(function(p){
@@ -1072,10 +1128,6 @@ function loadHistoryPanel(){
     body.innerHTML = h;
   }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
-// ⚡ แก้ (21/8/69) — เพิ่มฟังก์ชันนี้แยกจาก privilegeValueText_() สำหรับแสดงในรายการคูปองโดยเฉพาะ เพราะ
-// privilegeValueText_() แบบเดิมสำหรับ bogo จะประกอบชื่อสินค้าที่ต้องซื้อ (restriction) + ชื่อสินค้าที่แถม
-// (freeProduct) เข้าไปในประโยคด้วย ทำให้ยาวเกินไปเวลาคูปองมีสินค้าหลายรายการคั่นด้วยจุลภาค — ที่นี่ตัดชื่อ
-// สินค้าออก เหลือแค่ "ซื้อครบ X แถม Y" สั้นๆ พอ ส่วนประเภทอื่น (percent/fixed/ship_*) ใช้ข้อความเดิม (สั้นอยู่แล้ว)
 function couponValueTextCompact_(c){
   if (c.type === 'bogo') return 'ซื้อครบ ' + c.value + ' แถม ' + (c.freeQty || 1);
   return privilegeValueText_(c.type, c.value, c.restriction, c.freeProduct, c.freeQty);
