@@ -1031,9 +1031,13 @@ function loadHistoryPanel(){
   callApi('getMyOrderHistory', { idToken: currentIdToken }).then(function(r){
     var body = document.getElementById('panelBody');
     if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
-    if (!r.results.length) { body.innerHTML = '<div class="empty">ยังไม่มีประวัติการสั่งซื้อ</div>'; return; }
+    // ⚡ แก้ (26/8/69) — "ประวัติการสั่งซื้อ" ให้นับเฉพาะออเดอร์ที่แนบสลิปแล้วเท่านั้น (hasSlip = true) ตามที่
+    // ขอ — ออเดอร์ที่ยังไม่แนบสลิป (รอชำระเงิน) ยังไม่ถือเป็นประวัติ จะไปโผล่แค่ในหน้า "คำสั่งซื้อรอดำเนินการ"
+    // ที่หน้าสั่งซื้อสินค้าเท่านั้น ไม่ปนกับที่นี่
+    var history = (r.results || []).filter(function(o){ return o.hasSlip; });
+    if (!history.length) { body.innerHTML = '<div class="empty">ยังไม่มีประวัติการสั่งซื้อ</div>'; return; }
     var h = '';
-    r.results.forEach(function(o){
+    history.forEach(function(o){
       h += '<div class="list-item"><div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Number(o.totalAmount).toLocaleString('th-TH') + '</span></div>'
         + '<div class="row2">' + esc(o.date) + ' · ' + esc(o.paymentMethod) + (o.campaign ? ' · ' + esc(o.campaign) : '') + '</div></div>';
     });
