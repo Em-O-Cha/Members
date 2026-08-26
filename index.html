@@ -107,7 +107,7 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 .mcard-greeting-name{font-size:18px;font-weight:800;line-height:1.25;color:var(--td);}
 .mcard-greeting-sub{font-size:13px;font-weight:500;color:var(--g6);margin-top:1px;}
 .mcard-body{position:absolute;bottom:16px;right:16px;text-align:right;z-index:1;}
-.mcard-code{position:absolute;bottom:16px;left:16px;z-index:1;font-size:16px;letter-spacing:.3px;
+.mcard-code{position:absolute;bottom:16px;left:16px;z-index:1;font-size:14px;letter-spacing:.3px;
   color:#ffffff;background:rgba(0,0,0,.4);padding:4px 11px;border-radius:20px;font-weight:600;}
 .mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;
   text-shadow:0 1px 4px rgba(0,0,0,.55);transform:translateY(-19px);}
@@ -795,8 +795,16 @@ function loadPrivilegesPanel(){
     }
     if (r.privileges && r.privileges.length) {
       r.privileges.forEach(function(p){
-        h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span></div>'
-          + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
+        // ⚡ เพิ่ม (26/8/69) — สิทธิ์ที่ยังไม่ถึงวันเริ่มใช้ (isUpcoming) ให้แสดงไว้ด้วย ไม่ซ่อน แต่ทำให้จางลง
+        // + บอกวันที่เริ่มใช้ได้ชัดเจน (แพทเทิร์นเดียวกับสิทธิ์ตามระดับที่ยังไม่ปลดล็อคด้านล่าง) เพื่อให้
+        // ลูกค้ารู้ล่วงหน้าว่าตัวเองมีสิทธิ์นี้ติดตัวอยู่แล้ว แค่ยังใช้ไม่ได้จนกว่าจะถึงวันที่กำหนด
+        if (p.isUpcoming) {
+          h += '<div class="list-item" style="opacity:.55"><div class="row1"><span>⏳ ' + esc(p.name) + '</span></div>'
+            + '<div class="row2">ใช้สิทธิ์ได้ตั้งแต่วันที่ ' + esc(p.startDateText) + ' · หมดอายุ ' + esc(p.expiry) + '</div></div>';
+        } else {
+          h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span></div>'
+            + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
+        }
       });
     } else if (!(r.pointsPromos && r.pointsPromos.length) && !(r.tierPerks && r.tierPerks.length)) {
       h += '<div class="empty" style="padding:12px 0">ยังไม่มีสิทธิ์พิเศษในตอนนี้</div>';
