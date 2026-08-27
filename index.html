@@ -794,7 +794,12 @@ function loadPrivilegesPanel(){
       h += '<div style="height:14px"></div>';
     }
     if (r.privileges && r.privileges.length) {
+      // กันรายการสิทธิ์แถวเดิมจากข้อมูลต้นทางถูกแสดงซ้ำบนหน้าสมาชิก
+      var displayedPrivileges = {};
       r.privileges.forEach(function(p){
+        var privilegeKey = [p.name, p.expiry, p.startDateText || '', p.isUpcoming ? 'upcoming' : 'active'].join('\u001f');
+        if (displayedPrivileges[privilegeKey]) return;
+        displayedPrivileges[privilegeKey] = true;
         // ⚡ เพิ่ม (26/8/69) — สิทธิ์ที่ยังไม่ถึงวันเริ่มใช้ (isUpcoming) ให้แสดงไว้ด้วย ไม่ซ่อน แต่ทำให้จางลง
         // + บอกวันที่เริ่มใช้ได้ชัดเจน (แพทเทิร์นเดียวกับสิทธิ์ตามระดับที่ยังไม่ปลดล็อคด้านล่าง) เพื่อให้
         // ลูกค้ารู้ล่วงหน้าว่าตัวเองมีสิทธิ์นี้ติดตัวอยู่แล้ว แค่ยังใช้ไม่ได้จนกว่าจะถึงวันที่กำหนด
