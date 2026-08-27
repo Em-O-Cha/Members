@@ -33,16 +33,12 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
 #welcomeState{position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;display:flex;flex-direction:column;
   height:100vh;background:#000;}
 #welcomeState.sh{display:none;}
-.welcome-topbar{flex-shrink:0;background:linear-gradient(135deg,#a50d0c,#d85d5c);
-  padding:14px 20px;display:flex;align-items:center;gap:10px;color:#fff;}
-.welcome-topbar img{width:28px;height:35px;object-fit:contain;}
-.welcome-topbar span{font-weight:700;font-size:16px;letter-spacing:.5px;}
 .welcome-photo{flex:1;position:relative;background-image:url('welcome-bg.jpg');
   background-size:cover;background-position:center;min-height:0;}
-.welcome-bottom{flex-shrink:0;background:#fff;border-radius:28px 28px 0 0;margin-top:-28px;
-  position:relative;z-index:1;padding:26px 24px 30px;text-align:center;box-shadow:0 -6px 20px rgba(0,0,0,.12);}
-.welcome-bottom h3{font-size:19px;font-weight:700;color:var(--td);letter-spacing:1px;margin-bottom:14px;}
-.welcome-bottom .btn{max-width:240px;margin:0 auto;border-radius:24px;}
+.welcome-bottom{position:absolute;z-index:1;left:0;right:0;bottom:44px;padding:0 24px;text-align:center;}
+.welcome-bottom .btn{max-width:240px;margin:0 auto;border-radius:24px;
+  background:linear-gradient(135deg,#a50d0c 0%,#e4504d 55%,#a50d0c 100%);
+  box-shadow:0 6px 18px rgba(165,13,12,.48);}
 .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:20px;}
 .fg label{font-size:13px;font-weight:600;color:var(--g8);}
 .fc{height:46px;padding:0 14px;border:1.5px solid #eee;border-radius:10px;font-size:15px;
@@ -189,13 +185,8 @@ body{font-family:'Sarabun',sans-serif;color:var(--td);min-height:100vh;
   <symbol id="icon-tiktok" viewBox="0 0 48 48"><path class="blue-stroke" d="M28 8v20.5a7.5 7.5 0 1 1-6-7.4M28 8c1.5 5.2 4.5 8.2 10 8.7V22c-4.1-.2-7.5-1.5-10-4"/></symbol>
 </svg>
 <div id="welcomeState" class="sh">
-  <div class="welcome-topbar">
-    <img id="welcomeLogo" alt="Em-O-Cha">
-    <span>Em-O-Cha</span>
-  </div>
   <div class="welcome-photo"></div>
   <div class="welcome-bottom">
-    <h3>MEMBERSHIP</h3>
     <button class="btn" onclick="try{showState('registerState');}catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}">🎉 เข้าร่วมเป็นสมาชิก</button>
   </div>
 </div>
@@ -1122,8 +1113,6 @@ function initLiff(){
     }
     if (profile && profile.name) currentLineName = profile.name;
     brandLogoDataUrl = document.querySelector('.brand-logo') ? document.querySelector('.brand-logo').src : '';
-    var welcomeLogoEl = document.getElementById('welcomeLogo');
-    if (welcomeLogoEl && brandLogoDataUrl) welcomeLogoEl.src = brandLogoDataUrl;
     checkStatus();
   }).catch(function(e){
     clearTimeout(initTimeout);
