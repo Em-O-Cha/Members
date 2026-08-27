@@ -478,7 +478,14 @@ function renderMemberCard(member){
   mcardEl.style.backgroundImage = "url('" + (cardImageMap[tierKey] || cardImageMap.start) + "?v=" + CARD_IMAGE_VERSION + "')";
   mcardEl.style.color = textColor;
   var shopBtnEl = document.getElementById('shopCtaBtn');
-  if (shopBtnEl) { shopBtnEl.style.background = baseColor; shopBtnEl.style.color = textColor; }
+  // ปุ่มสั่งซื้อใช้เฉดเดียวกับสีบัตรใน Tier_Config เสมอ
+  // ต้องกำหนด !important เพราะปุ่มทั่วไปของหน้าใช้ธีมแดงเป็นค่าเริ่มต้น
+  if (shopBtnEl) {
+    shopBtnEl.style.setProperty('background', tierButtonGradient_(baseColor), 'important');
+    shopBtnEl.style.setProperty('border-color', baseColor, 'important');
+    shopBtnEl.style.setProperty('color', textColor, 'important');
+    shopBtnEl.style.setProperty('box-shadow', '0 5px 14px ' + hexToRgba(baseColor, .42), 'important');
+  }
   var cardEl = document.querySelector('.card');
   var bgImageMap = { start: 'member-bg-start.png', fan: 'member-bg-silver.png', love: 'member-bg-gold.png', vip: 'member-bg-platinum.png' };
   if (cardEl) cardEl.style.backgroundImage = "url('" + (bgImageMap[tierKey] || 'member-bg.png') + "?v=" + CARD_IMAGE_VERSION + "')";
@@ -496,6 +503,10 @@ function renderMemberCard(member){
   document.getElementById('tierPointsValue').textContent = (member.points || 0).toLocaleString('th-TH') + ' คะแนน';
   renderTierProgressHint_(member);
   applyThemeColor_(baseColor);
+  warmMemberMenuData_();
+}
+function tierButtonGradient_(baseColor){
+  return 'linear-gradient(135deg,' + shadeColor(baseColor, -16) + ' 0%,' + baseColor + ' 52%,' + shadeColor(baseColor, 14) + ' 100%)';
 }
 function applyThemeColor_(baseColor){
   document.body.style.background = mixWithWhite(baseColor, .12);
@@ -593,7 +604,16 @@ function submitRegister(){
       didFinish = true; clearTimeout(slowTimer);
       btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
       if (r && r.success) {
-        checkStatus();
+        // ใช้ข้อมูลที่เพิ่งบันทึกทันที ไม่รอ API ตรวจสถานะซ้ำ ซึ่งอาจค้างชั่วคราวหลังส่ง LINE Flex
+        if (r.member) {
+          lastMemberData = r.member;
+          lastMemberDataTime = Date.now();
+          renderMemberCard(r.member);
+          showState('memberCardState');
+        } else {
+          // รองรับ Apps Script เวอร์ชันเก่าระหว่างรอ deploy ไฟล์ backend ใหม่
+          checkStatus();
+        }
       } else {
         errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด'; errBox.classList.add('show');
       }
@@ -726,6 +746,36 @@ var rewardsCatalogCache = [];
 var currentPointsBalance = 0;
 var redeemQty = 1;
 var redeemItemIdx = -1;
+var memberMenuDataCache_ = null, memberMenuDataCacheTime_ = 0, memberMenuDataPromise_ = null;
+var couponsMenuCache_ = null, couponsMenuCacheTime_ = 0, couponsMenuPromise_ = null;
+var memberMenuWarmStarted_ = false;
+var MEMBER_MENU_CACHE_TTL_ = 30000;
+function getMemberMenuData_(){
+  if (memberMenuDataCache_ && Date.now() - memberMenuDataCacheTime_ < MEMBER_MENU_CACHE_TTL_) return Promise.resolve(memberMenuDataCache_);
+  if (memberMenuDataPromise_) return memberMenuDataPromise_;
+  memberMenuDataPromise_ = callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
+    memberMenuDataPromise_ = null;
+    if (r && r.success) { memberMenuDataCache_ = r; memberMenuDataCacheTime_ = Date.now(); }
+    return r;
+  }).catch(function(e){ memberMenuDataPromise_ = null; throw e; });
+  return memberMenuDataPromise_;
+}
+function getCouponsMenuData_(){
+  if (couponsMenuCache_ && Date.now() - couponsMenuCacheTime_ < MEMBER_MENU_CACHE_TTL_) return Promise.resolve(couponsMenuCache_);
+  if (couponsMenuPromise_) return couponsMenuPromise_;
+  couponsMenuPromise_ = callApi('getActiveCoupons', {}).then(function(r){
+    couponsMenuPromise_ = null;
+    if (r && r.success) { couponsMenuCache_ = r; couponsMenuCacheTime_ = Date.now(); }
+    return r;
+  }).catch(function(e){ couponsMenuPromise_ = null; throw e; });
+  return couponsMenuPromise_;
+}
+function warmMemberMenuData_(){
+  if (memberMenuWarmStarted_) return;
+  memberMenuWarmStarted_ = true;
+  // ดึงหลังบัตรสมาชิกแสดงแล้ว จึงไม่ทำให้หน้าแรกค้าง แต่กดเมนูแล้วมีข้อมูลรอไว้
+  setTimeout(function(){ getMemberMenuData_().catch(function(){}); getCouponsMenuData_().catch(function(){}); }, 500);
+}
 function loadPointsPanel(){
   var body = document.getElementById('panelBody');
   callApi('getPointsHistory', { idToken: currentIdToken }).then(function(r){
@@ -752,7 +802,7 @@ function loadPointsPanel(){
 }
 function loadRewardsPanel(){
   var body = document.getElementById('panelBody');
-  callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
+  getMemberMenuData_().then(function(r){
     if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
     currentPointsBalance = r.points || 0;
     var h = '';
@@ -786,7 +836,7 @@ function loadRewardsPanel(){
 }
 function loadPrivilegesPanel(){
   var body = document.getElementById('panelBody');
-  callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
+  getMemberMenuData_().then(function(r){
     if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
     var h = '';
     if (r.pointsPromos && r.pointsPromos.length) {
@@ -1057,7 +1107,7 @@ function couponValueTextCompact_(c){
   return privilegeValueText_(c.type, c.value, c.restriction, c.freeProduct, c.freeQty);
 }
 function loadCouponsPanel(){
-  callApi('getActiveCoupons', {}).then(function(r){
+  getCouponsMenuData_().then(function(r){
     var body = document.getElementById('panelBody');
     if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
     if (!r.results.length) { body.innerHTML = '<div class="empty">ยังไม่มีคูปองที่ใช้ได้ตอนนี้</div>'; return; }
