@@ -984,8 +984,9 @@ function loadPrivilegesPanel(){
           h += '<div class="list-item"><div class="row1"><span>✅ ' + esc(p.text) + '</span></div>'
             + '<div class="row2">ปลดล็อคแล้ว (' + esc(p.tierName) + ')</div></div>';
         } else {
-          h += '<div class="list-item" style="opacity:.55"><div class="row1"><span>🔒 ' + esc(p.text) + '</span></div>'
-            + '<div class="row2">ปลดล็อคเมื่อเป็น ' + esc(p.tierName) + '</div></div>';
+          // สิทธิ์ของระดับที่ยังไปไม่ถึง: แสดงไว้ให้เห็นเป้าหมาย แต่ต้องจางและระบุชัดว่าใช้ไม่ได้
+          h += '<div class="list-item" style="opacity:.42;filter:grayscale(1)"><div class="row1"><span>🔒 ' + esc(p.text) + '</span></div>'
+            + '<div class="row2">ยังไม่ปลดล็อก · ปลดล็อกเมื่อเป็น ' + esc(p.tierName) + '</div></div>';
         }
       });
     }
