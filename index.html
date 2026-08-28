@@ -106,8 +106,8 @@ body{font-family:'Kanit',sans-serif;color:var(--td);min-height:100vh;
 .mcard-body{position:absolute;bottom:16px;right:16px;text-align:right;z-index:1;}
 .mcard-code{position:absolute;bottom:16px;left:16px;z-index:1;font-size:14px;letter-spacing:.3px;
   color:#ffffff;background:rgba(0,0,0,.4);padding:4px 11px;border-radius:20px;font-weight:600;}
-.mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;opacity:.95;margin-top:2px;
-  text-shadow:0 1px 4px rgba(0,0,0,.55);transform:translateY(-19px);}
+.mcard-multiplier{position:relative;z-index:1;text-align:right;font-size:10.5px;color:#ffffff;opacity:1;margin-top:2px;
+  text-shadow:0 1px 4px rgba(0,0,0,.55);}
 .shop-cta-btn{display:block;width:100%;height:48px;line-height:48px;text-align:center;
   border-radius:12px;background:var(--gm);color:#fff;font-size:15px;font-weight:700;
   text-decoration:none;margin:14px 0 0;box-shadow:0 4px 14px rgba(46,125,50,.25);}
@@ -579,8 +579,6 @@ function submitRegister(){
   var errBox = document.getElementById('errBox');
   errBox.classList.remove('show');
   if (!fullName) { errBox.textContent = 'กรุณากรอกชื่อ-นามสกุล'; errBox.classList.add('show'); return; }
-  if (!bd || !bm || !by) { errBox.textContent = 'กรุณาเลือกวัน/เดือน/ปีเกิดให้ครบ'; errBox.classList.add('show'); return; }
-  var birthday = by + '-' + bm + '-' + bd;
   if (!/^0\d{9}$/.test(phone)) {
     errBox.textContent = 'กรุณากรอกเบอร์โทร 10 หลัก ขึ้นต้นด้วย 0';
     errBox.classList.add('show');
@@ -1006,15 +1004,13 @@ function loadMemberInfoPanel(){
 }
 function renderMemberInfoPanel_(m){
     var body = document.getElementById('panelBody');
-    var bParts = String(m.birthdayRaw || '').split('-');
-    var by = bParts[0] || '', bm = bParts[1] || '', bd = bParts[2] || '';
     var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
       + '<span style="font-weight:600">ข้อมูลของคุณ</span>'
-      + '<button type="button" onclick="toggleMemberEditMode()" id="editPencilBtn" style="background:none;border:none;font-size:18px;cursor:pointer" title="แก้ไขข้อมูล">✏️</button>'
+      + '<button type="button" onclick="toggleMemberEditMode()" id="editPencilBtn" style="background:transparent !important;border:none !important;box-shadow:none !important;color:#555 !important;font-size:18px;cursor:pointer;padding:0" title="แก้ไขข้อมูล">✏️</button>'
       + '</div>';
     h += '<div class="info-row"><span>ชื่อ-นามสกุล</span><span>' + esc(m.fullName) + '</span></div>'
       + '<div class="info-row"><span>เบอร์โทร</span><span>' + esc(m.phone) + '</span></div>'
-      + '<div class="info-row"><span>วันเกิด</span><span>' + esc(m.birthday) + '</span></div>'
+      + '<div class="info-row" style="opacity:.55"><span>วันเกิด</span><span style="font-weight:400">' + esc(m.birthday) + '</span></div>'
       + '<div class="info-row"><span>ที่อยู่จัดส่ง</span><span style="text-align:right;max-width:60%">' + esc(m.address || '-') + '</span></div>'
       + '<div class="info-row"><span>จังหวัด</span><span>' + esc(m.province || '-') + '</span></div>'
       + '<div class="info-row"><span>ระดับสมาชิก</span><span>' + esc(m.tier) + '</span></div>'
@@ -1025,25 +1021,12 @@ function renderMemberInfoPanel_(m){
     h += '<div class="err" id="editInfoErr"></div><div class="ok" id="editInfoOk"></div>';
     h += '<div class="fg"><label>ชื่อ-นามสกุล</label><input type="text" class="fc" id="editFullName" value="' + esc(m.fullName) + '"></div>';
     h += '<div class="fg"><label>เบอร์โทรศัพท์</label><input type="tel" class="fc" id="editPhone" value="' + esc(m.phone) + '" maxlength="10"></div>';
-    h += '<div class="fg"><label>วันเกิด</label><div class="date-select-row">'
-      + '<select id="editBirthDay"></select><select id="editBirthMonth"></select><select id="editBirthYear"></select>'
-      + '</div></div>';
     h += '<div class="fg"><label>ที่อยู่จัดส่ง</label><textarea class="fc" id="editAddress" rows="3" style="height:auto;padding:10px 14px;resize:vertical">' + esc(m.address) + '</textarea></div>';
     h += '<div class="fg"><label>จังหวัด</label><select class="fc" id="editProvince"></select></div>';
     h += '<button class="btn btn-block" onclick="saveMemberProfile()">💾 บันทึกการแก้ไข</button>';
     h += '<button class="btn btn-outline btn-block" style="margin-top:8px" onclick="toggleMemberEditMode()">ยกเลิก</button>';
     h += '</div>';
     body.innerHTML = h;
-    var daySel = document.getElementById('editBirthDay');
-    daySel.innerHTML = '<option value="">วัน</option>';
-    for (var d = 1; d <= 31; d++) { var dv = String(d).padStart(2,'0'); daySel.innerHTML += '<option value="' + dv + '"' + (dv === bd ? ' selected' : '') + '>' + d + '</option>'; }
-    var monthSel = document.getElementById('editBirthMonth');
-    monthSel.innerHTML = '<option value="">เดือน</option>';
-    THAI_MONTHS_CLIENT_.forEach(function(name, idx){ var mv = String(idx+1).padStart(2,'0'); monthSel.innerHTML += '<option value="' + mv + '"' + (mv === bm ? ' selected' : '') + '>' + name + '</option>'; });
-    var yearSel = document.getElementById('editBirthYear');
-    yearSel.innerHTML = '<option value="">ปี</option>';
-    var thisYear = new Date().getFullYear();
-    for (var y = thisYear; y >= thisYear - 90; y--) { var yv = String(y); yearSel.innerHTML += '<option value="' + yv + '"' + (yv === by ? ' selected' : '') + '>' + (y+543) + '</option>'; }
     var provSel = document.getElementById('editProvince');
     provSel.innerHTML = '<option value="">— เลือกจังหวัด —</option>';
     THAI_PROVINCES.forEach(function(p){ provSel.innerHTML += '<option value="' + p + '"' + (p === m.province ? ' selected' : '') + '>' + p + '</option>'; });
@@ -1059,22 +1042,18 @@ function saveMemberProfile(){
   errBox.classList.remove('show'); okBox.classList.remove('show');
   var fullName = document.getElementById('editFullName').value.trim();
   var phone = document.getElementById('editPhone').value.trim();
-  var bd = document.getElementById('editBirthDay').value;
-  var bm = document.getElementById('editBirthMonth').value;
-  var by = document.getElementById('editBirthYear').value;
   var address = document.getElementById('editAddress').value.trim();
   var province = document.getElementById('editProvince').value;
   if (!fullName) { errBox.textContent = 'กรุณากรอกชื่อ-นามสกุล'; errBox.classList.add('show'); return; }
   if (!/^0\d{9}$/.test(phone)) { errBox.textContent = 'กรุณากรอกเบอร์โทร 10 หลัก ขึ้นต้นด้วย 0'; errBox.classList.add('show'); return; }
   if (!bd || !bm || !by) { errBox.textContent = 'กรุณาเลือกวัน/เดือน/ปีเกิดให้ครบ'; errBox.classList.add('show'); return; }
   var birthday = by + '-' + bm + '-' + bd;
-  callApi('updateMemberProfile', { idToken: currentIdToken, fullName: fullName, phone: phone, birthday: birthday, address: address, province: province })
+  callApi('updateMemberProfile', { idToken: currentIdToken, fullName: fullName, phone: phone, address: address, province: province })
     .then(function(r){
       if (r && r.success) {
         if (lastMemberData) {
           lastMemberData = Object.assign({}, lastMemberData, {
-            fullName: fullName, phone: phone, address: address, province: province,
-            birthdayRaw: birthday, birthday: (function(){ var p = birthday.split('-'); return p[2] + ' ' + THAI_MONTHS_CLIENT_[parseInt(p[1])-1] + ' ' + (parseInt(p[0])+543); })()
+            fullName: fullName, phone: phone, address: address, province: province
           });
         }
         loadMemberInfoPanel();
