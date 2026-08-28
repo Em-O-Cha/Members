@@ -62,6 +62,8 @@ body{font-family:'Kanit',sans-serif;color:var(--td);min-height:100vh;
 .promo-frame,.photo-frame{border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.12);
   background-size:cover;background-position:center;}
 #memberCardState{display:flex;flex-direction:column;}
+#memberCardState.pending-registration{position:relative;pointer-events:none;}
+.pending-start-notice{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#fff8df;color:#745b12;text-align:center;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08);}
 .photo-frame{height:100px;background-image:url('card-header-bg.png');margin-bottom:14px;}
 .promo-frame{height:110px;background-image:url('promo-banner.png');margin:4px 0 0;}
 .lower-section{background:#f5f5f5;margin:10px -24px -28px;
@@ -630,6 +632,7 @@ function submitRegister(){
           queueInfo.textContent = '✅ รับคำขอสมัครแล้ว กำลังสร้างบัตรสมาชิกให้อัตโนมัติ';
           queueInfo.classList.add('show');
         }
+        showPendingStartCard_(fullName);
         kickRegistrationQueue_();
         watchRegistrationQueue_();
         return;
@@ -644,6 +647,31 @@ function submitRegister(){
       errBox.innerHTML = 'Error: ' + e.message.replace(/</g,'&lt;');
       errBox.classList.add('show');
     });
+}
+function showPendingStartCard_(fullName){
+  // แสดง Start ชั่วคราวทันที แต่ปิดการกดเมนูไว้จนกว่าจะยืนยันจากหลังบ้าน
+  renderMemberCard({
+    displayName: currentLineName || '', fullName: fullName || '', tier: 'Start', points: 0,
+    memberCode: 'กำลังออกบัตรสมาชิก', tierColor: '#2e7d32', tierTextColor: '#ffffff',
+    tierNameEn: 'START', tierKey: 'start', pointMultiplier: 1, lifetimeSpend: 0
+  });
+  showState('memberCardState');
+  var state = document.getElementById('memberCardState');
+  state.classList.add('pending-registration');
+  var notice = document.getElementById('pendingStartNotice');
+  if (!notice) {
+    notice = document.createElement('div');
+    notice.id = 'pendingStartNotice';
+    notice.className = 'pending-start-notice';
+    state.insertBefore(notice, state.firstChild);
+  }
+  notice.textContent = '⏳ บัตรระดับ Start กำลังเปิดใช้งาน — กรุณารอสักครู่';
+}
+function clearPendingStartCard_(){
+  var state = document.getElementById('memberCardState');
+  if (state) state.classList.remove('pending-registration');
+  var notice = document.getElementById('pendingStartNotice');
+  if (notice) notice.remove();
 }
 var registrationQueueWatcher_ = null;
 function kickRegistrationQueue_(){
@@ -661,12 +689,15 @@ function watchRegistrationQueue_(){
       if (r && r.success && r.status === 'COMPLETED') {
         if (registrationQueueWatcher_) clearTimeout(registrationQueueWatcher_);
         registrationQueueWatcher_ = null;
+        clearPendingStartCard_();
         checkStatus();
         return;
       }
       if (r && r.success && r.status === 'FAILED') {
         if (registrationQueueWatcher_) clearTimeout(registrationQueueWatcher_);
         registrationQueueWatcher_ = null;
+        clearPendingStartCard_();
+        showState('registerState');
         if (btn) { btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก'; }
         if (queueInfo) queueInfo.classList.remove('show');
         errBox.textContent = r.error || 'สมัครสมาชิกไม่สำเร็จ';
