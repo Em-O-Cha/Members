@@ -684,13 +684,28 @@ function watchRegistrationQueue_(){
   var btn = document.getElementById('submitBtn');
   var errBox = document.getElementById('errBox');
   var queueInfo = document.getElementById('registerQueueInfo');
+  function unlockWithRealMember_(member){
+    if (registrationQueueWatcher_) clearTimeout(registrationQueueWatcher_);
+    registrationQueueWatcher_ = null;
+    clearPendingStartCard_();
+    lastMemberData = member;
+    lastMemberDataTime = Date.now();
+    renderMemberCard(member);
+    showState('memberCardState');
+  }
   function poll(){
-    callApi('getRegistrationQueueStatus', { idToken: currentIdToken }).then(function(r){
+    // ปลดเมนูทันทีที่ฐานข้อมูลสร้างสมาชิกแล้ว ไม่ต้องรอส่ง LINE Flex ให้เสร็จ
+    callApi('checkMemberStatus', { idToken: currentIdToken }).then(function(memberResult){
+      if (memberResult && memberResult.success && memberResult.isMember && memberResult.member) {
+        unlockWithRealMember_(memberResult.member);
+        return null;
+      }
+      return callApi('getRegistrationQueueStatus', { idToken: currentIdToken });
+    }).then(function(r){
+      if (!r) return;
       if (r && r.success && r.status === 'COMPLETED') {
-        if (registrationQueueWatcher_) clearTimeout(registrationQueueWatcher_);
-        registrationQueueWatcher_ = null;
-        clearPendingStartCard_();
-        checkStatus();
+        // สถานะคิวเสร็จแล้ว แต่ข้อมูลสมาชิกยังไม่สะท้อนในรอบนี้ ให้ตรวจซ้ำเร็ว ๆ โดยไม่พาผู้ใช้กลับหน้าต้อนรับ
+        registrationQueueWatcher_ = setTimeout(poll, 700);
         return;
       }
       if (r && r.success && r.status === 'FAILED') {
