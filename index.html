@@ -481,9 +481,11 @@ function renderMemberCard(member){
   // ปุ่มสั่งซื้อใช้เฉดเดียวกับสีบัตรใน Tier_Config เสมอ
   // ต้องกำหนด !important เพราะปุ่มทั่วไปของหน้าใช้ธีมแดงเป็นค่าเริ่มต้น
   if (shopBtnEl) {
+    var shopCtaTextColor_ = contrastTextColor_(baseColor);
     shopBtnEl.style.setProperty('background', tierButtonGradient_(baseColor), 'important');
     shopBtnEl.style.setProperty('border-color', baseColor, 'important');
-    shopBtnEl.style.setProperty('color', textColor, 'important');
+    shopBtnEl.style.setProperty('color', shopCtaTextColor_, 'important');
+    shopBtnEl.style.setProperty('text-shadow', shopCtaTextColor_ === '#ffffff' ? '0 1px 3px rgba(0,0,0,.45)' : '0 1px 2px rgba(255,255,255,.4)', 'important');
     shopBtnEl.style.setProperty('box-shadow', '0 5px 14px ' + hexToRgba(baseColor, .42), 'important');
   }
   var cardEl = document.querySelector('.card');
@@ -507,6 +509,15 @@ function renderMemberCard(member){
 }
 function tierButtonGradient_(baseColor){
   return 'linear-gradient(135deg,' + shadeColor(baseColor, -16) + ' 0%,' + baseColor + ' 52%,' + shadeColor(baseColor, 14) + ' 100%)';
+}
+function contrastTextColor_(hex){
+  var clean = String(hex || '').replace('#', '');
+  if (clean.length === 3) clean = clean.split('').map(function(c){ return c + c; }).join('');
+  var n = parseInt(clean, 16);
+  if (isNaN(n)) return '#ffffff';
+  var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  // สีสว่างใช้ตัวอักษรเข้ม ส่วนสีเข้มใช้สีขาว เพื่อให้อ่านชัดในทุกระดับสมาชิก
+  return ((r * 299 + g * 587 + b * 114) / 1000) > 158 ? '#1b1b1b' : '#ffffff';
 }
 function applyThemeColor_(baseColor){
   document.body.style.background = mixWithWhite(baseColor, .12);
