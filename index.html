@@ -595,6 +595,12 @@ function submitRegister(){
     errBox.classList.add('show');
     return;
   }
+  if (!bd || !bm || !by) {
+    errBox.textContent = 'กรุณาเลือกวัน/เดือน/ปีเกิดให้ครบ';
+    errBox.classList.add('show');
+    return;
+  }
+  var birthday = by + '-' + bm + '-' + bd;
   var btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
   var didFinish = false;
