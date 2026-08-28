@@ -219,6 +219,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
     </div>
     <div id="registerState" class="sh">
       <div class="err" id="errBox"></div>
+      <div class="ok" id="registerQueueInfo"></div>
       <div class="fg">
         <label>ชื่อ-นามสกุล</label>
         <input type="text" class="fc" id="fullNameInput" placeholder="เช่น สมชาย ใจดี">
@@ -384,7 +385,7 @@ function closeCustomAlert_(){
   document.getElementById('customAlertOverlay').classList.add('sh');
 }
 window.alert = function(message){ showCustomAlert_(message); };
-var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'redeemReward', 'updateMemberProfile'];
+var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'enqueueMemberRegistration', 'redeemReward', 'updateMemberProfile'];
 
 function callApi(action, payload, _attempt){
   payload = payload || {};
@@ -588,7 +589,9 @@ function submitRegister(){
   var by = document.getElementById('birthYearSelect').value;
   var phone = document.getElementById('phoneInput').value.trim();
   var errBox = document.getElementById('errBox');
+  var queueInfo = document.getElementById('registerQueueInfo');
   errBox.classList.remove('show');
+  if (queueInfo) queueInfo.classList.remove('show');
   if (!fullName) { errBox.textContent = 'กรุณากรอกชื่อ-นามสกุล'; errBox.classList.add('show'); return; }
   if (!/^0\d{9}$/.test(phone)) {
     errBox.textContent = 'กรุณากรอกเบอร์โทร 10 หลัก ขึ้นต้นด้วย 0';
@@ -614,32 +617,77 @@ function submitRegister(){
   // สมาชิกของผู้แนะนำ (A) เข้ามาเองในฟอร์ม (เหมือนแพทเทิร์นเดียวกับช่องกรอกรหัสแนะนำที่หน้าชำระเงินฝั่งร้านค้า)
   // Code.gs ฝั่งเซิร์ฟเวอร์จะเป็นคนตรวจสอบเองว่ารหัสนี้ตรงกับสมาชิกจริงหรือไม่ ถ้าไม่ตรง/ไม่มี ก็สมัครได้ปกติ
   var referrerCode = document.getElementById('referrerCodeInput').value.trim();
-  callApi('registerMember', { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday, referrerCode: referrerCode })
+  callApi('enqueueMemberRegistration', { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday, referrerCode: referrerCode })
     .then(function(r){
       didFinish = true; clearTimeout(slowTimer);
-      btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
-      if (r && r.success) {
-        // ใช้ข้อมูลที่เพิ่งบันทึกทันที ไม่รอ API ตรวจสถานะซ้ำ ซึ่งอาจค้างชั่วคราวหลังส่ง LINE Flex
-        if (r.member) {
-          lastMemberData = r.member;
-          lastMemberDataTime = Date.now();
-          renderMemberCard(r.member);
-          showState('memberCardState');
-        } else {
-          // รองรับ Apps Script เวอร์ชันเก่าระหว่างรอ deploy ไฟล์ backend ใหม่
-          checkStatus();
-        }
-      } else {
-        errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด'; errBox.classList.add('show');
+      if (r && r.success && r.alreadyMember) {
+        checkStatus();
+        return;
       }
+      if (r && r.success && r.queued) {
+        btn.disabled = true; btn.textContent = '⏳ กำลังสร้างบัตรสมาชิก...';
+        if (queueInfo) {
+          queueInfo.textContent = '✅ รับคำขอสมัครแล้ว กำลังสร้างบัตรสมาชิกให้อัตโนมัติ';
+          queueInfo.classList.add('show');
+        }
+        kickRegistrationQueue_();
+        watchRegistrationQueue_();
+        return;
+      }
+      btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
+      errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด';
+      errBox.classList.add('show');
     })
     .catch(function(e){
       didFinish = true; clearTimeout(slowTimer);
       btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
-      errBox.innerHTML = 'Error: ' + e.message.replace(/</g,'&lt;') + '<br>'
-        + '<button class="btn btn-sm" style="margin-top:8px" onclick="checkStatus()">🔄 เช็คสถานะอีกครั้ง (เผื่อบันทึกสำเร็จแล้ว)</button>';
+      errBox.innerHTML = 'Error: ' + e.message.replace(/</g,'&lt;');
       errBox.classList.add('show');
     });
+}
+var registrationQueueWatcher_ = null;
+function kickRegistrationQueue_(){
+  // เริ่มประมวลผลทันทีเมื่อผู้สมัครยังเปิดหน้าอยู่; ตัวตั้งเวลา 1 นาทีเป็นตัวสำรอง
+  fetch(API_URL + '?action=processRegistrationQueue', { method: 'GET' }).catch(function(){});
+}
+function watchRegistrationQueue_(){
+  if (registrationQueueWatcher_) clearTimeout(registrationQueueWatcher_);
+  var startedAt = Date.now();
+  var btn = document.getElementById('submitBtn');
+  var errBox = document.getElementById('errBox');
+  var queueInfo = document.getElementById('registerQueueInfo');
+  function poll(){
+    callApi('getRegistrationQueueStatus', { idToken: currentIdToken }).then(function(r){
+      if (r && r.success && r.status === 'COMPLETED') {
+        if (registrationQueueWatcher_) clearTimeout(registrationQueueWatcher_);
+        registrationQueueWatcher_ = null;
+        checkStatus();
+        return;
+      }
+      if (r && r.success && r.status === 'FAILED') {
+        if (registrationQueueWatcher_) clearTimeout(registrationQueueWatcher_);
+        registrationQueueWatcher_ = null;
+        if (btn) { btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก'; }
+        if (queueInfo) queueInfo.classList.remove('show');
+        errBox.textContent = r.error || 'สมัครสมาชิกไม่สำเร็จ';
+        errBox.classList.add('show');
+        return;
+      }
+      if (Date.now() - startedAt > 150000) {
+        registrationQueueWatcher_ = null;
+        if (queueInfo) {
+          queueInfo.textContent = 'คำขอยังอยู่ในคิว ระบบจะสร้างบัตรสมาชิกให้อัตโนมัติ กรุณาเปิดหน้านี้ใหม่อีกครั้งในอีกสักครู่';
+          queueInfo.classList.add('show');
+        }
+        return;
+      }
+      registrationQueueWatcher_ = setTimeout(poll, 1500);
+    }).catch(function(){
+      registrationQueueWatcher_ = setTimeout(poll, 2000);
+    });
+  }
+  registrationQueueWatcher_ = setTimeout(poll, 1200);
+}
 }
 var MENU_ICON_BASE_FILES = {
   points: 'icon-points',
