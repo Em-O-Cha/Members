@@ -605,7 +605,7 @@ function submitRegister(){
     errBox.classList.add('show');
     return;
   }
-  var birthday = by + '-' + bm + '-' + bd;
+  var birthday = bd + '/' + bm + '/' + by;
   var btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
   var didFinish = false;
