@@ -1159,8 +1159,6 @@ function saveMemberProfile(){
   var province = document.getElementById('editProvince').value;
   if (!fullName) { errBox.textContent = 'กรุณากรอกชื่อ-นามสกุล'; errBox.classList.add('show'); return; }
   if (!/^0\d{9}$/.test(phone)) { errBox.textContent = 'กรุณากรอกเบอร์โทร 10 หลัก ขึ้นต้นด้วย 0'; errBox.classList.add('show'); return; }
-  if (!bd || !bm || !by) { errBox.textContent = 'กรุณาเลือกวัน/เดือน/ปีเกิดให้ครบ'; errBox.classList.add('show'); return; }
-  var birthday = by + '-' + bm + '-' + bd;
   callApi('updateMemberProfile', { idToken: currentIdToken, fullName: fullName, phone: phone, address: address, province: province })
     .then(function(r){
       if (r && r.success) {
