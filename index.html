@@ -671,8 +671,10 @@ function renderTierProgressHint_(member){
   var render = function(tiers){
     var idx = tiers.findIndex(function(t){ return t.key === tierKey; });
     var currentTier = idx >= 0 ? tiers[idx] : null;
-    if (idx === -1 || idx === tiers.length - 1) {
-      buildCard('🎉', 'คุณอยู่ในระดับสมาชิกสูงสุดแล้ว', 100, currentTier ? currentTier.name : '', '');
+    // VIP เป็นระดับสูงสุดเสมอ แม้ลำดับใน Tier_Config จะมีการสลับหรือมีแถวเพิ่มเติม
+    var isVipMaxTier = String(tierKey || '').toLowerCase() === 'vip';
+    if (isVipMaxTier || idx === -1 || idx === tiers.length - 1) {
+      buildCard('🎉', 'เป็นระดับสูงสุดแล้ว', 100, currentTier ? currentTier.name : (member.tier || 'VIP'), '');
       return;
     }
     var nextTier = tiers[idx + 1];
