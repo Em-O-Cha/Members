@@ -174,6 +174,24 @@ body{font-family:'Kanit',sans-serif;color:var(--td);min-height:100vh;
 .custom-alert-icon.info{background:#e3f2fd;}
 .custom-alert-text{font-size:14px;line-height:1.7;color:var(--td);white-space:pre-line;margin-bottom:20px;}
 .custom-alert-ok{border-radius:999px;}
+.welcome-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:210;display:flex;
+  align-items:center;justify-content:center;padding:20px;}
+.welcome-popup-overlay.sh{display:none;}
+.welcome-popup-card{position:relative;background:#fff;border:6px solid var(--gb);border-radius:26px;
+  max-width:340px;width:100%;padding:30px 26px 74px;text-align:center;
+  box-shadow:0 20px 50px rgba(0,0,0,.3);animation:alertPop .22s cubic-bezier(.34,1.56,.64,1);}
+.welcome-popup-icon{font-size:44px;margin-bottom:10px;}
+.welcome-popup-title{font-size:19px;font-weight:700;color:var(--gd);line-height:1.4;margin-bottom:14px;}
+.welcome-popup-success{font-size:15px;font-weight:600;color:var(--gm);margin-bottom:18px;}
+.welcome-popup-list{list-style:none;text-align:left;display:flex;flex-direction:column;gap:14px;margin-bottom:18px;}
+.welcome-popup-list li{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;font-weight:600;color:var(--td);line-height:1.5;}
+.welcome-popup-list .wp-ico{font-size:17px;flex-shrink:0;line-height:1.4;}
+.welcome-popup-list .wp-promo{display:block;font-size:12px;font-weight:500;color:var(--g6);margin-top:2px;}
+.welcome-popup-tagline{font-size:14px;font-weight:700;color:#f9a825;line-height:1.6;margin-bottom:22px;}
+.welcome-popup-btn{max-width:220px;margin:0 auto;border-radius:24px;}
+.welcome-popup-arrow{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);width:40px;height:40px;
+  border-radius:50%;background:#2a2a2a;color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:16px;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.3);}
 /* หน้าสมัครอยู่บนพื้นแดง: ใช้สีอ่อนทั้งหมดเพื่อไม่ให้กลืนกับพื้นหลัง */
 #registerState .fg label{color:#ffffff;text-shadow:0 1px 2px rgba(85,0,0,.42);}
 #registerState .hint{color:#ffe4e3;text-shadow:0 1px 2px rgba(85,0,0,.38);}
@@ -331,6 +349,21 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
     <button class="btn custom-alert-ok" id="customAlertOkBtn" onclick="closeCustomAlert_()">ตกลง</button>
   </div>
 </div>
+<div class="welcome-popup-overlay sh" id="welcomePopupOverlay">
+  <div class="welcome-popup-card">
+    <div class="welcome-popup-icon">🎉</div>
+    <h2 class="welcome-popup-title">ยินดีต้อนรับสู่<br>คลับของคนรักเอมโอชา</h2>
+    <p class="welcome-popup-success">💚 สมัครสมาชิกสำเร็จแล้ว! 💚</p>
+    <ul class="welcome-popup-list">
+      <li><span class="wp-ico">🎁</span><span>รับเลยสิทธิพิเศษต้อนรับสมาชิกใหม่<span class="wp-promo" id="welcomePopupPromo"></span></span></li>
+      <li><span class="wp-ico">⭐</span><span>ทุกการสั่งซื้อ รับคะแนนสะสม</span></li>
+      <li><span class="wp-ico">🎫</span><span>พร้อมคูปอง ส่วนลด และสิทธิพิเศษเฉพาะสมาชิก</span></li>
+    </ul>
+    <p class="welcome-popup-tagline">✨ ยิ่งช้อป ยิ่งคุ้ม<br>ยิ่งเป็นสมาชิก ยิ่งพิเศษ! ✨</p>
+    <button class="btn welcome-popup-btn" onclick="closeWelcomePopup_()">เริ่มใช้งาน</button>
+    <div class="welcome-popup-arrow" onclick="closeWelcomePopup_()">↓</div>
+  </div>
+</div>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 var LIFF_ID = '2010892131-hMnmdrmH';
@@ -384,6 +417,20 @@ function showCustomAlert_(message){
 }
 function closeCustomAlert_(){
   document.getElementById('customAlertOverlay').classList.add('sh');
+}
+function openWelcomePopup_(){
+  var promoEl = document.getElementById('welcomePopupPromo');
+  promoEl.textContent = '';
+  getMemberMenuData_().then(function(r){
+    var promoName = (r && r.success && r.pointsPromos && r.pointsPromos.length) ? r.pointsPromos[0].name : '';
+    promoEl.textContent = promoName || 'ดูรายละเอียดสิทธิ์ต้อนรับได้ที่เมนู "สิทธิ์พิเศษ"';
+  }).catch(function(){
+    promoEl.textContent = 'ดูรายละเอียดสิทธิ์ต้อนรับได้ที่เมนู "สิทธิ์พิเศษ"';
+  });
+  document.getElementById('welcomePopupOverlay').classList.remove('sh');
+}
+function closeWelcomePopup_(){
+  document.getElementById('welcomePopupOverlay').classList.add('sh');
 }
 window.alert = function(message){ showCustomAlert_(message); };
 var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'enqueueMemberRegistration', 'redeemReward', 'updateMemberProfile'];
@@ -685,6 +732,7 @@ function watchRegistrationQueue_(){
     lastMemberDataTime = Date.now();
     renderMemberCard(member);
     showState('memberCardState');
+    openWelcomePopup_();
   }
   function poll(){
     // ปลดเมนูทันทีที่ฐานข้อมูลสร้างสมาชิกแล้ว ไม่ต้องรอส่ง LINE Flex ให้เสร็จ
