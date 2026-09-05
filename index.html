@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://static.line-scdn.net">
 <link rel="preconnect" href="https://access.line.me">
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com">
 <link rel="dns-prefetch" href="https://static.line-scdn.net">
 <link rel="dns-prefetch" href="https://access.line.me">
+<link rel="dns-prefetch" href="https://script.google.com">
+<link rel="dns-prefetch" href="https://script.googleusercontent.com">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>สมัครสมาชิก</title>
 <style>
@@ -338,6 +342,7 @@ var API_URL = 'https://script.google.com/macros/s/AKfycbw4EpQS0JlG_MGw8Tt08kYOM7
 var currentIdToken = null;
 var currentLinePicture = '';
 var currentLineName = '';
+var currentLineUserId = '';
 var brandLogoDataUrl = '';
 function showState(id){
   ['loadingState','welcomeState','registerState','memberCardState','successState','errorState'].forEach(function(s){
@@ -436,23 +441,47 @@ var lastMemberData = null;
 var lastMemberDataTime = 0;
 var checkStatusLoadingDefaultHtml_ = null;
 var checkStatusInFlight_ = false;
+// ⚡ เพิ่ม — แคชผลลัพธ์ checkMemberStatus ล่าสุดไว้ใน localStorage ต่อ LINE UID เพื่อวาดบัตรสมาชิก
+// ให้เห็นทันทีจาก "ของเดิมที่เคยรู้" ระหว่างรอ API ตอบกลับจริง (stale-while-revalidate) แทนที่จะค้าง
+// จอ "กำลังเชื่อมต่อ..." ทุกครั้งที่เปิดหน้า — ยังคงยิง API จริงเพื่ออัปเดตให้ตรงล่าสุดเสมอ ไม่ได้ข้ามการเช็ค
+function memberStatusCacheKey_(uid){ return 'emocha.members.statusCache.' + uid; }
+function loadCachedMemberStatus_(uid){
+  if (!uid) return null;
+  try {
+    var raw = localStorage.getItem(memberStatusCacheKey_(uid));
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function saveCachedMemberStatus_(uid, result){
+  if (!uid) return;
+  try { localStorage.setItem(memberStatusCacheKey_(uid), JSON.stringify(result)); } catch (e) {}
+}
 function checkStatus(){
   if (checkStatusInFlight_) return;
   checkStatusInFlight_ = true;
   var loadingEl = document.getElementById('loadingState');
   if (checkStatusLoadingDefaultHtml_ === null) checkStatusLoadingDefaultHtml_ = loadingEl.innerHTML;
   loadingEl.innerHTML = checkStatusLoadingDefaultHtml_;
-  showState('loadingState');
+  var cached_ = loadCachedMemberStatus_(currentLineUserId);
+  var usedCache_ = false;
+  if (cached_ && cached_.success) {
+    usedCache_ = true;
+    if (cached_.isMember) { renderMemberCard(cached_.member); showState('memberCardState'); }
+    else { showState('welcomeState'); }
+  } else {
+    showState('loadingState');
+  }
   var didFinish = false;
   var slowTimer = setTimeout(function(){
-    if (didFinish) return;
+    if (didFinish || usedCache_) return;
     loadingEl.innerHTML = '<div class="ico">⏳</div>'
       + '<p style="color:var(--g6);font-size:14px">ระบบตอบกลับช้ากว่าปกติ กรุณารอสักครู่ (ระบบกำลังทำงานอยู่ ไม่ต้องกดซ้ำ)</p>';
   }, 12000);
   callApi('checkMemberStatus', { idToken: currentIdToken })
     .then(function(r){
       didFinish = true; clearTimeout(slowTimer); checkStatusInFlight_ = false;
-      if (!r || !r.success) { showErrorState('checkMemberStatus error: ' + (r ? r.error : 'ไม่ทราบสาเหตุ')); return; }
+      if (!r || !r.success) { if (!usedCache_) showErrorState('checkMemberStatus error: ' + (r ? r.error : 'ไม่ทราบสาเหตุ')); return; }
+      saveCachedMemberStatus_(currentLineUserId, r);
       if (r.isMember) {
         lastMemberData = r.member;
         lastMemberDataTime = Date.now();
@@ -462,7 +491,7 @@ function checkStatus(){
         showState('welcomeState');
       }
     })
-    .catch(function(e){ didFinish = true; clearTimeout(slowTimer); checkStatusInFlight_ = false; showErrorState('เรียก API ไม่สำเร็จ: ' + e.message); });
+    .catch(function(e){ didFinish = true; clearTimeout(slowTimer); checkStatusInFlight_ = false; if (!usedCache_) showErrorState('เรียก API ไม่สำเร็จ: ' + e.message); });
 }
 function renderMemberCard(member){
   var baseColor = member.tierColor || '#2e7d32';
@@ -1257,6 +1286,7 @@ function initLiff(){
       document.getElementById('avatar').innerHTML = '<img src="' + profile.picture + '">';
     }
     if (profile && profile.name) currentLineName = profile.name;
+    if (profile && profile.sub) currentLineUserId = profile.sub;
     brandLogoDataUrl = document.querySelector('.brand-logo') ? document.querySelector('.brand-logo').src : '';
     checkStatus();
   }).catch(function(e){
