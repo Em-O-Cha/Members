@@ -354,7 +354,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
     <div class="reg-success-title">ยินดีต้อนรับสู่<br>คลับของคนรักเอมโอชา</div>
     <div class="reg-success-check">💚 สมัครสมาชิกสำเร็จแล้ว! 💚</div>
     <div class="reg-success-list">
-      <div>🎁 รับเลยสิทธิพิเศษต้อนรับสมาชิกใหม่</div>
+      <div id="regSuccessPrivileges">🎁 รับเลยสิทธิพิเศษต้อนรับสมาชิกใหม่</div>
       <div>⭐ ทุกการสั่งซื้อ รับคะแนนสะสม</div>
       <div>🎫 พร้อมคูปอง ส่วนลด และสิทธิพิเศษเฉพาะสมาชิก</div>
     </div>
@@ -423,6 +423,14 @@ function showRegSuccessOverlay_(){
 }
 function closeRegSuccessOverlay_(){
   document.getElementById('regSuccessOverlay').classList.add('sh');
+}
+// ⚡ เพิ่ม — ดึงชื่อโปรโมชั่น/สิทธิพิเศษต้อนรับสมาชิกใหม่ที่ตั้งค่าไว้จริง (จาก getMyPrivileges ที่มีอยู่แล้ว)
+// มาแทนที่ข้อความทั่วไปใน popup ต้อนรับ ให้ลูกค้าเห็นโปรจริงที่ตัวเองได้รับ ไม่ใช่แค่ข้อความยินดีเฉยๆ
+// ถ้าดึงไม่สำเร็จหรือไม่มีสิทธิพิเศษตั้งไว้เลย จะคงข้อความทั่วไปเดิมไว้ ไม่ทำให้ popup ว่างเปล่า
+function renderRegSuccessPrivileges_(privileges){
+  var el = document.getElementById('regSuccessPrivileges');
+  if (!el || !privileges || !privileges.length) return;
+  el.innerHTML = privileges.map(function(p){ return '🎁 ' + esc(p.name); }).join('<br>');
 }
 var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'enqueueMemberRegistration', 'redeemReward', 'updateMemberProfile'];
 function callApi(action, payload, _attempt){
@@ -752,6 +760,9 @@ function watchRegistrationQueue_(){
     renderMemberCard(member);
     showState('memberCardState');
     showRegSuccessOverlay_();
+    callApi('getMyPrivileges', { idToken: currentIdToken })
+      .then(function(r){ if (r && r.success) renderRegSuccessPrivileges_(r.results); })
+      .catch(function(){ /* ดึงไม่สำเร็จ ปล่อยข้อความทั่วไปใน popup ไว้เหมือนเดิม */ });
   }
   function poll(){
     // ปลดเมนูทันทีที่ฐานข้อมูลสร้างสมาชิกแล้ว ไม่ต้องรอส่ง LINE Flex ให้เสร็จ
