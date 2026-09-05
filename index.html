@@ -712,6 +712,10 @@ function watchRegistrationQueue_(){
     clearPendingStartCard_();
     lastMemberData = member;
     lastMemberDataTime = Date.now();
+    // ⚡ สมัครผ่านคิวจบแล้ว ต้องอัปเดตแคชด้วย เพราะรอบนี้ไม่ได้ผ่าน checkStatus() (เรียก checkMemberStatus
+    // ตรงๆ ในนี้เพื่อ poll คิว) ถ้าไม่อัปเดต ครั้งหน้าที่เปิดหน้าใหม่จะยังอ่านแคชเก่าที่บอกว่า "ยังไม่ใช่สมาชิก"
+    // แล้ววาบไปโชว์หน้าชวนสมัครซ้ำก่อนสักครู่หนึ่ง ก่อนที่ API จริงจะตอบกลับมาแก้ให้
+    saveCachedMemberStatus_(currentLineUserId, { success: true, isMember: true, member: member });
     renderMemberCard(member);
     showState('memberCardState');
   }
