@@ -434,6 +434,8 @@ function renderRegSuccessPrivileges_(privileges){
   if (!el || !privileges || !privileges.length) return;
   var signupOnly = privileges.filter(function(p){ return String(p.reason || '').indexOf('ต้อนรับสมาชิกใหม่') !== -1; });
   if (!signupOnly.length) return;
+  // ⚡ สมัครสมาชิกได้สิทธิ์ติดตัวไปทันทีเสมอ ไม่ว่าโปรจะเริ่มใช้ได้จริงวันไหน (ดู isUpcoming ที่ backend ส่งมา
+  // แต่ไม่ต้องใช้ตรงนี้ก็ได้ เพราะ popup นี้โชว์ครั้งเดียวตอนสมัครเสร็จอยู่แล้ว ไม่ต้องแยกข้อความตามวันเริ่มใช้)
   el.innerHTML = signupOnly.map(function(p){
     var expiryText = (p.expiry && p.expiry !== 'ไม่มีวันหมดอายุ') ? (' · ใช้ได้ถึง ' + esc(p.expiry)) : '';
     return '🎁 ' + esc(p.name) + expiryText;
