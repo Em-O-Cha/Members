@@ -434,7 +434,10 @@ function renderRegSuccessPrivileges_(privileges){
   if (!el || !privileges || !privileges.length) return;
   var signupOnly = privileges.filter(function(p){ return String(p.reason || '').indexOf('ต้อนรับสมาชิกใหม่') !== -1; });
   if (!signupOnly.length) return;
-  el.innerHTML = signupOnly.map(function(p){ return '🎁 ' + esc(p.name); }).join('<br>');
+  el.innerHTML = signupOnly.map(function(p){
+    var expiryText = (p.expiry && p.expiry !== 'ไม่มีวันหมดอายุ') ? (' · ใช้ได้ถึง ' + esc(p.expiry)) : '';
+    return '🎁 ' + esc(p.name) + expiryText;
+  }).join('<br>');
 }
 var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'enqueueMemberRegistration', 'redeemReward', 'updateMemberProfile'];
 function callApi(action, payload, _attempt){
