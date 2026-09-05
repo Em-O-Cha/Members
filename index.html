@@ -514,7 +514,15 @@ function checkStatus(){
   var usedCache_ = false;
   if (cached_ && cached_.success) {
     usedCache_ = true;
-    if (cached_.isMember) { renderMemberCard(cached_.member); showState('memberCardState'); }
+    if (cached_.isMember) {
+      // ⚡ ต้องตั้ง lastMemberData ตรงนี้ด้วย ไม่ใช่แค่ตอน API จริงตอบกลับ ไม่งั้นถ้าผู้ใช้กดเข้าเมนู
+      // "ข้อมูลสมาชิก" ระหว่างที่ยังรอ API จริงอยู่ loadMemberInfoPanel() จะเห็น lastMemberData ว่าง
+      // แล้วต้องยิง checkMemberStatus ซ้ำเองอีกรอบ ทั้งที่มีข้อมูล (แม้จะเก่านิดหน่อย) อยู่ในมือแล้ว
+      lastMemberData = cached_.member;
+      lastMemberDataTime = Date.now();
+      renderMemberCard(cached_.member);
+      showState('memberCardState');
+    }
     else { showState('welcomeState'); }
   } else {
     showState('loadingState');
@@ -934,99 +942,125 @@ var rewardsCatalogCache = [];
 var currentPointsBalance = 0;
 var redeemQty = 1;
 var redeemItemIdx = -1;
-var memberMenuDataCache_ = null, memberMenuDataCacheTime_ = 0, memberMenuDataPromise_ = null;
-var couponsMenuCache_ = null, couponsMenuCacheTime_ = 0, couponsMenuPromise_ = null;
-var memberMenuWarmStarted_ = false;
 var MEMBER_MENU_CACHE_TTL_ = 30000;
-function getMemberMenuData_(){
-  if (memberMenuDataCache_ && Date.now() - memberMenuDataCacheTime_ < MEMBER_MENU_CACHE_TTL_) return Promise.resolve(memberMenuDataCache_);
-  if (memberMenuDataPromise_) return memberMenuDataPromise_;
-  memberMenuDataPromise_ = callApi('getPrivilegesPanelData', { idToken: currentIdToken }).then(function(r){
-    memberMenuDataPromise_ = null;
-    if (r && r.success) { memberMenuDataCache_ = r; memberMenuDataCacheTime_ = Date.now(); }
-    return r;
-  }).catch(function(e){ memberMenuDataPromise_ = null; throw e; });
-  return memberMenuDataPromise_;
+var memberMenuWarmStarted_ = false;
+// ⚡ เพิ่ม — โรงงานสร้าง cache ต่อเมนู: จำผลไว้ในหน่วยความจำ (30 วิ กันยิงซ้ำถี่ๆ) + localStorage (ให้เปิด
+// เมนูแล้วเห็นของเดิมทันทีแม้เพิ่งเปิดหน้าใหม่ ยังไม่ทันโหลดจริงเสร็จ) แทนที่ของเดิมที่มีแค่ 2 ชุด
+// (privileges/coupons) จำเฉพาะในหน่วยความจำ รีเซ็ตทุกครั้งที่โหลดหน้าใหม่ ขยายให้ครบทุกเมนูในนี้เลย
+function createMenuCache_(storageKeyPrefix, apiAction, payloadFn){
+  var mem = null, memTime = 0, inFlight = null;
+  function storageKey(){ return storageKeyPrefix + '.' + (currentLineUserId || '-'); }
+  function loadStale(){
+    if (mem) return mem;
+    try { var raw = localStorage.getItem(storageKey()); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function fetch(){
+    if (mem && Date.now() - memTime < MEMBER_MENU_CACHE_TTL_) return Promise.resolve(mem);
+    if (inFlight) return inFlight;
+    inFlight = callApi(apiAction, payloadFn()).then(function(r){
+      inFlight = null;
+      if (r && r.success) {
+        mem = r; memTime = Date.now();
+        try { localStorage.setItem(storageKey(), JSON.stringify(r)); } catch (e) {}
+      }
+      return r;
+    }).catch(function(e){ inFlight = null; throw e; });
+    return inFlight;
+  }
+  return { loadStale: loadStale, fetch: fetch };
 }
-function getCouponsMenuData_(){
-  if (couponsMenuCache_ && Date.now() - couponsMenuCacheTime_ < MEMBER_MENU_CACHE_TTL_) return Promise.resolve(couponsMenuCache_);
-  if (couponsMenuPromise_) return couponsMenuPromise_;
-  couponsMenuPromise_ = callApi('getActiveCoupons', {}).then(function(r){
-    couponsMenuPromise_ = null;
-    if (r && r.success) { couponsMenuCache_ = r; couponsMenuCacheTime_ = Date.now(); }
-    return r;
-  }).catch(function(e){ couponsMenuPromise_ = null; throw e; });
-  return couponsMenuPromise_;
-}
+var memberMenuData_ = createMenuCache_('emocha.members.menuCache', 'getPrivilegesPanelData', function(){ return { idToken: currentIdToken }; });
+var couponsMenuData_ = createMenuCache_('emocha.members.couponsCache', 'getActiveCoupons', function(){ return {}; });
+var pointsHistoryData_ = createMenuCache_('emocha.members.pointsHistoryCache', 'getPointsHistory', function(){ return { idToken: currentIdToken }; });
+var orderHistoryData_ = createMenuCache_('emocha.members.orderHistoryCache', 'getMyOrderHistory', function(){ return { idToken: currentIdToken }; });
+function getMemberMenuData_(){ return memberMenuData_.fetch(); }
+function getCouponsMenuData_(){ return couponsMenuData_.fetch(); }
 function warmMemberMenuData_(){
   if (memberMenuWarmStarted_) return;
   memberMenuWarmStarted_ = true;
-  // ดึงหลังบัตรสมาชิกแสดงแล้ว จึงไม่ทำให้หน้าแรกค้าง แต่กดเมนูแล้วมีข้อมูลรอไว้
-  setTimeout(function(){ getMemberMenuData_().catch(function(){}); getCouponsMenuData_().catch(function(){}); }, 500);
+  // ดึงหลังบัตรสมาชิกแสดงแล้ว จึงไม่ทำให้หน้าแรกค้าง แต่กดเข้าเมนูไหนก็มีข้อมูลรอไว้เกือบทันที (หรือเห็นของเดิม
+  // จาก localStorage ทันทีระหว่างรอของใหม่ ถ้าเพิ่งเปิดหน้านี้เป็นครั้งแรกในรอบนี้)
+  setTimeout(function(){
+    memberMenuData_.fetch().catch(function(){});
+    couponsMenuData_.fetch().catch(function(){});
+    pointsHistoryData_.fetch().catch(function(){});
+    orderHistoryData_.fetch().catch(function(){});
+  }, 500);
+}
+function renderPointsPanel_(r){
+  var body = document.getElementById('panelBody');
+  currentPointsBalance = r.points || 0;
+  var h = '<div class="bank-box" style="margin-bottom:16px;text-align:center">'
+    + '<div style="font-size:13px;color:var(--g6)">คะแนนคงเหลือ</div>'
+    + '<div style="font-size:28px;font-weight:700;color:var(--gd)">' + currentPointsBalance.toLocaleString('th-TH') + '</div>'
+    + '</div>';
+  h += '<p style="font-weight:600;margin-bottom:8px">🧾 ประวัติการรับคะแนน/แลกซื้อ</p>';
+  if (r.results && r.results.length) {
+    r.results.forEach(function(item){
+      var isPositive = Number(item.delta) > 0;
+      var deltaText = (isPositive ? '+' : '') + Number(item.delta).toLocaleString('th-TH');
+      h += '<div class="list-item"><div class="row1"><span>' + esc(item.desc) + '</span>'
+        + '<span style="color:' + (isPositive ? 'var(--gd)' : '#c62828') + '">' + deltaText + '</span></div>'
+        + '<div class="row2">' + esc(item.date) + ' · คงเหลือ ' + Number(item.balanceAfter).toLocaleString('th-TH') + '</div></div>';
+    });
+  } else {
+    h += '<div class="empty" style="padding:12px 0">ยังไม่มีประวัติคะแนน</div>';
+  }
+  body.innerHTML = h;
 }
 function loadPointsPanel(){
   var body = document.getElementById('panelBody');
-  callApi('getPointsHistory', { idToken: currentIdToken }).then(function(r){
-    if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
-    currentPointsBalance = r.points || 0;
-    var h = '<div class="bank-box" style="margin-bottom:16px;text-align:center">'
-      + '<div style="font-size:13px;color:var(--g6)">คะแนนคงเหลือ</div>'
-      + '<div style="font-size:28px;font-weight:700;color:var(--gd)">' + currentPointsBalance.toLocaleString('th-TH') + '</div>'
-      + '</div>';
-    h += '<p style="font-weight:600;margin-bottom:8px">🧾 ประวัติการรับคะแนน/แลกซื้อ</p>';
-    if (r.results && r.results.length) {
-      r.results.forEach(function(item){
-        var isPositive = Number(item.delta) > 0;
-        var deltaText = (isPositive ? '+' : '') + Number(item.delta).toLocaleString('th-TH');
-        h += '<div class="list-item"><div class="row1"><span>' + esc(item.desc) + '</span>'
-          + '<span style="color:' + (isPositive ? 'var(--gd)' : '#c62828') + '">' + deltaText + '</span></div>'
-          + '<div class="row2">' + esc(item.date) + ' · คงเหลือ ' + Number(item.balanceAfter).toLocaleString('th-TH') + '</div></div>';
-      });
-    } else {
-      h += '<div class="empty" style="padding:12px 0">ยังไม่มีประวัติคะแนน</div>';
-    }
-    body.innerHTML = h;
-  }).catch(function(e){ body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+  var stale = pointsHistoryData_.loadStale();
+  if (stale && stale.success) renderPointsPanel_(stale);
+  pointsHistoryData_.fetch().then(function(r){
+    if (!r || !r.success) { if (!stale) body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
+    renderPointsPanel_(r);
+  }).catch(function(e){ if (!stale) body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+}
+function renderRewardsPanel_(r){
+  var body = document.getElementById('panelBody');
+  currentPointsBalance = r.points || 0;
+  var h = '';
+  rewardsCatalogCache = r.rewards || [];
+  if (rewardsCatalogCache.length) {
+    rewardsCatalogCache.forEach(function(item, idx){
+      var subText = rewardSubText_(item);
+      var canAfford = currentPointsBalance >= item.pointCost;
+      var imgHtml = item.image
+        ? '<img class="reward-img" src="' + esc(item.image) + '" onerror="this.style.display=\'none\'">'
+        : '<div class="reward-img" style="display:flex;align-items:center;justify-content:center;font-size:22px">🎁</div>';
+      h += '<div class="reward-card">'
+        + imgHtml
+        + '<div class="reward-body">'
+        +   '<div class="reward-name">' + esc(item.name) + '</div>'
+        +   '<div class="reward-sub">' + esc(item.categoryLabel) + ' · ' + esc(subText) + (item.remaining >= 0 ? ' · เหลือ ' + item.remaining + ' ชิ้น' : '') + '</div>'
+        +   '<div class="reward-sub" style="color:var(--gd);font-weight:600">' + item.pointCost.toLocaleString('th-TH') + ' แต้ม</div>'
+        + '</div>'
+        + '<div class="reward-btn-col"><button class="btn btn-sm' + (canAfford ? '' : ' btn-outline') + '"' + (canAfford ? '' : ' disabled') + ' onclick="showRedeemView(' + idx + ')">' + (canAfford ? 'แลกเลย' : 'คะแนนไม่พอ') + '</button></div>'
+        + '</div>';
+    });
+  } else {
+    h += '<div class="empty" style="padding:12px 0">ยังไม่มีของรางวัลให้แลกตอนนี้</div>';
+  }
+  body.innerHTML = h;
 }
 function loadRewardsPanel(){
   var body = document.getElementById('panelBody');
+  var stale = memberMenuData_.loadStale();
+  if (stale && stale.success) renderRewardsPanel_(stale);
   getMemberMenuData_().then(function(r){
-    if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
-    currentPointsBalance = r.points || 0;
-    var h = '';
-    rewardsCatalogCache = r.rewards || [];
-    if (rewardsCatalogCache.length) {
-      rewardsCatalogCache.forEach(function(item, idx){
-        var subText = rewardSubText_(item);
-        var canAfford = currentPointsBalance >= item.pointCost;
-        var imgHtml = item.image
-          ? '<img class="reward-img" src="' + esc(item.image) + '" onerror="this.style.display=\'none\'">'
-          : '<div class="reward-img" style="display:flex;align-items:center;justify-content:center;font-size:22px">🎁</div>';
-        h += '<div class="reward-card">'
-          + imgHtml
-          + '<div class="reward-body">'
-          +   '<div class="reward-name">' + esc(item.name) + '</div>'
-          +   '<div class="reward-sub">' + esc(item.categoryLabel) + ' · ' + esc(subText) + (item.remaining >= 0 ? ' · เหลือ ' + item.remaining + ' ชิ้น' : '') + '</div>'
-          +   '<div class="reward-sub" style="color:var(--gd);font-weight:600">' + item.pointCost.toLocaleString('th-TH') + ' แต้ม</div>'
-          + '</div>'
-          + '<div class="reward-btn-col"><button class="btn btn-sm' + (canAfford ? '' : ' btn-outline') + '"' + (canAfford ? '' : ' disabled') + ' onclick="showRedeemView(' + idx + ')">' + (canAfford ? 'แลกเลย' : 'คะแนนไม่พอ') + '</button></div>'
-          + '</div>';
-      });
-    } else {
-      h += '<div class="empty" style="padding:12px 0">ยังไม่มีของรางวัลให้แลกตอนนี้</div>';
-    }
-    body.innerHTML = h;
+    if (!r || !r.success) { if (!stale) body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
+    renderRewardsPanel_(r);
   }).catch(function(e){
+    if (stale) return;
     body.innerHTML = '<div class="empty" style="text-align:left;white-space:pre-wrap;font-size:11px">⚠️ Error: ' + esc(e.message)
       + '\n\nname: ' + esc(e.name || '-')
       + '\n\nstack:\n' + esc((e.stack || '').substring(0, 500)) + '</div>';
   });
 }
-function loadPrivilegesPanel(){
+function renderPrivilegesPanel_(r){
   var body = document.getElementById('panelBody');
-  getMemberMenuData_().then(function(r){
-    if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
-    var h = '';
+  var h = '';
     if (r.pointsPromos && r.pointsPromos.length) {
       h += '<div style="font-size:13px;font-weight:700;color:var(--gd);margin-bottom:8px">🎯 โปรแต้มสะสมพิเศษตอนนี้</div>';
       r.pointsPromos.forEach(function(p){
@@ -1069,7 +1103,16 @@ function loadPrivilegesPanel(){
       });
     }
     body.innerHTML = h;
+}
+function loadPrivilegesPanel(){
+  var body = document.getElementById('panelBody');
+  var stale = memberMenuData_.loadStale();
+  if (stale && stale.success) renderPrivilegesPanel_(stale);
+  getMemberMenuData_().then(function(r){
+    if (!r || !r.success) { if (!stale) body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(r ? r.error : '') + '</div>'; return; }
+    renderPrivilegesPanel_(r);
   }).catch(function(e){
+    if (stale) return;
     body.innerHTML = '<div class="empty" style="text-align:left;white-space:pre-wrap;font-size:11px">⚠️ Error: ' + esc(e.message)
       + '\n\nname: ' + esc(e.name || '-')
       + '\n\nstack:\n' + esc((e.stack || '').substring(0, 500)) + '</div>';
@@ -1247,46 +1290,59 @@ function saveMemberProfile(){
         }
         loadMemberInfoPanel();
         checkStatus();
+        alert('✅ บันทึกข้อมูลสำเร็จ!');
       } else {
         errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด'; errBox.classList.add('show');
       }
     })
     .catch(function(e){ errBox.textContent = 'Error: ' + e.message; errBox.classList.add('show'); });
 }
+function renderHistoryPanel_(r){
+  var body = document.getElementById('panelBody');
+  // ⚡ แก้ (26/8/69) — "ประวัติการสั่งซื้อ" ให้นับเฉพาะออเดอร์ที่แนบสลิปแล้วเท่านั้น (hasSlip = true) ตามที่
+  // ขอ — ออเดอร์ที่ยังไม่แนบสลิป (รอชำระเงิน) ยังไม่ถือเป็นประวัติ จะไปโผล่แค่ในหน้า "คำสั่งซื้อรอดำเนินการ"
+  // ที่หน้าสั่งซื้อสินค้าเท่านั้น ไม่ปนกับที่นี่
+  var history = (r.results || []).filter(function(o){ return o.hasSlip; });
+  if (!history.length) { body.innerHTML = '<div class="empty">ยังไม่มีประวัติการสั่งซื้อ</div>'; return; }
+  var h = '';
+  history.forEach(function(o){
+    h += '<div class="list-item"><div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Number(o.totalAmount).toLocaleString('th-TH') + '</span></div>'
+      + '<div class="row2">' + esc(o.date) + ' · ' + esc(o.paymentMethod) + (o.campaign ? ' · ' + esc(o.campaign) : '') + '</div></div>';
+  });
+  body.innerHTML = h;
+}
 function loadHistoryPanel(){
-  callApi('getMyOrderHistory', { idToken: currentIdToken }).then(function(r){
-    var body = document.getElementById('panelBody');
-    if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
-    // ⚡ แก้ (26/8/69) — "ประวัติการสั่งซื้อ" ให้นับเฉพาะออเดอร์ที่แนบสลิปแล้วเท่านั้น (hasSlip = true) ตามที่
-    // ขอ — ออเดอร์ที่ยังไม่แนบสลิป (รอชำระเงิน) ยังไม่ถือเป็นประวัติ จะไปโผล่แค่ในหน้า "คำสั่งซื้อรอดำเนินการ"
-    // ที่หน้าสั่งซื้อสินค้าเท่านั้น ไม่ปนกับที่นี่
-    var history = (r.results || []).filter(function(o){ return o.hasSlip; });
-    if (!history.length) { body.innerHTML = '<div class="empty">ยังไม่มีประวัติการสั่งซื้อ</div>'; return; }
-    var h = '';
-    history.forEach(function(o){
-      h += '<div class="list-item"><div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Number(o.totalAmount).toLocaleString('th-TH') + '</span></div>'
-        + '<div class="row2">' + esc(o.date) + ' · ' + esc(o.paymentMethod) + (o.campaign ? ' · ' + esc(o.campaign) : '') + '</div></div>';
-    });
-    body.innerHTML = h;
-  }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+  var body = document.getElementById('panelBody');
+  var stale = orderHistoryData_.loadStale();
+  if (stale && stale.success) renderHistoryPanel_(stale);
+  orderHistoryData_.fetch().then(function(r){
+    if (!r || !r.success) { if (!stale) body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
+    renderHistoryPanel_(r);
+  }).catch(function(e){ if (!stale) body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
 function couponValueTextCompact_(c){
   if (c.type === 'bogo') return 'ซื้อครบ ' + c.value + ' แถม ' + (c.freeQty || 1);
   return privilegeValueText_(c.type, c.value, c.restriction, c.freeProduct, c.freeQty);
 }
+function renderCouponsPanel_(r){
+  var body = document.getElementById('panelBody');
+  if (!r.results.length) { body.innerHTML = '<div class="empty">ยังไม่มีคูปองที่ใช้ได้ตอนนี้</div>'; return; }
+  var h = '';
+  r.results.forEach(function(c){
+    var valueText = couponValueTextCompact_(c);
+    h += '<div class="list-item"><div class="row1"><span>' + esc(c.code) + '</span><span>' + valueText + '</span></div>'
+      + '<div class="row2">' + (c.autoApply ? 'ใช้อัตโนมัติที่หน้าชำระเงิน' : 'พิมพ์โค้ดนี้ตอนชำระเงิน') + (c.expiry ? ' · หมดอายุ ' + esc(c.expiry) : '') + '</div></div>';
+  });
+  body.innerHTML = h;
+}
 function loadCouponsPanel(){
+  var body = document.getElementById('panelBody');
+  var stale = couponsMenuData_.loadStale();
+  if (stale && stale.success) renderCouponsPanel_(stale);
   getCouponsMenuData_().then(function(r){
-    var body = document.getElementById('panelBody');
-    if (!r || !r.success) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
-    if (!r.results.length) { body.innerHTML = '<div class="empty">ยังไม่มีคูปองที่ใช้ได้ตอนนี้</div>'; return; }
-    var h = '';
-    r.results.forEach(function(c){
-      var valueText = couponValueTextCompact_(c);
-      h += '<div class="list-item"><div class="row1"><span>' + esc(c.code) + '</span><span>' + valueText + '</span></div>'
-        + '<div class="row2">' + (c.autoApply ? 'ใช้อัตโนมัติที่หน้าชำระเงิน' : 'พิมพ์โค้ดนี้ตอนชำระเงิน') + (c.expiry ? ' · หมดอายุ ' + esc(c.expiry) : '') + '</div></div>';
-    });
-    body.innerHTML = h;
-  }).catch(function(e){ document.getElementById('panelBody').innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+    if (!r || !r.success) { if (!stale) body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
+    renderCouponsPanel_(r);
+  }).catch(function(e){ if (!stale) body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
 function decodeJwtExp_(token) {
   try {
