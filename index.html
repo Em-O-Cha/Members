@@ -426,11 +426,15 @@ function closeRegSuccessOverlay_(){
 }
 // ⚡ เพิ่ม — ดึงชื่อโปรโมชั่น/สิทธิพิเศษต้อนรับสมาชิกใหม่ที่ตั้งค่าไว้จริง (จาก getMyPrivileges ที่มีอยู่แล้ว)
 // มาแทนที่ข้อความทั่วไปใน popup ต้อนรับ ให้ลูกค้าเห็นโปรจริงที่ตัวเองได้รับ ไม่ใช่แค่ข้อความยินดีเฉยๆ
-// ถ้าดึงไม่สำเร็จหรือไม่มีสิทธิพิเศษตั้งไว้เลย จะคงข้อความทั่วไปเดิมไว้ ไม่ทำให้ popup ว่างเปล่า
+// กรองเอาเฉพาะสิทธิ์ที่มาจาก "การสมัครสมาชิก" เท่านั้น (reason มีคำว่า "ต้อนรับสมาชิกใหม่") ไม่เอาสิทธิ์จาก
+// แหล่งอื่นที่อาจได้มาพร้อมกันในบางเคส เช่น รางวัลแนะนำเพื่อน/วันเกิด/แอดมินให้เอง มาปนใน popup นี้
+// ถ้าดึงไม่สำเร็จหรือไม่มีสิทธิพิเศษต้อนรับสมาชิกใหม่เลย จะคงข้อความทั่วไปเดิมไว้ ไม่ทำให้ popup ว่างเปล่า
 function renderRegSuccessPrivileges_(privileges){
   var el = document.getElementById('regSuccessPrivileges');
   if (!el || !privileges || !privileges.length) return;
-  el.innerHTML = privileges.map(function(p){ return '🎁 ' + esc(p.name); }).join('<br>');
+  var signupOnly = privileges.filter(function(p){ return String(p.reason || '').indexOf('ต้อนรับสมาชิกใหม่') !== -1; });
+  if (!signupOnly.length) return;
+  el.innerHTML = signupOnly.map(function(p){ return '🎁 ' + esc(p.name); }).join('<br>');
 }
 var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'enqueueMemberRegistration', 'redeemReward', 'updateMemberProfile'];
 function callApi(action, payload, _attempt){
