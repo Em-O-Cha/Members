@@ -362,7 +362,6 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
     <button class="btn" onclick="closeRegSuccessOverlay_()">เริ่มใช้งาน</button>
   </div>
 </div>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 var LIFF_ID = '2010892131-hMnmdrmH';
 var API_URL = 'https://script.google.com/macros/s/AKfycbw4EpQS0JlG_MGw8Tt08kYOM730cb0J4nHZ5Bbz54AUTXgodPsSn8xjTwWiALBp0nYK/exec';
@@ -834,6 +833,24 @@ var MENU_ICON_BASE_FILES = {
 };
 var TIER_FILE_SUFFIX_ = { start: 'start', fan: 'silver', love: 'gold', vip: 'platinum' };
 var tierConfigCache_ = null;
+// ⚡ แก้ — เดิมมี 2 จุดที่เรียก getTierConfig แยกกัน (ตอนโหลดหน้า + ตอน renderTierProgressHint_) ถ้าลูกค้าเก่า
+// ที่มีแคชสถานะสมาชิกใน localStorage อยู่แล้ว renderMemberCard จะวาดบัตรสมาชิกได้ทันทีแบบไม่ต้องรอเน็ตเลย ซึ่ง
+// อาจเร็วกว่าที่ getTierConfig ตอนโหลดหน้าจะตอบกลับมา (โดยเฉพาะถ้า Apps Script ตอบช้า) ทำให้ยิง getTierConfig
+// ซ้ำ 2 รอบโดยไม่จำเป็น รวมมาเป็นฟังก์ชันเดียวที่กันการยิงซ้ำระหว่างที่มีคำขอเดิมค้างอยู่แทน
+var tierConfigInFlight_ = null;
+function fetchTierConfig_(){
+  if (tierConfigCache_) return Promise.resolve(tierConfigCache_);
+  if (tierConfigInFlight_) return tierConfigInFlight_;
+  tierConfigInFlight_ = callApi('getTierConfig', {}).then(function(r){
+    tierConfigInFlight_ = null;
+    if (r && r.success && Array.isArray(r.tiers)) tierConfigCache_ = r.tiers;
+    return tierConfigCache_;
+  }).catch(function(e){
+    tierConfigInFlight_ = null;
+    throw e;
+  });
+  return tierConfigInFlight_;
+}
 var SPUNKY_LOGO_URL = 'spunky-logo.png';
 function renderTierProgressHint_(member){
   var hintEl = document.getElementById('tierProgressHint');
@@ -873,11 +890,8 @@ function renderTierProgressHint_(member){
   };
   if (tierConfigCache_) { render(tierConfigCache_); return; }
   hintEl.innerHTML = '';
-  callApi('getTierConfig', {}).then(function(r){
-    if (r && r.success && Array.isArray(r.tiers)) {
-      tierConfigCache_ = r.tiers;
-      render(tierConfigCache_);
-    }
+  fetchTierConfig_().then(function(tiers){
+    if (tiers) render(tiers);
   }).catch(function(){ /* โหลดไม่สำเร็จ เงียบไว้ ไม่ต้องโชว์ error รบกวนลูกค้า แค่ไม่มีข้อความนี้ */ });
 }
 var currentTierSuffix = 'start';
@@ -1408,9 +1422,7 @@ function initLiff(){
     showErrorState('liff.init() ล้มเหลว: ' + (e && e.message ? e.message : String(e)));
   });
 }
-callApi('getTierConfig', {}).then(function(r){
-  if (r && r.success && Array.isArray(r.tiers)) tierConfigCache_ = r.tiers;
-}).catch(function(){ /* พลาดก็ไม่เป็นไร renderTierProgressHint_ จะลองยิงเองอีกทีตอนต้องใช้จริง */ });
+fetchTierConfig_().catch(function(){ /* พลาดก็ไม่เป็นไร renderTierProgressHint_ จะลองยิงเองอีกทีตอนต้องใช้จริง */ });
 // ⚡ เพิ่ม (25/8/69) — เช็คว่าระบบแนะนำเพื่อนสมัครสมาชิก (MGM) เปิดใช้งานอยู่หรือไม่ตอนโหลดหน้า ถ้าปิดอยู่
 // ช่องกรอก "รหัสสมาชิกผู้แนะนำ" ในฟอร์มสมัครจะไม่โชว์เลย (ค่าเริ่มต้นซ่อนไว้ก่อนด้วย class="sh" ใน HTML)
 // เอ็นด์พอยต์นี้เป็นแบบสาธารณะ ไม่ต้องใช้ idToken/PIN คืนแค่ true/false เท่านั้น
@@ -1419,7 +1431,18 @@ callApi('getReferralPublicStatus', {}).then(function(r){
     document.getElementById('referrerCodeField').classList.remove('sh');
   }
 }).catch(function(){ /* เช็คไม่สำเร็จ ปล่อยให้ช่องซ่อนไว้ต่อไปเงียบๆ ไม่กระทบการสมัครสมาชิกปกติ */ });
-initLiff();
+// ⚡ แก้ — เดิม <script src="...sdk.js"> เป็น tag ปกติ (ไม่มี defer/async) เป็น script แบบบล็อกการโหลดหน้า
+// (render-blocking): เบราว์เซอร์ต้องรอโหลด+รัน SDK จาก LINE ให้เสร็จก่อน ถึงจะไปแตะโค้ดส่วนที่เหลือของหน้านี้
+// ได้เลยสักบรรทัด (รวมถึง getTierConfig/getReferralPublicStatus 2 บรรทัดด้านบนที่ไม่ต้องใช้ LIFF เลยด้วยซ้ำ)
+// ถ้าเน็ตช้าหรือ LINE server ตอบช้าเป็นพิเศษ ทั้งหน้าจะกดอะไรไม่ได้เลยทั้งที่มองเห็นหน้าตาครบแล้ว — แก้ให้ตรง
+// จุดแบบเดียวกับที่แก้ไปแล้วในระบบ Order: โหลด SDK แบบ inject เข้ามาด้วยโค้ดเองแทน ฟังก์ชันหลักของหน้านี้
+// ประกาศพร้อมใช้งานได้ทันทีไม่ต้องรอ SDK เลย ส่วน liff.init() (ผ่าน initLiff()) จะถูกเรียกก็ต่อเมื่อ SDK โหลด
+// เสร็จจริงๆ เท่านั้น (ผ่าน onload ของ script ที่ inject เอง)
+var liffSdkScript_ = document.createElement('script');
+liffSdkScript_.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
+liffSdkScript_.onload = function(){ initLiff(); };
+liffSdkScript_.onerror = function(){ showErrorState('โหลด LIFF SDK ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'); };
+document.head.appendChild(liffSdkScript_);
 </script>
 </body>
 </html>
