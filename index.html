@@ -1442,7 +1442,7 @@ callApi('getReferralPublicStatus', {}).then(function(r){
 // สาเหตุ: ระหว่างโหลด sdk.js จาก LINE ถ้า request ค้างกลางทาง (เน็ตมือถือสะดุด/CDN ไม่ตอบ) เบราว์เซอร์
 // จะไม่ยิงทั้ง onload และ onerror เลย (ค้างได้เป็นนาทีหรือตลอดไป) เมื่อ onload ไม่ทำงาน initLiff() ก็ไม่ถูก
 // เรียก ตัวจับเวลา 10 วิของ liff.init() ที่อยู่ข้างในก็ไม่เริ่มนับ หน้าจึงค้างอยู่ที่หน้าโหลดตลอดไป ไม่มีทั้ง
-// ข้อความผิดพลาดและปุ่มให้กดลองใหม่ — เพิ่มตัวจับเวลาคุมการโหลด SDK เอง: ไม่ขึ้นใน 7 วิ โหลดซ้ำใหม่อีกครั้ง
+// ข้อความผิดพลาดและปุ่มให้กดลองใหม่ — เพิ่มตัวจับเวลาคุมการโหลด SDK เอง: ไม่ขึ้นใน 4 วิ โหลดซ้ำใหม่อีกครั้ง
 // (ต่อท้าย query กันหยิบไฟล์ค้างในแคชมาใช้ซ้ำ) ถ้ายังไม่ขึ้นอีก จึงขึ้นข้อความพร้อมปุ่มลองใหม่ ไม่ปล่อยให้นั่งรอเก้อ
 var LIFF_SDK_URL_ = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
 var liffSdkAttempt_ = 0;
@@ -1474,7 +1474,7 @@ function loadLiffSdk_(){
     if (liffStarted_) return;
     if (liffSdkReady_()) { startLiffWhenReady_(); return; }  // ไฟล์มาแล้วแต่ onload ไม่ยิง
     if (liffSdkAttempt_ < 2) loadLiffSdk_(); else showLiffSdkFailed_();
-  }, liffSdkAttempt_ < 2 ? 7000 : 12000);
+  }, liffSdkAttempt_ < 2 ? 4000 : 7000);
 }
 loadLiffSdk_();
 </script>
