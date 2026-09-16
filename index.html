@@ -833,17 +833,41 @@ var MENU_ICON_BASE_FILES = {
 };
 var TIER_FILE_SUFFIX_ = { start: 'start', fan: 'silver', love: 'gold', vip: 'platinum' };
 var tierConfigCache_ = null;
+var tierHintRetried_ = false; // ลองโหลดซ้ำให้อีกครั้งเดียวต่อการเปิดหน้า 1 รอบ
 // ⚡ แก้ — เดิมมี 2 จุดที่เรียก getTierConfig แยกกัน (ตอนโหลดหน้า + ตอน renderTierProgressHint_) ถ้าลูกค้าเก่า
 // ที่มีแคชสถานะสมาชิกใน localStorage อยู่แล้ว renderMemberCard จะวาดบัตรสมาชิกได้ทันทีแบบไม่ต้องรอเน็ตเลย ซึ่ง
 // อาจเร็วกว่าที่ getTierConfig ตอนโหลดหน้าจะตอบกลับมา (โดยเฉพาะถ้า Apps Script ตอบช้า) ทำให้ยิง getTierConfig
 // ซ้ำ 2 รอบโดยไม่จำเป็น รวมมาเป็นฟังก์ชันเดียวที่กันการยิงซ้ำระหว่างที่มีคำขอเดิมค้างอยู่แทน
 var tierConfigInFlight_ = null;
+// ⚡ เพิ่ม (16/9/69) — กล่องแถบเลื่อนระดับ (พริก) เป็นจุดเดียวในหน้าที่ไม่มีแคชในเครื่อง: บัตรสมาชิก
+// และเมนูทั้ง 8 ปุ่มมีแคช localStorage วาดได้ทันทีที่เปิดหน้า แต่ Tier_Config เก็บไว้ในตัวแปรของหน้าเท่านั้น
+// ปิดหน้าทีหนึ่งค่าหายหมด ต้องยิงถาม getTierConfig ใหม่ทุกครั้งแล้วนั่งรอคำตอบก่อนถึงจะวาดได้ ซ้ำร้ายคำขอนี้
+// มักต้องต่อคิวรอ checkMemberStatus ที่หนักกว่าเสร็จก่อน (Apps Script ทำทีละคำขอต่อผู้ใช้หนึ่งคน) กล่องจึงค้างว่างอยู่
+// หลายวินาทีทั้งที่บัตรขึ้นไปแล้ว — เก็บลง localStorage ด้วย ครั้งต่อไปจะวาดได้ทันทีแล้วค่อยอัปเดตทับเงียบๆ
+var TIER_CONFIG_STORAGE_KEY_ = 'emocha.members.tierConfigCache';
+var TIER_CONFIG_STORAGE_MAX_AGE_ = 7 * 24 * 60 * 60 * 1000; // เกินนี้ถือว่าเก่าเกินไป รอของจริงดีกว่า
+function loadCachedTierConfig_(){
+  try {
+    var raw = localStorage.getItem(TIER_CONFIG_STORAGE_KEY_);
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.tiers) || !parsed.tiers.length) return null;
+    if (!parsed.savedAt || (Date.now() - parsed.savedAt) > TIER_CONFIG_STORAGE_MAX_AGE_) return null;
+    return parsed.tiers;
+  } catch (e) { return null; }
+}
+function saveCachedTierConfig_(tiers){
+  try { localStorage.setItem(TIER_CONFIG_STORAGE_KEY_, JSON.stringify({ tiers: tiers, savedAt: Date.now() })); } catch (e) {}
+}
 function fetchTierConfig_(){
   if (tierConfigCache_) return Promise.resolve(tierConfigCache_);
   if (tierConfigInFlight_) return tierConfigInFlight_;
   tierConfigInFlight_ = callApi('getTierConfig', {}).then(function(r){
     tierConfigInFlight_ = null;
-    if (r && r.success && Array.isArray(r.tiers)) tierConfigCache_ = r.tiers;
+    if (r && r.success && Array.isArray(r.tiers)) {
+      tierConfigCache_ = r.tiers;
+      saveCachedTierConfig_(r.tiers);
+    }
     return tierConfigCache_;
   }).catch(function(e){
     tierConfigInFlight_ = null;
@@ -889,10 +913,19 @@ function renderTierProgressHint_(member){
       percent, currentTier.name, nextTier.name);
   };
   if (tierConfigCache_) { render(tierConfigCache_); return; }
-  hintEl.innerHTML = '';
+  // มีแคชในเครื่องจากครั้งก่อน → วาดทันทีพร้อมบัตร ไม่ต้องรอเน็ต (ของจริงที่ยิงไปจะมาวาดทับเองทีหลัง)
+  var cachedTiers_ = loadCachedTierConfig_();
+  if (cachedTiers_) render(cachedTiers_);
+  else hintEl.innerHTML = '';
   fetchTierConfig_().then(function(tiers){
     if (tiers) render(tiers);
-  }).catch(function(){ /* โหลดไม่สำเร็จ เงียบไว้ ไม่ต้องโชว์ error รบกวนลูกค้า แค่ไม่มีข้อความนี้ */ });
+  }).catch(function(){
+    // โหลดไม่สำเร็จ ถ้ามีของเก่าวาดค้างไว้แล้วก็ปล่อยไว้ ไม่งั้นลองใหม่ให้อีกครั้งเดียว
+    // (เดิมเงียบไปเฉยๆ กล่องเลยว่างค้างตลอดไป จนกว่าลูกค้าจะปิดหน้าเปิดใหม่เอง)
+    if (cachedTiers_ || tierHintRetried_) return;
+    tierHintRetried_ = true;
+    setTimeout(function(){ renderTierProgressHint_(member); }, 2000);
+  });
 }
 var currentTierSuffix = 'start';
 function menuIcon(type, className){
