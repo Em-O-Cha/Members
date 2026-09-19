@@ -1356,12 +1356,16 @@ function renderHistoryPanel_(r){
   // ⚡ แก้ (26/8/69) — "ประวัติการสั่งซื้อ" ให้นับเฉพาะออเดอร์ที่แนบสลิปแล้วเท่านั้น (hasSlip = true) ตามที่
   // ขอ — ออเดอร์ที่ยังไม่แนบสลิป (รอชำระเงิน) ยังไม่ถือเป็นประวัติ จะไปโผล่แค่ในหน้า "คำสั่งซื้อรอดำเนินการ"
   // ที่หน้าสั่งซื้อสินค้าเท่านั้น ไม่ปนกับที่นี่
-  var history = (r.results || []).filter(function(o){ return o.hasSlip; });
+  // ⚡ เพิ่ม (19/9/69) — ออเดอร์เก็บเงินปลายทางไม่มีสลิปให้แนบเลยโดยธรรมชาติ แต่ถือเป็นการสั่งซื้อที่สมบูรณ์
+  // แล้วตั้งแต่วันที่กดสั่ง จึงต้องนับเป็นประวัติด้วย (ฝั่งเซิร์ฟเวอร์ส่งธง isCod มาให้แยกออกจากกัน)
+  var history = (r.results || []).filter(function(o){ return o.hasSlip || o.isCod; });
   if (!history.length) { body.innerHTML = '<div class="empty">ยังไม่มีประวัติการสั่งซื้อ</div>'; return; }
   var h = '';
   history.forEach(function(o){
+    var codNote = o.isCod ? ('<div class="row2" style="color:' + (o.codStatus === 'รอเก็บเงิน' ? '#e65100' : '#2e7d32') + '">💵 เก็บเงินปลายทาง' + (o.codStatus ? ' · ' + esc(o.codStatus) : '') + '</div>') : '';
     h += '<div class="list-item"><div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Number(o.totalAmount).toLocaleString('th-TH') + '</span></div>'
-      + '<div class="row2">' + esc(o.date) + ' · ' + esc(o.paymentMethod) + (o.campaign ? ' · ' + esc(o.campaign) : '') + '</div></div>';
+      + '<div class="row2">' + esc(o.date) + ' · ' + esc(o.paymentMethod) + (o.campaign ? ' · ' + esc(o.campaign) : '') + '</div>'
+      + codNote + '</div>';
   });
   body.innerHTML = h;
 }
