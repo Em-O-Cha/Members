@@ -1127,12 +1127,17 @@ function renderPrivilegesPanel_(r){
         // ⚡ เพิ่ม (26/8/69) — สิทธิ์ที่ยังไม่ถึงวันเริ่มใช้ (isUpcoming) ให้แสดงไว้ด้วย ไม่ซ่อน แต่ทำให้จางลง
         // + บอกวันที่เริ่มใช้ได้ชัดเจน (แพทเทิร์นเดียวกับสิทธิ์ตามระดับที่ยังไม่ปลดล็อคด้านล่าง) เพื่อให้
         // ลูกค้ารู้ล่วงหน้าว่าตัวเองมีสิทธิ์นี้ติดตัวอยู่แล้ว แค่ยังใช้ไม่ได้จนกว่าจะถึงวันที่กำหนด
+        // ⚡ แก้ — backend ส่ง p.expiry เป็นคำว่า "ไม่มีวันหมดอายุ" (ไม่ใช่ค่าว่าง) เมื่อสิทธิ์ใบนั้นไม่มีวัน
+        // หมดอายุ ถ้าเอามาต่อท้าย "หมดอายุ:" ตรงๆ จะอ่านได้ว่า "หมดอายุ: ไม่มีวันหมดอายุ" — แยกสองเคสออกจากกัน
+        // (แพทเทิร์นเดียวกับ renderRegSuccessPrivileges_ ด้านบนและหน้าสั่งซื้อสินค้า)
+        var hasExpiry_ = p.expiry && p.expiry !== 'ไม่มีวันหมดอายุ';
         if (p.isUpcoming) {
           h += '<div class="list-item" style="opacity:.55"><div class="row1"><span>⏳ ' + esc(p.name) + '</span></div>'
-            + '<div class="row2">ใช้สิทธิ์ได้ตั้งแต่วันที่ ' + esc(p.startDateText) + ' · หมดอายุ ' + esc(p.expiry) + '</div></div>';
+            + '<div class="row2">ใช้สิทธิ์ได้ตั้งแต่วันที่ ' + esc(p.startDateText)
+            + (hasExpiry_ ? (' · หมดอายุ ' + esc(p.expiry)) : '') + '</div></div>';
         } else {
           h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span></div>'
-            + '<div class="row2">หมดอายุ: ' + esc(p.expiry) + '</div></div>';
+            + '<div class="row2">' + (hasExpiry_ ? ('หมดอายุ: ' + esc(p.expiry)) : 'ไม่มีวันหมดอายุ') + '</div></div>';
         }
       });
     } else if (!(r.pointsPromos && r.pointsPromos.length) && !(r.tierPerks && r.tierPerks.length)) {
