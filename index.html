@@ -19,6 +19,8 @@
   --g6:#757575; --g8:#424242; --td:#1b2e1c;
   --brand-button-gradient:linear-gradient(135deg,#a50d0c 0%,#e4504d 55%,#a50d0c 100%);
   --tier-soft:rgba(46,125,50,.52); --tier-glass:rgba(46,125,50,.36); --tier-ink:#1a5c2a;
+  --tier-on:#ffffff; --tier-on-shadow:0 1px 3px rgba(0,0,0,.45);
+  --tier-btn-grad:linear-gradient(135deg,#246b28 0%,#2e7d32 52%,#3f9144 100%);
   --gut:8px; --vu:1vh; --cardh:calc(34 * var(--vu));
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -253,12 +255,13 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .menu-grid{
   grid-template-columns:repeat(6,1fr);gap:0 2px;
   margin:12px -8px 0;padding:12px 8px 11px;border-radius:24px;
-  background:linear-gradient(150deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.66) 38%,var(--tier-glass) 100%);
-  border:1px solid rgba(255,255,255,.9);
-  -webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
-  box-shadow:0 10px 26px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05),
-             inset 0 1px 0 rgba(255,255,255,1),inset 0 -10px 20px rgba(255,255,255,.45);
+  background:var(--tier-btn-grad);
+  border:1px solid rgba(255,255,255,.3);
+  box-shadow:0 8px 22px rgba(0,0,0,.20),0 2px 6px rgba(0,0,0,.10),
+             inset 0 1px 0 rgba(255,255,255,.38),inset 0 -10px 20px rgba(0,0,0,.07);
 }
+/* ตัวหนังสือใต้ไอคอนใช้สีที่ตัดกับพื้นเข้ม (ขาวหรือดำ แล้วแต่สีของระดับสมาชิก) */
+.card.member-page .menu-item .txt{text-shadow:var(--tier-on-shadow);}
 .menu-item{gap:5px;position:relative;isolation:isolate;border-radius:16px;}
 .menu-item .icon{width:min(52px,13.3vw);height:min(52px,13.3vw);}
 .menu-item .txt{font-size:11px;min-height:28px;line-height:1.3;}
@@ -767,11 +770,13 @@ function applyThemeColor_(baseColor){
   document.documentElement.style.setProperty('--tier-soft', hexToRgba(baseColor, .52));
   document.documentElement.style.setProperty('--tier-glass', hexToRgba(baseColor, .36));
   document.documentElement.style.setProperty('--tier-ink', shadeColor(baseColor, -28));
-  var menuTextColor = shadeColor(baseColor, -10);
-  var menuBg = mixWithWhite(baseColor, .45);
+  var onColor = contrastTextColor_(baseColor);
+  document.documentElement.style.setProperty('--tier-btn-grad', tierButtonGradient_(baseColor));
+  document.documentElement.style.setProperty('--tier-on', onColor);
+  document.documentElement.style.setProperty('--tier-on-shadow',
+    onColor === '#ffffff' ? '0 1px 3px rgba(0,0,0,.45)' : '0 1px 2px rgba(255,255,255,.5)');
   document.querySelectorAll('.menu-item').forEach(function(el){
-    el.style.background = menuBg;
-    el.style.color = menuTextColor;
+    el.style.color = onColor;
   });
   document.querySelectorAll('.menu-section-title').forEach(function(el){
     el.style.color = baseColor;
