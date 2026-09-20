@@ -211,7 +211,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .card.member-page .lower-section{flex:1;display:flex;flex-direction:column;}
 /* ไม่มีส่วนอื่นต่อท้ายแล้ว — เฉลี่ยพื้นที่ว่างที่เหลือให้ทุกช่องไฟในกล่องขาวเท่ากัน
    (ทั้งเหนือหัวข้อ ระหว่างกล่อง และใต้แถวเมนู) แทนที่จะกองไว้รอบแถวเมนูก้อนเดียว */
-.card.member-page .lower-section{justify-content:space-evenly;gap:10px;}
+.card.member-page .lower-section{justify-content:space-evenly;gap:10px;padding-left:16px;padding-right:16px;}
 .card.member-page .menu-section-title{margin:0;}
 .card.member-page .menu-grid{margin:0 -8px;}
 /* กล่องยอดใช้จ่าย/คะแนน และกล่องเลื่อนขั้น กว้างเท่ากรอบเมนูทั้งหมด และใช้กระจก
@@ -225,7 +225,10 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   box-shadow:0 10px 26px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05),
              inset 0 1px 0 rgba(255,255,255,1),inset 0 -10px 20px rgba(255,255,255,.35);
 }
-.card.member-page .tier-progress-box{border-radius:18px;}
+.card.member-page .tier-progress-box{border-radius:18px;padding:14px 15px;}
+.card.member-page .tier-progress-card{padding:19px 18px 17px;}
+.card.member-page .tier-progress-text{margin-bottom:15px;}
+.card.member-page .tier-progress-labels{margin-top:15px;}
 .card.member-page .tier-progress-value{color:var(--tier-ink);}
 #bdArea.member-view{padding-top:12px;}
 .member-greeting-bar{margin:0 0 10px;}
@@ -296,6 +299,10 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .lower-section{margin-top:8px;padding:11px 24px 10px;}
   .tier-progress-boxes{margin-top:16px;}
   .tier-progress-card{margin-top:9px;padding:10px 14px 9px;}
+  .card.member-page .tier-progress-box{padding:9px 13px;}
+  .card.member-page .tier-progress-card{padding:13px 15px 11px;}
+  .card.member-page .tier-progress-text{margin-bottom:10px;}
+  .card.member-page .tier-progress-labels{margin-top:10px;}
   .tier-progress-text{margin-bottom:8px;}
   .tier-progress-labels{margin-top:9px;}
   .menu-grid{padding:10px 8px 9px;}
@@ -314,6 +321,10 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .menu-grid{padding:8px 6px 7px;}
   .menu-item .txt{font-size:10px;min-height:24px;}
   .card.member-page .lower-section{gap:5px;}
+  .card.member-page .tier-progress-box{padding:7px 11px;}
+  .card.member-page .tier-progress-card{padding:10px 13px 9px;}
+  .card.member-page .tier-progress-text{margin-bottom:8px;}
+  .card.member-page .tier-progress-labels{margin-top:8px;}
 }
 </style>
 </head>
