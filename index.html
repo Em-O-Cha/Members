@@ -209,8 +209,13 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .card.member-page .bd{flex:1;display:flex;flex-direction:column;}
 .card.member-page #memberCardState{flex:1;}
 .card.member-page .lower-section{flex:1;display:flex;flex-direction:column;}
-/* ไม่มีส่วนอื่นต่อท้ายแล้ว — จัดแถวเมนูไว้กลางพื้นที่ว่างที่เหลือของหน้า */
-.card.member-page .menu-grid{margin-top:auto;margin-bottom:auto;}
+/* ไม่มีส่วนอื่นต่อท้ายแล้ว — เฉลี่ยพื้นที่ว่างที่เหลือให้ทุกช่องไฟในกล่องขาวเท่ากัน
+   (ทั้งเหนือหัวข้อ ระหว่างกล่อง และใต้แถวเมนู) แทนที่จะกองไว้รอบแถวเมนูก้อนเดียว */
+.card.member-page .lower-section{justify-content:space-evenly;gap:10px;}
+.card.member-page .menu-section-title{margin:0;}
+.card.member-page .tier-progress-boxes{margin-top:0;}
+.card.member-page .tier-progress-card{margin-top:0;}
+.card.member-page .menu-grid{margin:0 -8px;}
 #bdArea.member-view{padding-top:12px;}
 .member-greeting-bar{margin:0 0 10px;}
 .member-greeting-logo{width:40px;height:40px;}
@@ -295,8 +300,9 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .lower-section{padding:9px 20px 8px;}
   .tier-progress-boxes{margin-top:13px;}
   .tier-progress-card{margin-top:8px;}
-  .menu-grid{margin-top:9px;padding:8px 6px 7px;}
+  .menu-grid{padding:8px 6px 7px;}
   .menu-item .txt{font-size:10px;min-height:24px;}
+  .card.member-page .lower-section{gap:5px;}
 }
 </style>
 </head>
@@ -388,7 +394,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
         <div class="tier-progress-card" id="tierProgressHint"></div>
         <div class="menu-grid">
           <div class="menu-item" onclick="openPanel('points')">
-            <div class="icon">💰</div><div class="txt">คะแนน<br>สะสม</div>
+            <div class="icon">💰</div><div class="txt">ประวัติ<br>คะแนน</div>
           </div>
           <div class="menu-item" onclick="openPanel('rewards')">
             <div class="icon">🎁</div><div class="txt">แลก<br>ของรางวัล</div>
