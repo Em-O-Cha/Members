@@ -19,7 +19,7 @@
   --g6:#757575; --g8:#424242; --td:#1b2e1c;
   --brand-button-gradient:linear-gradient(135deg,#a50d0c 0%,#e4504d 55%,#a50d0c 100%);
   --tier-soft:rgba(46,125,50,.52); --tier-glass:rgba(46,125,50,.36); --tier-ink:#1a5c2a;
-  --gut:8px;
+  --gut:8px; --cardh:34vh;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Kanit',sans-serif;color:var(--td);min-height:100vh;
@@ -239,7 +239,8 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .member-greeting-bar{margin:0 0 10px;}
 .member-greeting-logo{width:40px;height:40px;}
 .mcard-greeting-name{font-size:17px;}
-.mcard{aspect-ratio:1.6;margin:0 calc(var(--gut) - 24px);}
+.mcard{aspect-ratio:1.593;margin:0 auto;
+  width:min(calc(100% + 48px - var(--gut) * 2), calc(var(--cardh) * 1.593));}
 .shop-cta-btn{width:auto;height:44px;line-height:44px;margin:12px calc(var(--gut) - 24px) 0;}
 .lower-section{margin-top:10px;padding:16px 24px 14px;}
 .tier-progress-boxes{margin-top:22px;}
@@ -306,9 +307,8 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .card.member-page .tier-progress-labels{margin-top:15px;}
   .card.member-page .tier-chip{font-size:11.5px;padding:4px 13px;}
 }
-@media (max-height:730px){
+@media (max-height:765px){
   :root{--gut:20px;}
-  .mcard{margin:0 22px;}
   .mcard-code{font-size:13px;padding:3px 10px;bottom:13px;left:13px;}
   .shop-cta-btn{height:40px;line-height:40px;margin-top:9px;}
   .lower-section{margin-top:8px;padding:11px 24px 10px;}
@@ -327,13 +327,15 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .menu-item{gap:4px;}
   .menu-item .txt{font-size:10.5px;min-height:26px;}
 }
+@media (max-height:700px){
+  :root{--cardh:29vh;}
+}
 @media (max-height:670px){
-  .mcard{margin:0 40px;}
+  :root{--cardh:24vh;}
   .mcard-code{font-size:11.5px;padding:3px 9px;bottom:11px;left:11px;}
 }
 @media (max-height:600px){
-  :root{--gut:26px;}
-  .mcard{margin:0 58px;}
+  :root{--gut:26px; --cardh:23vh;}
   .lower-section{padding:9px 20px 8px;}
   .tier-progress-boxes{margin-top:13px;}
   .tier-progress-card{margin-top:8px;}
@@ -347,6 +349,16 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .card.member-page .tier-progress-marker{width:20px;height:20px;}
   .card.member-page .tier-progress-labels{margin-top:8px;}
   .card.member-page .tier-chip{font-size:10.5px;padding:3px 11px;}
+}
+@media (max-height:570px){
+  :root{--cardh:19vh;}
+}
+/* จอแคบมาก (320px) ทุกอย่างกินความกว้างเท่าเดิมแต่ตัวหนังสือขึ้นบรรทัดมากกว่า
+   จึงต้องบีบระยะแนวตั้งเพิ่มอีกนิดให้ยังอยู่ในหน้าเดียว */
+@media (max-width:340px){
+  #bdArea.member-view{padding-top:8px;}
+  .member-greeting-bar{margin-bottom:8px;}
+  .card.member-page .lower-section{gap:4px;}
 }
 </style>
 </head>
