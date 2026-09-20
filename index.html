@@ -249,13 +249,15 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .shop-cta-btn{flex:1;min-width:0;width:auto;height:44px;line-height:44px;margin:0;padding:0;}
 /* ปุ่มรถเข็นเป็นปุ่มรอง: พื้นขาวขอบสีของระดับสมาชิก ปุ่มสั่งซื้อจึงยังเป็นปุ่มหลักที่เด่นกว่า
    ต้องใช้ !important ทับกฎสีแดงรวมของปุ่มทุกปุ่มในหน้า (specificity สูงกว่าจึงชนะ) */
+/* ใช้กระจกขาวไล่เฉดเบา ๆ ชุดเดียวกับกล่องยอดใช้จ่าย/คะแนนสะสม
+   (ไม่ใช่เฉดเข้มแบบปุ่มสั่งซื้อ) ปุ่มสั่งซื้อจึงยังเป็นปุ่มหลักที่เด่นกว่า */
 .card.member-page .cart-cta-btn{
-  background:var(--tier-btn-grad) !important;
-  color:var(--tier-on) !important;
-  border:1px solid rgba(255,255,255,.3) !important;
-  box-shadow:0 8px 22px rgba(0,0,0,.20),0 2px 6px rgba(0,0,0,.10),
-             inset 0 1px 0 rgba(255,255,255,.38) !important;
-  text-shadow:var(--tier-on-shadow) !important;
+  background:linear-gradient(150deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.66) 38%,var(--tier-glass) 100%) !important;
+  color:var(--tier-ink) !important;
+  border:1px solid rgba(255,255,255,.9) !important;
+  box-shadow:0 10px 26px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05),
+             inset 0 1px 0 rgba(255,255,255,1),inset 0 -10px 20px rgba(255,255,255,.35) !important;
+  text-shadow:none !important;
   position:relative;font-family:inherit;cursor:pointer;
 }
 .card.member-page .cart-cta-btn:active{opacity:.85;}
