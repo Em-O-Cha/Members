@@ -18,6 +18,7 @@
   --gd:#1a5c2a; --gm:#2e7d32; --gp:#e8f5e9; --gb:#c8e6c9;
   --g6:#757575; --g8:#424242; --td:#1b2e1c;
   --brand-button-gradient:linear-gradient(135deg,#a50d0c 0%,#e4504d 55%,#a50d0c 100%);
+  --tier-soft:rgba(46,125,50,.30); --tier-glass:rgba(46,125,50,.16);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Kanit',sans-serif;color:var(--td);min-height:100vh;
@@ -202,6 +203,117 @@ button,.btn,.sbu,.shop-cta-btn{
   border-color:#a50d0c !important;box-shadow:0 5px 14px rgba(165,13,12,.42);
 }
 button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
+
+/* ================================================================
+   หน้าสมาชิกแบบ "จบใน 1 หน้า" — 6 เมนูเรียงแถวเดียวในกรอบเดียวกัน
+   เลิกใช้ 8 เมนู 2 แถว (ตัด Facebook/TikTok ออก) เพื่อให้ทุกอย่าง
+   อยู่ในจอเดียวไม่ต้องเลื่อน ระยะห่าง/ขนาดไอคอนย่อลงเป็นขั้นตาม
+   ความสูงจอ (@media max-height) ให้พอดีตั้งแต่จอ 640px ขึ้นไป
+   ================================================================ */
+.card.member-page{display:flex;flex-direction:column;}
+.card.member-page .bd{flex:1;display:flex;flex-direction:column;}
+.card.member-page #memberCardState{flex:1;}
+.card.member-page .lower-section{flex:1;display:flex;flex-direction:column;}
+/* แบนเนอร์ News & Update เหลือใบเดียว ยืดเติมพื้นที่ว่างที่เหลือของหน้า */
+.card.member-page .photo-frame{display:none;}
+.card.member-page #newUpdateTitle{margin:14px 0 8px;}
+.card.member-page .promo-frame{flex:1;min-height:70px;max-height:140px;margin:0;}
+#bdArea.member-view{padding-top:12px;}
+.member-greeting-bar{margin:0 0 10px;}
+.member-greeting-logo{width:40px;height:40px;}
+.mcard-greeting-name{font-size:17px;}
+.mcard{aspect-ratio:1.6;margin:0 -8px;}
+.shop-cta-btn{height:44px;line-height:44px;margin-top:12px;}
+.lower-section{margin-top:10px;padding:16px 24px 14px;}
+.tier-progress-boxes{margin-top:22px;}
+.tier-progress-box{padding:10px 12px;}
+.tier-progress-value{font-size:17px;}
+.tier-progress-card{margin-top:12px;padding:14px 16px 12px;}
+.tier-progress-text{margin-bottom:11px;}
+
+/* ---- กรอบเมนู: การ์ดกระจกใบเดียวครอบทั้ง 6 เมนู ให้แถวเมนูเด่นแยกออกมา ---- */
+.menu-grid{
+  grid-template-columns:repeat(6,1fr);gap:0 2px;
+  margin:12px -8px 0;padding:12px 8px 11px;border-radius:24px;
+  background:linear-gradient(155deg,rgba(255,255,255,.96) 0%,rgba(255,255,255,.72) 46%,var(--tier-glass) 100%);
+  border:1px solid rgba(255,255,255,.9);
+  -webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
+  box-shadow:0 10px 26px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05),
+             inset 0 1px 0 rgba(255,255,255,1),inset 0 -10px 20px rgba(255,255,255,.45);
+}
+.menu-item{gap:5px;position:relative;isolation:isolate;border-radius:16px;}
+.menu-item .icon{width:46px;height:46px;}
+.menu-item .txt{font-size:10px;min-height:26px;line-height:1.3;}
+
+/* ---- liquid glass: แผ่นกระจกเรืองขึ้นมาใต้เมนูที่กด/ที่เปิดอยู่ ---- */
+.menu-item::before{
+  content:'';position:absolute;inset:-5px -1px;border-radius:16px;z-index:-1;
+  opacity:0;transform:scale(.86);
+  transition:opacity .2s ease,transform .26s cubic-bezier(.34,1.5,.64,1);
+  background:linear-gradient(150deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.74) 44%,var(--tier-soft) 100%);
+  border:1px solid rgba(255,255,255,.95);
+  -webkit-backdrop-filter:blur(12px) saturate(200%);backdrop-filter:blur(12px) saturate(200%);
+  box-shadow:0 8px 20px rgba(0,0,0,.16),0 2px 5px rgba(0,0,0,.07),
+             inset 0 1px 0 rgba(255,255,255,1),inset 0 -7px 14px rgba(255,255,255,.55);
+}
+.menu-item:active::before,.menu-item.is-open::before{opacity:1;transform:scale(1);}
+.menu-item:active,.menu-item.is-open{transform:scale(.97);}
+@media (prefers-reduced-motion:reduce){
+  .menu-item::before{transition:none;}
+}
+
+/* ---- ย่อระยะห่าง/ขนาดลงเป็นขั้น ๆ ตามความสูงจอ ให้จบใน 1 หน้าเสมอ ---- */
+@media (max-height:820px){
+  #bdArea.member-view{padding-top:10px;}
+  .member-greeting-logo{width:36px;height:36px;}
+  .mcard-greeting-name{font-size:16px;}
+  .mcard-greeting-sub{font-size:12px;}
+  .mcard{margin:0 4px;}
+  .shop-cta-btn{height:42px;line-height:42px;margin-top:10px;font-size:14.5px;}
+  .lower-section{padding:13px 24px 12px;}
+  .tier-progress-boxes{margin-top:18px;}
+  .tier-progress-box{padding:8px 12px;}
+  .tier-progress-label{font-size:11.5px;margin-bottom:2px;}
+  .tier-progress-value{font-size:16px;}
+  .tier-progress-card{margin-top:10px;padding:12px 14px 10px;}
+  .tier-progress-text{font-size:13px;margin-bottom:9px;}
+  .tier-progress-labels{margin-top:10px;}
+  .menu-grid{margin-top:11px;padding:10px 8px 9px;}
+  .menu-item .icon{width:44px;height:44px;}
+}
+/* จอเตี้ยกว่านี้ไม่เหลือที่พอสำหรับแบนเนอร์ — ซ่อนไว้ แล้วจัดแถวเมนูไว้กลางพื้นที่ว่างแทน */
+@media (max-height:789px){
+  .card.member-page #newUpdateTitle,.card.member-page .promo-frame{display:none;}
+  .card.member-page .menu-grid{margin-top:auto;margin-bottom:auto;}
+}
+@media (max-height:730px){
+  .mcard{margin:0 22px;}
+  .mcard-code{font-size:13px;padding:3px 10px;bottom:13px;left:13px;}
+  .shop-cta-btn{height:40px;line-height:40px;margin-top:9px;}
+  .lower-section{margin-top:8px;padding:11px 24px 10px;}
+  .tier-progress-boxes{margin-top:16px;}
+  .tier-progress-card{margin-top:9px;padding:10px 14px 9px;}
+  .tier-progress-text{margin-bottom:8px;}
+  .tier-progress-labels{margin-top:9px;}
+  .menu-grid{padding:10px 8px 9px;}
+  .menu-item{gap:4px;}
+  .menu-item .icon{width:42px;height:42px;}
+  .menu-item .txt{font-size:9.5px;min-height:24px;}
+}
+@media (max-height:670px){
+  .mcard{margin:0 40px;}
+  .mcard-code{font-size:11.5px;padding:3px 9px;bottom:11px;left:11px;}
+  .menu-item .icon{width:40px;height:40px;}
+}
+@media (max-height:600px){
+  .mcard{margin:0 58px;}
+  .lower-section{padding:9px 20px 8px;}
+  .tier-progress-boxes{margin-top:13px;}
+  .tier-progress-card{margin-top:8px;}
+  .menu-grid{margin-top:9px;padding:8px 6px 7px;}
+  .menu-item .icon{width:37px;height:37px;}
+  .menu-item .txt{font-size:9px;min-height:22px;}
+}
 </style>
 </head>
 <body>
@@ -212,8 +324,6 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   <symbol id="icon-privileges" viewBox="0 0 48 48"><path d="M24 7.5c2.2 0 3.3 2 5.3 2.7 2 .7 4.1-.2 5.7 1.4 1.6 1.6.7 3.7 1.4 5.7.7 2 2.7 3.1 2.7 5.3s-2 3.3-2.7 5.3c-.7 2 .2 4.1-1.4 5.7-1.6 1.6-3.7.7-5.7 1.4-2 .7-3.1 2.7-5.3 2.7s-3.3-2-5.3-2.7c-2-.7-4.1.2-5.7-1.4-1.6-1.6-.7-3.7-1.4-5.7-.7-2-2.7-3.1-2.7-5.3s2-3.3 2.7-5.3c.7-2-.2-4.1 1.4-5.7 1.6-1.6 3.7-.7 5.7-1.4 2-.7 3.1-2.7 5.3-2.7z"/><path d="m24 14.5 2.6 5.3 5.9.9-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.9zM17.5 34.5l-2.4 7 8.9-4.4 8.9 4.4-2.4-7M42 12v6m-3-3h6M6 25v6m-3-3h6"/></symbol>
   <symbol id="icon-info" viewBox="0 0 48 48"><circle class="blue-fill" cx="24" cy="24" r="18"/><circle cx="24" cy="18" r="6"/><path d="M12 38c1.5-7 6-10 12-10s10.5 3 12 10"/></symbol>
   <symbol id="icon-history" viewBox="0 0 48 48"><path d="M7 8h5l3 25h17M14 28h18M16 35h15l1.5-4M19 41a3 3 0 1 0 0 .1M31 41a3 3 0 1 0 0 .1"/><circle cx="34" cy="23" r="10"/><path d="M34 17v6l4.2 2.7M12 15h12"/></symbol>
-  <symbol id="icon-facebook" viewBox="0 0 48 48"><circle class="blue-fill" cx="24" cy="24" r="18"/><path d="M27 39V25h5l.8-5H27v-2.6c0-1.5.6-2.6 2.8-2.6H33V10c-.6-.1-1.9-.3-3.7-.3-4 0-6.5 2.4-6.5 6.8V20h-4.4v5h4.4v14"/></symbol>
-  <symbol id="icon-tiktok" viewBox="0 0 48 48"><path class="blue-stroke" d="M28 8v20.5a7.5 7.5 0 1 1-6-7.4M28 8c1.5 5.2 4.5 8.2 10 8.7V22c-4.1-.2-7.5-1.5-10-4"/></symbol>
 </svg>
 <div id="welcomeState" class="sh">
   <div class="welcome-photo"></div>
@@ -311,12 +421,6 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
           <div class="menu-item" onclick="openPanel('history')">
             <div class="icon"><img src="icon-history.png" alt="ประวัติสั่งซื้อ"></div><div class="txt">ประวัติ<br>สั่งซื้อ</div>
           </div>
-          <a class="menu-item" href="https://www.facebook.com/emocha.official/" target="_blank">
-            <img class="icon" src="icon-facebook.png" alt="Facebook"><div class="txt">Facebook</div>
-          </a>
-          <a class="menu-item" href="https://www.tiktok.com/@emocha.food?_r=1&_t=ZS-98ViS0aVxWW" target="_blank">
-            <img class="icon" src="icon-tiktok.png" alt="TikTok"><div class="txt">TikTok</div>
-          </a>
         </div>
         <h2 class="menu-section-title" id="newUpdateTitle">News & Update</h2>
         <div class="photo-frame"></div>
@@ -376,6 +480,8 @@ function showState(id){
   });
   document.getElementById('hd').classList.toggle('sh', id === 'memberCardState');
   document.getElementById('bdArea').classList.toggle('member-view', id === 'memberCardState');
+  var cardEl_ = document.querySelector('.card');
+  if (cardEl_) cardEl_.classList.toggle('member-page', id === 'memberCardState');
 }
 function showErrorState(msg){
   document.getElementById('errorState').innerHTML = '<div class="ico">⚠️</div><div id="errorMsg">' + msg.replace(/</g,'&lt;') + '</div>';
@@ -611,6 +717,9 @@ function contrastTextColor_(hex){
 }
 function applyThemeColor_(baseColor){
   document.body.style.background = mixWithWhite(baseColor, .12);
+  // กรอบเมนูและแผ่นกระจกตอนกดใช้เฉดเดียวกับบัตรของระดับสมาชิกนั้น
+  document.documentElement.style.setProperty('--tier-soft', hexToRgba(baseColor, .30));
+  document.documentElement.style.setProperty('--tier-glass', hexToRgba(baseColor, .16));
   var menuTextColor = shadeColor(baseColor, -10);
   var menuBg = mixWithWhite(baseColor, .45);
   document.querySelectorAll('.menu-item').forEach(function(el){
@@ -835,9 +944,7 @@ var MENU_ICON_BASE_FILES = {
   coupons: 'icon-coupon',
   privileges: 'icon-privileges',
   info: 'icon-info',
-  history: 'icon-history',
-  facebook: 'icon-facebook',
-  tiktok: 'icon-tiktok'
+  history: 'icon-history'
 };
 var TIER_FILE_SUFFIX_ = { start: 'start', fan: 'silver', love: 'gold', vip: 'platinum' };
 var tierConfigCache_ = null;
@@ -950,12 +1057,6 @@ function decorateMemberMenu(){
     var oldIcon = item.querySelector('.icon');
     if (oldIcon) oldIcon.outerHTML = menuIcon(type);
   });
-  [['facebook', 'icon-facebook'], ['tiktok', 'icon-tiktok']].forEach(function(pair){
-    var item = document.querySelector('.menu-item[href*="' + pair[0] + '"]');
-    if (!item) return;
-    var oldIcon = item.querySelector('.icon');
-    if (oldIcon) oldIcon.outerHTML = menuIcon(pair[1].replace('icon-', ''));
-  });
 }
 decorateMemberMenu();
 var PANEL_TITLES = {
@@ -967,7 +1068,14 @@ var PANEL_TITLES = {
   coupons: { icon: '<img src="icon-coupon.png" alt="">', label: 'คูปอง' },
   terms: { icon: 'ⓘ', label: 'เงื่อนไขสิทธิพิเศษสมาชิก' }
 };
+function setOpenMenuItem_(type){
+  document.querySelectorAll('.menu-item.is-open').forEach(function(el){ el.classList.remove('is-open'); });
+  if (!type) return;
+  var item = document.querySelector('.menu-item[onclick*="\'' + type + '\'"]');
+  if (item) item.classList.add('is-open');
+}
 function openPanel(type){
+  setOpenMenuItem_(type);
   var t = PANEL_TITLES[type];
   var iconHtml = (type === 'terms') ? ('<span class="panel-menu-icon" aria-hidden="true">' + (t ? t.icon : 'ⓘ') + '</span>') : (t ? menuIcon(type, 'panel-menu-icon') : '');
   document.getElementById('panelTitle').innerHTML = t ? (iconHtml + '<span>' + esc(t.label) + '</span>') : '';
@@ -983,6 +1091,7 @@ function openPanel(type){
 }
 function closePanel(){
   document.getElementById('panelOverlay').classList.add('sh');
+  setOpenMenuItem_(null);
 }
 var TERMS_CONTENT_ = [
   'ทุก ๆ 30 บาท ได้รับ 1 คะแนน คะแนนสะสมคำนวณจากยอดซื้อ ตามอัตราคูณของแต่ละระดับสมาชิก',
