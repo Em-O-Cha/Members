@@ -19,7 +19,7 @@
   --g6:#757575; --g8:#424242; --td:#1b2e1c;
   --brand-button-gradient:linear-gradient(135deg,#a50d0c 0%,#e4504d 55%,#a50d0c 100%);
   --tier-soft:rgba(46,125,50,.52); --tier-glass:rgba(46,125,50,.36); --tier-ink:#1a5c2a;
-  --tier-on:#ffffff; --tier-on-shadow:0 1px 3px rgba(0,0,0,.45); --tier-line:rgba(46,125,50,.75);
+  --tier-on:#ffffff; --tier-on-shadow:0 1px 3px rgba(0,0,0,.45);
   --tier-btn-grad:linear-gradient(135deg,#246b28 0%,#2e7d32 52%,#3f9144 100%);
   --gut:8px; --vu:1vh; --cardh:calc(34 * var(--vu));
 }
@@ -250,11 +250,12 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 /* ปุ่มรถเข็นเป็นปุ่มรอง: พื้นขาวขอบสีของระดับสมาชิก ปุ่มสั่งซื้อจึงยังเป็นปุ่มหลักที่เด่นกว่า
    ต้องใช้ !important ทับกฎสีแดงรวมของปุ่มทุกปุ่มในหน้า (specificity สูงกว่าจึงชนะ) */
 .card.member-page .cart-cta-btn{
-  background:rgba(255,255,255,.94) !important;
-  color:var(--tier-ink) !important;
-  border:1.8px solid var(--tier-line) !important;
-  box-shadow:0 4px 12px rgba(0,0,0,.10) !important;
-  text-shadow:none !important;
+  background:var(--tier-btn-grad) !important;
+  color:var(--tier-on) !important;
+  border:1px solid rgba(255,255,255,.3) !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.20),0 2px 6px rgba(0,0,0,.10),
+             inset 0 1px 0 rgba(255,255,255,.38) !important;
+  text-shadow:var(--tier-on-shadow) !important;
   position:relative;font-family:inherit;cursor:pointer;
 }
 .card.member-page .cart-cta-btn:active{opacity:.85;}
@@ -792,7 +793,6 @@ function applyThemeColor_(baseColor){
   document.documentElement.style.setProperty('--tier-soft', hexToRgba(baseColor, .52));
   document.documentElement.style.setProperty('--tier-glass', hexToRgba(baseColor, .36));
   document.documentElement.style.setProperty('--tier-ink', shadeColor(baseColor, -28));
-  document.documentElement.style.setProperty('--tier-line', hexToRgba(baseColor, .75));
   var onColor = contrastTextColor_(baseColor);
   document.documentElement.style.setProperty('--tier-btn-grad', tierButtonGradient_(baseColor));
   document.documentElement.style.setProperty('--tier-on', onColor);
