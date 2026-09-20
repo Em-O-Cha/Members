@@ -19,7 +19,7 @@
   --g6:#757575; --g8:#424242; --td:#1b2e1c;
   --brand-button-gradient:linear-gradient(135deg,#a50d0c 0%,#e4504d 55%,#a50d0c 100%);
   --tier-soft:rgba(46,125,50,.52); --tier-glass:rgba(46,125,50,.36); --tier-ink:#1a5c2a;
-  --tier-on:#ffffff; --tier-on-shadow:0 1px 3px rgba(0,0,0,.45);
+  --tier-on:#ffffff; --tier-on-shadow:0 1px 3px rgba(0,0,0,.45); --tier-line:rgba(46,125,50,.75);
   --tier-btn-grad:linear-gradient(135deg,#246b28 0%,#2e7d32 52%,#3f9144 100%);
   --gut:8px; --vu:1vh; --cardh:calc(34 * var(--vu));
 }
@@ -57,6 +57,8 @@ body{font-family:'Kanit',sans-serif;color:var(--td);min-height:100vh;
 .btn{width:100%;height:48px;border:none;border-radius:10px;background:var(--gm);color:#fff;
   font-size:15px;font-weight:600;font-family:'Kanit',sans-serif;cursor:pointer;}
 .btn:disabled{opacity:.5;}
+/* ปุ่มที่เป็นลิงก์ (<a class="btn">) ต้องบังคับให้จัดกลางและไม่มีเส้นใต้เหมือนปุ่มจริง */
+a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;}
 .btn-outline{background:#fff;color:var(--gm);border:1.5px solid var(--gm);}
 .btn-sm{width:auto;height:36px;padding:0 14px;font-size:13px;}
 .state{text-align:center;padding:20px 0;}
@@ -243,7 +245,22 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .mcard-greeting-name{font-size:17px;}
 .mcard{aspect-ratio:1.593;margin:0 auto;
   width:min(calc(100% + 48px - var(--gut) * 2), calc(var(--cardh) * 1.593));}
-.shop-cta-btn{width:auto;height:44px;line-height:44px;margin:12px calc(var(--gut) - 24px) 0;}
+.cta-row{display:flex;align-items:center;gap:10px;margin:12px calc(var(--gut) - 24px) 0;}
+.shop-cta-btn{flex:1;min-width:0;width:auto;height:44px;line-height:44px;margin:0;padding:0;}
+/* ปุ่มรถเข็นเป็นปุ่มรอง: พื้นขาวขอบสีของระดับสมาชิก ปุ่มสั่งซื้อจึงยังเป็นปุ่มหลักที่เด่นกว่า
+   ต้องใช้ !important ทับกฎสีแดงรวมของปุ่มทุกปุ่มในหน้า (specificity สูงกว่าจึงชนะ) */
+.card.member-page .cart-cta-btn{
+  background:rgba(255,255,255,.94) !important;
+  color:var(--tier-ink) !important;
+  border:1.8px solid var(--tier-line) !important;
+  box-shadow:0 4px 12px rgba(0,0,0,.10) !important;
+  text-shadow:none !important;
+  position:relative;font-family:inherit;cursor:pointer;
+}
+.card.member-page .cart-cta-btn:active{opacity:.85;}
+.cart-badge{position:absolute;top:-6px;right:-4px;min-width:20px;height:20px;line-height:20px;padding:0 6px;
+  border-radius:999px;background:#d32f2f;color:#fff;font-size:11.5px;font-weight:800;
+  box-shadow:0 2px 6px rgba(211,47,47,.45);border:2px solid #fff;}
 .lower-section{margin-top:10px;padding:16px 24px 14px;}
 .tier-progress-boxes{margin-top:22px;}
 .tier-progress-box{padding:10px 12px;}
@@ -293,7 +310,8 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .mcard-greeting-name{font-size:16px;}
   .mcard-greeting-sub{font-size:12px;}
   :root{--gut:14px;}
-  .shop-cta-btn{height:42px;line-height:42px;margin-top:10px;font-size:14.5px;}
+  .cta-row{margin-top:10px;}
+  .shop-cta-btn{height:42px;line-height:42px;font-size:14.5px;}
   .lower-section{padding:13px 24px 12px;}
   .tier-progress-boxes{margin-top:18px;}
   .tier-progress-box{padding:8px 12px;}
@@ -316,7 +334,8 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 @media (max-height:765px){
   :root{--gut:20px;}
   .mcard-code{font-size:13px;padding:3px 10px;bottom:13px;left:13px;}
-  .shop-cta-btn{height:40px;line-height:40px;margin-top:9px;}
+  .cta-row{margin-top:9px;}
+  .shop-cta-btn{height:40px;line-height:40px;}
   .lower-section{margin-top:8px;padding:11px 24px 10px;}
   .tier-progress-boxes{margin-top:16px;}
   .tier-progress-card{margin-top:9px;padding:10px 14px 9px;}
@@ -440,7 +459,10 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
           <div class="mcard-multiplier" id="mcardMultiplier"></div>
         </div>
       </div>
-      <a class="shop-cta-btn" id="shopCtaBtn" href="https://liff.line.me/2010892131-3XYQXNzq">🛒 สั่งซื้อสินค้า</a>
+      <div class="cta-row">
+        <a class="shop-cta-btn" id="shopCtaBtn" href="https://liff.line.me/2010892131-3XYQXNzq">🛍️ สั่งซื้อสินค้า</a>
+        <button class="shop-cta-btn cart-cta-btn" id="cartCtaBtn" type="button" onclick="openPanel('cart')">🛒 รถเข็น<span class="cart-badge sh" id="cartBadge"></span></button>
+      </div>
       <div class="lower-section">
         <h2 class="menu-section-title" id="menuSectionTitle">สิทธิพิเศษสมาชิก<span class="tier-info-icon" onclick="openPanel('terms')" title="เงื่อนไขสิทธิพิเศษสมาชิก">ⓘ</span></h2>
         <div class="tier-progress-boxes">
@@ -770,6 +792,7 @@ function applyThemeColor_(baseColor){
   document.documentElement.style.setProperty('--tier-soft', hexToRgba(baseColor, .52));
   document.documentElement.style.setProperty('--tier-glass', hexToRgba(baseColor, .36));
   document.documentElement.style.setProperty('--tier-ink', shadeColor(baseColor, -28));
+  document.documentElement.style.setProperty('--tier-line', hexToRgba(baseColor, .75));
   var onColor = contrastTextColor_(baseColor);
   document.documentElement.style.setProperty('--tier-btn-grad', tierButtonGradient_(baseColor));
   document.documentElement.style.setProperty('--tier-on', onColor);
@@ -1118,6 +1141,7 @@ var PANEL_TITLES = {
   info: { icon: '👤', label: 'ข้อมูลสมาชิก' },
   history: { icon: '<img src="icon-history.png" alt="">', label: 'ประวัติการสั่งซื้อ' },
   coupons: { icon: '<img src="icon-coupon.png" alt="">', label: 'คูปอง' },
+  cart: { icon: '🛒', label: 'รถเข็นของฉัน' },
   terms: { icon: 'ⓘ', label: 'เงื่อนไขสิทธิพิเศษสมาชิก' }
 };
 function setOpenMenuItem_(type){
@@ -1129,7 +1153,9 @@ function setOpenMenuItem_(type){
 function openPanel(type){
   setOpenMenuItem_(type);
   var t = PANEL_TITLES[type];
-  var iconHtml = (type === 'terms') ? ('<span class="panel-menu-icon" aria-hidden="true">' + (t ? t.icon : 'ⓘ') + '</span>') : (t ? menuIcon(type, 'panel-menu-icon') : '');
+  var iconHtml = MENU_ICON_BASE_FILES[type]
+    ? menuIcon(type, 'panel-menu-icon')
+    : ('<span class="panel-menu-icon" aria-hidden="true">' + (t ? t.icon : 'ⓘ') + '</span>');
   document.getElementById('panelTitle').innerHTML = t ? (iconHtml + '<span>' + esc(t.label) + '</span>') : '';
   document.getElementById('panelBody').innerHTML = '<div class="empty">กำลังโหลด...</div>';
   document.getElementById('panelOverlay').classList.remove('sh');
@@ -1139,6 +1165,7 @@ function openPanel(type){
   else if (type === 'info') loadMemberInfoPanel();
   else if (type === 'history') loadHistoryPanel();
   else if (type === 'coupons') loadCouponsPanel();
+  else if (type === 'cart') loadCartPanel();
   else if (type === 'terms') loadTermsPanel();
 }
 function closePanel(){
@@ -1202,8 +1229,9 @@ function warmMemberMenuData_(){
     memberMenuData_.fetch().catch(function(){});
     couponsMenuData_.fetch().catch(function(){});
     pointsHistoryData_.fetch().catch(function(){});
-    orderHistoryData_.fetch().catch(function(){});
+    orderHistoryData_.fetch().then(refreshCartBadgeFrom_).catch(function(){});
   }, 500);
+  refreshCartBadgeFrom_(orderHistoryData_.loadStale());
 }
 function renderPointsPanel_(r){
   var body = document.getElementById('panelBody');
@@ -1537,6 +1565,57 @@ function renderHistoryPanel_(r){
       + codNote + '</div>';
   });
   body.innerHTML = h;
+}
+// ออเดอร์ค้างชำระ = สั่งไว้แล้วแต่ยังไม่แนบสลิป และไม่ใช่เก็บเงินปลายทาง (ปลายทางถือว่าจบแล้วตั้งแต่กดสั่ง)
+// และต้องไม่ใช่ออเดอร์ที่ถูกยกเลิกไปแล้ว — ชุดข้อมูลเดียวกับที่หน้าสั่งซื้อใช้ในหน้า "รถเข็น"
+function pendingOrders_(r){
+  return (r && r.results ? r.results : []).filter(function(o){
+    return !o.hasSlip && !o.isCod && !o.cancelled;
+  });
+}
+function updateCartBadge_(count){
+  var el = document.getElementById('cartBadge');
+  if (!el) return;
+  el.textContent = count > 99 ? '99+' : String(count);
+  el.classList.toggle('sh', !count);
+}
+function refreshCartBadgeFrom_(r){
+  if (r && r.success) updateCartBadge_(pendingOrders_(r).length);
+}
+var SHOP_LIFF_URL_ = 'https://liff.line.me/2010892131-3XYQXNzq';
+function renderCartPanel_(r){
+  var body = document.getElementById('panelBody');
+  var list = pendingOrders_(r);
+  updateCartBadge_(list.length);
+  if (!list.length) {
+    body.innerHTML = '<div class="empty" style="padding:22px 0">🎉<br>ไม่มีคำสั่งซื้อที่ค้างชำระ</div>'
+      + '<a class="btn btn-block" style="margin-top:6px" href="' + SHOP_LIFF_URL_ + '">🛍️ สั่งซื้อสินค้า</a>';
+    return;
+  }
+  var total = list.reduce(function(sum, o){ return sum + (Number(o.totalAmount) || 0); }, 0);
+  var h = '<div class="bank-box" style="margin-bottom:14px;text-align:center">'
+    + '<div style="font-size:13px;color:var(--g6)">ค้างชำระ ' + list.length + ' คำสั่งซื้อ</div>'
+    + '<div style="font-size:26px;font-weight:700;color:var(--gd)">฿' + Math.round(total).toLocaleString('th-TH') + '</div>'
+    + '</div>';
+  list.forEach(function(o){
+    h += '<div class="list-item">'
+      + '<div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Math.round(Number(o.totalAmount) || 0).toLocaleString('th-TH') + '</span></div>'
+      + '<div class="row2">' + esc(o.date) + (o.firstItemName ? ' · ' + esc(o.firstItemName) : '') + '</div>'
+      + '<div class="row2" style="color:#e65100;font-weight:600">⏳ รอแนบสลิป</div>'
+      + '</div>';
+  });
+  h += '<a class="btn btn-block" style="margin-top:14px" href="' + SHOP_LIFF_URL_ + '?view=cart">📎 ไปแนบสลิป / ชำระเงิน</a>'
+    + '<div class="hint" style="margin-top:8px;text-align:center">ยกเลิกคำสั่งซื้อได้ที่หน้ารถเข็นในหน้าสั่งซื้อสินค้า</div>';
+  body.innerHTML = h;
+}
+function loadCartPanel(){
+  var body = document.getElementById('panelBody');
+  var stale = orderHistoryData_.loadStale();
+  if (stale && stale.success) renderCartPanel_(stale);
+  orderHistoryData_.fetch().then(function(r){
+    if (!r || !r.success) { if (!stale) body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
+    renderCartPanel_(r);
+  }).catch(function(e){ if (!stale) body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
 function loadHistoryPanel(){
   var body = document.getElementById('panelBody');
