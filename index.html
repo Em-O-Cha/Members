@@ -382,12 +382,20 @@ function showErrorState(msg){
   showState('errorState');
 }
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function privilegeValueText_(type, value, restriction, freeProduct, freeQty){
+function privilegeValueText_(type, value, restriction, freeProduct, freeQty, freeDiscountPercent){
   if (type === 'percent') return 'ลด ' + value + '%';
   if (type === 'fixed') return 'ลด ' + value + ' บาท';
   if (type === 'ship_percent') return 'ลดค่าส่ง ' + value + '%';
   if (type === 'ship_fixed') return 'ลดค่าส่ง ' + value + ' บาท';
-  if (type === 'bogo') return 'ซื้อ' + (restriction ? esc(restriction) + ' ' : '') + 'ครบ ' + value + ' ชิ้น แถม ' + esc(freeProduct || '-') + (freeQty ? ' x' + freeQty : '');
+  if (type === 'bogo') {
+    // ⚡ แก้ — เดิมพูดว่า "แถม" เสมอ ทั้งที่ bogo รองรับส่วนลดเป็น % ของชิ้นถัดไปด้วย
+    // (คำพูดเดียวกับ privilegeValueText_ ฝั่ง Members.gs จะได้อ่านเหมือนกันทุกหน้า)
+    var pct = (freeDiscountPercent === '' || freeDiscountPercent === null || freeDiscountPercent === undefined)
+      ? 100 : parseFloat(freeDiscountPercent);
+    if (isNaN(pct)) pct = 100;
+    var freeText = pct >= 100 ? 'แถม' : ('ลด ' + pct + '%');
+    return 'ซื้อ' + (restriction ? esc(restriction) + ' ' : '') + 'ครบ ' + value + ' ชิ้น ' + freeText + ' ' + esc(freeProduct || '-') + (freeQty ? ' x' + freeQty : '');
+  }
   return esc(type);
 }
 function classifyAlert_(message){
@@ -1378,9 +1386,24 @@ function loadHistoryPanel(){
     renderHistoryPanel_(r);
   }).catch(function(e){ if (!stale) body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
+// ⚡ เพิ่ม — โค้ด bogo รองรับ "ลด X%" ของชิ้นถัดไป ไม่ใช่แถมฟรี 100% เสมอไป
+// เว้นว่าง = 100% (แถมฟรี) — ต้องอ่านค่านี้ก่อนเสมอ กฎเดียวกันกับหน้าสั่งซื้อ (autoPromoValueText_)
+function bogoFreeDiscountPercent_(c){
+  var raw = c ? c.freeDiscountPercent : null;
+  if (raw === '' || raw === null || raw === undefined) return 100;
+  var pct = parseFloat(raw);
+  return isNaN(pct) ? 100 : pct;
+}
 function couponValueTextCompact_(c){
-  if (c.type === 'bogo') return 'ซื้อครบ ' + c.value + ' แถม ' + (c.freeQty || 1);
-  return privilegeValueText_(c.type, c.value, c.restriction, c.freeProduct, c.freeQty);
+  if (c.type === 'bogo') {
+    // ⚡ แก้ — เดิมขึ้น "ซื้อครบ 1 แถม 1" เสมอ ทำให้โค้ด "ซื้อชิ้นที่ 2 ลด 50%"
+    // ขึ้นว่าแถมฟรี ซึ่งผิดจากส่วนลดจริงที่คิดตอนชำระเงิน (หน้าสั่งซื้อแก้ไปแล้ว หน้านี้ตกค้าง)
+    var pct = bogoFreeDiscountPercent_(c);
+    return pct >= 100
+      ? ('ซื้อครบ ' + c.value + ' แถม ' + (c.freeQty || 1))
+      : ('ซื้อครบ ' + c.value + ' ชิ้นถัดไปลด ' + pct + '%');
+  }
+  return privilegeValueText_(c.type, c.value, c.restriction, c.freeProduct, c.freeQty, c.freeDiscountPercent);
 }
 function renderCouponsPanel_(r){
   var body = document.getElementById('panelBody');
