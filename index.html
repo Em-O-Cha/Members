@@ -18,7 +18,7 @@
   --gd:#1a5c2a; --gm:#2e7d32; --gp:#e8f5e9; --gb:#c8e6c9;
   --g6:#757575; --g8:#424242; --td:#1b2e1c;
   --brand-button-gradient:linear-gradient(135deg,#a50d0c 0%,#e4504d 55%,#a50d0c 100%);
-  --tier-soft:rgba(46,125,50,.30); --tier-glass:rgba(46,125,50,.16);
+  --tier-soft:rgba(46,125,50,.42); --tier-glass:rgba(46,125,50,.26); --tier-ink:#1a5c2a;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Kanit',sans-serif;color:var(--td);min-height:100vh;
@@ -213,9 +213,20 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
    (ทั้งเหนือหัวข้อ ระหว่างกล่อง และใต้แถวเมนู) แทนที่จะกองไว้รอบแถวเมนูก้อนเดียว */
 .card.member-page .lower-section{justify-content:space-evenly;gap:10px;}
 .card.member-page .menu-section-title{margin:0;}
-.card.member-page .tier-progress-boxes{margin-top:0;}
-.card.member-page .tier-progress-card{margin-top:0;}
 .card.member-page .menu-grid{margin:0 -8px;}
+/* กล่องยอดใช้จ่าย/คะแนน และกล่องเลื่อนขั้น กว้างเท่ากรอบเมนูทั้งหมด และใช้กระจก
+   เฉดเดียวกับกรอบเมนู (อิงสีบัตรของระดับสมาชิก) ให้ทั้งหน้าดูเป็นชุดเดียวกัน */
+.card.member-page .tier-progress-boxes,
+.card.member-page .tier-progress-card{margin:0 -8px;}
+.card.member-page .tier-progress-box,
+.card.member-page .tier-progress-card{
+  background:linear-gradient(150deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.66) 38%,var(--tier-glass) 100%);
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 10px 26px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05),
+             inset 0 1px 0 rgba(255,255,255,1),inset 0 -10px 20px rgba(255,255,255,.35);
+}
+.card.member-page .tier-progress-box{border-radius:18px;}
+.card.member-page .tier-progress-value{color:var(--tier-ink);}
 #bdArea.member-view{padding-top:12px;}
 .member-greeting-bar{margin:0 0 10px;}
 .member-greeting-logo{width:40px;height:40px;}
@@ -233,7 +244,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .menu-grid{
   grid-template-columns:repeat(6,1fr);gap:0 2px;
   margin:12px -8px 0;padding:12px 8px 11px;border-radius:24px;
-  background:linear-gradient(155deg,rgba(255,255,255,.96) 0%,rgba(255,255,255,.72) 46%,var(--tier-glass) 100%);
+  background:linear-gradient(150deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.66) 38%,var(--tier-glass) 100%);
   border:1px solid rgba(255,255,255,.9);
   -webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
   box-shadow:0 10px 26px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05),
@@ -705,8 +716,9 @@ function contrastTextColor_(hex){
 function applyThemeColor_(baseColor){
   document.body.style.background = mixWithWhite(baseColor, .12);
   // กรอบเมนูและแผ่นกระจกตอนกดใช้เฉดเดียวกับบัตรของระดับสมาชิกนั้น
-  document.documentElement.style.setProperty('--tier-soft', hexToRgba(baseColor, .30));
-  document.documentElement.style.setProperty('--tier-glass', hexToRgba(baseColor, .16));
+  document.documentElement.style.setProperty('--tier-soft', hexToRgba(baseColor, .42));
+  document.documentElement.style.setProperty('--tier-glass', hexToRgba(baseColor, .26));
+  document.documentElement.style.setProperty('--tier-ink', shadeColor(baseColor, -28));
   var menuTextColor = shadeColor(baseColor, -10);
   var menuBg = mixWithWhite(baseColor, .45);
   document.querySelectorAll('.menu-item').forEach(function(el){
