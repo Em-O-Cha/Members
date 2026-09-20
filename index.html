@@ -19,6 +19,7 @@
   --g6:#757575; --g8:#424242; --td:#1b2e1c;
   --brand-button-gradient:linear-gradient(135deg,#a50d0c 0%,#e4504d 55%,#a50d0c 100%);
   --tier-soft:rgba(46,125,50,.52); --tier-glass:rgba(46,125,50,.36); --tier-ink:#1a5c2a;
+  --gut:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Kanit',sans-serif;color:var(--td);min-height:100vh;
@@ -211,13 +212,13 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .card.member-page .lower-section{flex:1;display:flex;flex-direction:column;}
 /* ไม่มีส่วนอื่นต่อท้ายแล้ว — เฉลี่ยพื้นที่ว่างที่เหลือให้ทุกช่องไฟในกล่องขาวเท่ากัน
    (ทั้งเหนือหัวข้อ ระหว่างกล่อง และใต้แถวเมนู) แทนที่จะกองไว้รอบแถวเมนูก้อนเดียว */
-.card.member-page .lower-section{justify-content:space-evenly;gap:10px;padding-left:16px;padding-right:16px;}
+.card.member-page .lower-section{justify-content:space-evenly;gap:10px;padding-left:var(--gut);padding-right:var(--gut);}
 .card.member-page .menu-section-title{margin:0;}
-.card.member-page .menu-grid{margin:0 -8px;}
+.card.member-page .menu-grid{margin:0;}
 /* กล่องยอดใช้จ่าย/คะแนน และกล่องเลื่อนขั้น กว้างเท่ากรอบเมนูทั้งหมด และใช้กระจก
    เฉดเดียวกับกรอบเมนู (อิงสีบัตรของระดับสมาชิก) ให้ทั้งหน้าดูเป็นชุดเดียวกัน */
 .card.member-page .tier-progress-boxes,
-.card.member-page .tier-progress-card{margin:0 -8px;}
+.card.member-page .tier-progress-card{margin:0;}
 .card.member-page .tier-progress-box,
 .card.member-page .tier-progress-card{
   background:linear-gradient(150deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.66) 38%,var(--tier-glass) 100%);
@@ -238,8 +239,8 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .member-greeting-bar{margin:0 0 10px;}
 .member-greeting-logo{width:40px;height:40px;}
 .mcard-greeting-name{font-size:17px;}
-.mcard{aspect-ratio:1.6;margin:0 -8px;}
-.shop-cta-btn{height:44px;line-height:44px;margin-top:12px;}
+.mcard{aspect-ratio:1.6;margin:0 calc(var(--gut) - 24px);}
+.shop-cta-btn{width:auto;height:44px;line-height:44px;margin:12px calc(var(--gut) - 24px) 0;}
 .lower-section{margin-top:10px;padding:16px 24px 14px;}
 .tier-progress-boxes{margin-top:22px;}
 .tier-progress-box{padding:10px 12px;}
@@ -284,7 +285,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .member-greeting-logo{width:36px;height:36px;}
   .mcard-greeting-name{font-size:16px;}
   .mcard-greeting-sub{font-size:12px;}
-  .mcard{margin:0 4px;}
+  :root{--gut:14px;}
   .shop-cta-btn{height:42px;line-height:42px;margin-top:10px;font-size:14.5px;}
   .lower-section{padding:13px 24px 12px;}
   .tier-progress-boxes{margin-top:18px;}
@@ -306,6 +307,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .card.member-page .tier-chip{font-size:11.5px;padding:4px 13px;}
 }
 @media (max-height:730px){
+  :root{--gut:20px;}
   .mcard{margin:0 22px;}
   .mcard-code{font-size:13px;padding:3px 10px;bottom:13px;left:13px;}
   .shop-cta-btn{height:40px;line-height:40px;margin-top:9px;}
@@ -330,6 +332,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   .mcard-code{font-size:11.5px;padding:3px 9px;bottom:11px;left:11px;}
 }
 @media (max-height:600px){
+  :root{--gut:26px;}
   .mcard{margin:0 58px;}
   .lower-section{padding:9px 20px 8px;}
   .tier-progress-boxes{margin-top:13px;}
