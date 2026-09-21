@@ -231,6 +231,13 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
              inset 0 1px 0 rgba(255,255,255,1),inset 0 -10px 20px rgba(255,255,255,.35);
 }
 .card.member-page .tier-progress-box{border-radius:18px;padding:14px 15px;}
+/* กล่องยอด/คะแนน กดเข้าไปดูประวัติได้ — ใช้ลูกศรมุมขวาบนกับบรรทัดใต้ตัวเลขบอกว่ากดได้
+   แทนที่จะไปกินช่องในแถวเมนูด้านล่าง */
+.card.member-page .tap-box{cursor:pointer;position:relative;transition:transform .15s;}
+.card.member-page .tap-box:active{transform:scale(.98);}
+.card.member-page .tap-hint{position:absolute;right:12px;bottom:11px;display:inline-flex;align-items:center;gap:2px;
+  font-size:10.5px;font-weight:700;color:var(--tier-ink);opacity:.6;white-space:nowrap;}
+.card.member-page .tap-arrow{font-size:14px;line-height:1;font-weight:700;}
 .card.member-page .tier-progress-card{padding:26px 20px 24px;}
 .card.member-page .tier-progress-text{font-size:14.5px;margin-bottom:21px;}
 .card.member-page .tier-progress-icon{width:22px;height:22px;font-size:15px;margin-right:8px;}
@@ -273,7 +280,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 
 /* ---- กรอบเมนู: การ์ดกระจกใบเดียวครอบทั้ง 6 เมนู ให้แถวเมนูเด่นแยกออกมา ---- */
 .menu-grid{
-  grid-template-columns:repeat(6,1fr);gap:0 2px;
+  grid-template-columns:repeat(4,1fr);gap:0 2px;
   margin:12px -8px 0;padding:12px 8px 11px;border-radius:24px;
   background:var(--tier-btn-grad);
   border:1px solid rgba(255,255,255,.3);
@@ -283,7 +290,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 /* ตัวหนังสือใต้ไอคอนใช้สีที่ตัดกับพื้นเข้ม (ขาวหรือดำ แล้วแต่สีของระดับสมาชิก) */
 .card.member-page .menu-item .txt{text-shadow:var(--tier-on-shadow);}
 .menu-item{gap:5px;position:relative;isolation:isolate;border-radius:16px;}
-.menu-item .icon{width:min(44px,11.4vw);height:min(44px,11.4vw);}
+.menu-item .icon{width:min(52px,13.3vw);height:min(52px,13.3vw);}
 .menu-item .txt{font-size:11px;min-height:28px;line-height:1.3;}
 
 /* ---- liquid glass: แผ่นกระจกเรืองขึ้นมาใต้เมนูที่กด/ที่เปิดอยู่ ---- */
@@ -469,20 +476,19 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
       <div class="lower-section">
         <h2 class="menu-section-title" id="menuSectionTitle">สิทธิพิเศษสมาชิก<span class="tier-info-icon" onclick="openPanel('terms')" title="เงื่อนไขสิทธิพิเศษสมาชิก">ⓘ</span></h2>
         <div class="tier-progress-boxes">
-          <div class="tier-progress-box">
+          <div class="tier-progress-box tap-box" onclick="openPanel('history')">
             <div class="tier-progress-label">ยอดใช้จ่ายสะสม</div>
             <div class="tier-progress-value" id="tierSpendValue">0 บาท</div>
+            <span class="tap-hint">ประวัติ <span class="tap-arrow" aria-hidden="true">›</span></span>
           </div>
-          <div class="tier-progress-box">
+          <div class="tier-progress-box tap-box" onclick="openPanel('points')">
             <div class="tier-progress-label">คะแนนสะสมของคุณ</div>
             <div class="tier-progress-value" id="tierPointsValue">0 คะแนน</div>
+            <span class="tap-hint">ประวัติ <span class="tap-arrow" aria-hidden="true">›</span></span>
           </div>
         </div>
         <div class="tier-progress-card" id="tierProgressHint"></div>
         <div class="menu-grid">
-          <div class="menu-item" onclick="openPanel('points')">
-            <div class="icon">💰</div><div class="txt">ประวัติ<br>คะแนน</div>
-          </div>
           <div class="menu-item" onclick="openPanel('rewards')">
             <div class="icon">🎁</div><div class="txt">แลก<br>ของรางวัล</div>
           </div>
@@ -494,9 +500,6 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
           </div>
           <div class="menu-item" onclick="openPanel('info')">
             <div class="icon">👤</div><div class="txt">ข้อมูล<br>สมาชิก</div>
-          </div>
-          <div class="menu-item" onclick="openPanel('history')">
-            <div class="icon"><img src="icon-history.png" alt="ประวัติสั่งซื้อ"></div><div class="txt">ประวัติ<br>สั่งซื้อ</div>
           </div>
         </div>
       </div>
@@ -1127,7 +1130,7 @@ function menuIcon(type, className){
     + '<img src="' + src + '" alt=""></span>';
 }
 function decorateMemberMenu(){
-  var menuTypes = ['points', 'rewards', 'coupons', 'privileges', 'info', 'history'];
+  var menuTypes = ['rewards', 'coupons', 'privileges', 'info'];
   menuTypes.forEach(function(type){
     var item = document.querySelector('.menu-item[onclick*="\'' + type + '\'"]');
     if (!item) return;
