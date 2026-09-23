@@ -677,6 +677,31 @@ function callApi(action, payload, _attempt){
     throw new Error('ระบบไม่ตอบสนองชั่วคราว (ลองแล้ว ' + MAX_ATTEMPTS + ' ครั้ง) กรุณาลองใหม่อีกครั้งในสักครู่: ' + effectiveErr.message);
   });
 }
+// ⚡ เพิ่ม (Supabase) — คำสั่งที่อ่านอย่างเดียว ถามสำเนาใน Supabase ก่อน (ตอบเร็วกว่า Apps Script หลายเท่า)
+// Supabase รันฟังก์ชันเดิมของ Apps Script บนสำเนาชีต ผลจึงเหมือนกันทุกช่อง ถ้าสำเนายังไม่ทัน (เพิ่งมีคนเขียนชีต),
+// ต้องเขียนชีต, ยังไม่เป็นสมาชิก, หรือเรียกไม่สำเร็จด้วยเหตุใดก็ตาม จะถาม Apps Script ตามเดิมทุกกรณี
+// ส่งพารามิเตอร์รูปแบบเดียวกับ callApi (query string) เป็น body แบบ text/plain จึงไม่มีคำขอ preflight
+var SUPABASE_READ_URL_ = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/shop-read';
+var SUPABASE_READ_TIMEOUT_MS_ = 8000;
+function callApiFast_(action, payload){
+  payload = payload || {};
+  var body = 'action=' + encodeURIComponent(action) + Object.keys(payload).map(function(k){
+    return '&' + encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
+  }).join('');
+  var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, SUPABASE_READ_TIMEOUT_MS_) : null;
+  return fetch(SUPABASE_READ_URL_, { method: 'POST', body: body, signal: controller ? controller.signal : undefined })
+    .then(function(res){ return res.json(); })
+    .then(function(r){
+      if (timeoutId) clearTimeout(timeoutId);
+      if (r && r.success) return r;
+      throw new Error((r && (r.reason || r.error)) || 'Supabase ตอบไม่สำเร็จ');
+    })
+    .catch(function(){
+      if (timeoutId) clearTimeout(timeoutId);
+      return callApi(action, payload);
+    });
+}
 var lastMemberData = null;
 var lastMemberDataTime = 0;
 var checkStatusLoadingDefaultHtml_ = null;
@@ -725,7 +750,7 @@ function checkStatus(){
     loadingEl.innerHTML = '<div class="ico">⏳</div>'
       + '<p style="color:var(--g6);font-size:14px">ระบบตอบกลับช้ากว่าปกติ กรุณารอสักครู่ (ระบบกำลังทำงานอยู่ ไม่ต้องกดซ้ำ)</p>';
   }, 12000);
-  callApi('checkMemberStatus', { idToken: currentIdToken })
+  callApiFast_('checkMemberStatus', { idToken: currentIdToken })
     .then(function(r){
       didFinish = true; clearTimeout(slowTimer); checkStatusInFlight_ = false;
       if (!r || !r.success) { if (!usedCache_) showErrorState('checkMemberStatus error: ' + (r ? r.error : 'ไม่ทราบสาเหตุ')); return; }
@@ -989,13 +1014,13 @@ function watchRegistrationQueue_(){
     renderMemberCard(member);
     showState('memberCardState');
     showRegSuccessOverlay_();
-    callApi('getMyPrivileges', { idToken: currentIdToken })
+    callApiFast_('getMyPrivileges', { idToken: currentIdToken })
       .then(function(r){ if (r && r.success) renderRegSuccessPrivileges_(r.results); })
       .catch(function(){ /* ดึงไม่สำเร็จ ปล่อยข้อความทั่วไปใน popup ไว้เหมือนเดิม */ });
   }
   function poll(){
     // ปลดเมนูทันทีที่ฐานข้อมูลสร้างสมาชิกแล้ว ไม่ต้องรอส่ง LINE Flex ให้เสร็จ
-    callApi('checkMemberStatus', { idToken: currentIdToken }).then(function(memberResult){
+    callApiFast_('checkMemberStatus', { idToken: currentIdToken }).then(function(memberResult){
       if (memberResult && memberResult.success && memberResult.isMember && memberResult.member) {
         unlockWithRealMember_(memberResult.member);
         return null;
@@ -1073,7 +1098,7 @@ function saveCachedTierConfig_(tiers){
 function fetchTierConfig_(){
   if (tierConfigCache_) return Promise.resolve(tierConfigCache_);
   if (tierConfigInFlight_) return tierConfigInFlight_;
-  tierConfigInFlight_ = callApi('getTierConfig', {}).then(function(r){
+  tierConfigInFlight_ = callApiFast_('getTierConfig', {}).then(function(r){
     tierConfigInFlight_ = null;
     if (r && r.success && Array.isArray(r.tiers)) {
       tierConfigCache_ = r.tiers;
@@ -1223,7 +1248,7 @@ function createMenuCache_(storageKeyPrefix, apiAction, payloadFn){
   function fetch(){
     if (mem && Date.now() - memTime < MEMBER_MENU_CACHE_TTL_) return Promise.resolve(mem);
     if (inFlight) return inFlight;
-    inFlight = callApi(apiAction, payloadFn()).then(function(r){
+    inFlight = callApiFast_(apiAction, payloadFn()).then(function(r){
       inFlight = null;
       if (r && r.success) {
         mem = r; memTime = Date.now();
@@ -1501,7 +1526,7 @@ function loadMemberInfoPanel(){
     return;
   }
   body.innerHTML = '<div class="empty">กำลังโหลด...</div>';
-  callApi('checkMemberStatus', { idToken: currentIdToken }).then(function(r){
+  callApiFast_('checkMemberStatus', { idToken: currentIdToken }).then(function(r){
     if (!r || !r.success || !r.isMember) { body.innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; return; }
     lastMemberData = r.member;
     lastMemberDataTime = Date.now();
@@ -1752,7 +1777,7 @@ fetchTierConfig_().catch(function(){ /* พลาดก็ไม่เป็น�
 // ⚡ เพิ่ม (25/8/69) — เช็คว่าระบบแนะนำเพื่อนสมัครสมาชิก (MGM) เปิดใช้งานอยู่หรือไม่ตอนโหลดหน้า ถ้าปิดอยู่
 // ช่องกรอก "รหัสสมาชิกผู้แนะนำ" ในฟอร์มสมัครจะไม่โชว์เลย (ค่าเริ่มต้นซ่อนไว้ก่อนด้วย class="sh" ใน HTML)
 // เอ็นด์พอยต์นี้เป็นแบบสาธารณะ ไม่ต้องใช้ idToken/PIN คืนแค่ true/false เท่านั้น
-callApi('getReferralPublicStatus', {}).then(function(r){
+callApiFast_('getReferralPublicStatus', {}).then(function(r){
   if (r && r.success && r.enabled) {
     document.getElementById('referrerCodeField').classList.remove('sh');
   }
