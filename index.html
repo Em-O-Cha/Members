@@ -681,7 +681,9 @@ function callApi(action, payload, _attempt){
 // Supabase รันฟังก์ชันเดิมของ Apps Script บนสำเนาชีต ผลจึงเหมือนกันทุกช่อง ถ้าสำเนายังไม่ทัน (เพิ่งมีคนเขียนชีต),
 // ต้องเขียนชีต, ยังไม่เป็นสมาชิก, หรือเรียกไม่สำเร็จด้วยเหตุใดก็ตาม จะถาม Apps Script ตามเดิมทุกกรณี
 // ส่งพารามิเตอร์รูปแบบเดียวกับ callApi (query string) เป็น body แบบ text/plain จึงไม่มีคำขอ preflight
-var SUPABASE_READ_URL_ = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/shop-read';
+// forceFunctionRegion: ให้ฟังก์ชันรันที่โซลซึ่งเป็นที่ตั้งฐานข้อมูล (ถ้าไม่ระบุจะรันที่สิงคโปร์ตามตำแหน่งลูกค้า
+// แล้วต้องข้ามประเทศไปถามฐานข้อมูลทุกครั้ง ช้ากว่าราว 1 วินาที)
+var SUPABASE_READ_URL_ = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/shop-read?forceFunctionRegion=ap-northeast-2';
 var SUPABASE_READ_TIMEOUT_MS_ = 8000;
 function callApiFast_(action, payload){
   payload = payload || {};
@@ -985,7 +987,7 @@ function submitRegister(){
 // บนสำเนาชีต แล้วให้ Apps Script เขียนแถวลงชีตตามหลังไม่กี่วินาที) คืนผลแบบเดียวกับ registerMember
 // หรือ null เมื่อต้องสมัครทางเดิม (Supabase ให้ถอย / เรียกไม่สำเร็จ / ช้าเกิน) — กรณีเรียกไม่สำเร็จแต่ Supabase
 // รับการสมัครไปแล้วจริง ทางเดิมจะตอบว่าเป็นสมาชิกแล้ว (นับรวมการสมัครที่รอลงชีต) หน้านี้จึงไปหน้าบัตรตามปกติ
-var SUPABASE_SIGNUP_URL_ = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/member-signup';
+var SUPABASE_SIGNUP_URL_ = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/member-signup?forceFunctionRegion=ap-northeast-2';
 var SUPABASE_SIGNUP_TIMEOUT_MS_ = 10000;
 function registerViaSupabase_(payload){
   var body = 'action=registerMember' + Object.keys(payload).map(function(k){
