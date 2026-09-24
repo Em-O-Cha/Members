@@ -681,7 +681,9 @@ function callApi(action, payload, _attempt){
 // Supabase รันฟังก์ชันเดิมของ Apps Script บนสำเนาชีต ผลจึงเหมือนกันทุกช่อง ถ้าสำเนายังไม่ทัน (เพิ่งมีคนเขียนชีต),
 // ต้องเขียนชีต, ยังไม่เป็นสมาชิก, หรือเรียกไม่สำเร็จด้วยเหตุใดก็ตาม จะถาม Apps Script ตามเดิมทุกกรณี
 // ส่งพารามิเตอร์รูปแบบเดียวกับ callApi (query string) เป็น body แบบ text/plain จึงไม่มีคำขอ preflight
-var SUPABASE_READ_URL_ = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/shop-read';
+// forceFunctionRegion: ให้ฟังก์ชันรันที่โซลซึ่งเป็นที่ตั้งฐานข้อมูล (ถ้าไม่ระบุจะรันที่สิงคโปร์ตามตำแหน่งลูกค้า
+// แล้วต้องข้ามประเทศไปถามฐานข้อมูลทุกครั้ง ช้ากว่าราว 1 วินาที)
+var SUPABASE_READ_URL_ = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/shop-read?forceFunctionRegion=ap-northeast-2';
 var SUPABASE_READ_TIMEOUT_MS_ = 8000;
 function callApiFast_(action, payload){
   payload = payload || {};
@@ -936,34 +938,87 @@ function submitRegister(){
   // สมาชิกของผู้แนะนำ (A) เข้ามาเองในฟอร์ม (เหมือนแพทเทิร์นเดียวกับช่องกรอกรหัสแนะนำที่หน้าชำระเงินฝั่งร้านค้า)
   // Code.gs ฝั่งเซิร์ฟเวอร์จะเป็นคนตรวจสอบเองว่ารหัสนี้ตรงกับสมาชิกจริงหรือไม่ ถ้าไม่ตรง/ไม่มี ก็สมัครได้ปกติ
   var referrerCode = document.getElementById('referrerCodeInput').value.trim();
-  callApi('enqueueMemberRegistration', { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday, referrerCode: referrerCode })
-    .then(function(r){
-      didFinish = true; clearTimeout(slowTimer);
-      if (r && r.success && r.alreadyMember) {
-        checkStatus();
-        return;
-      }
-      if (r && r.success && r.queued) {
-        btn.disabled = true; btn.textContent = '⏳ กำลังสร้างบัตรสมาชิก...';
-        if (queueInfo) {
-          queueInfo.textContent = '✅ รับคำขอสมัครแล้ว กำลังสร้างบัตรสมาชิกให้อัตโนมัติ';
-          queueInfo.classList.add('show');
+  var signupPayload = { idToken: currentIdToken, phoneNumber: phone, fullName: fullName, birthday: birthday, referrerCode: referrerCode };
+  // ⚡ เพิ่ม (Supabase) — สมัครผ่าน Supabase ก่อน: ได้บัตรสมาชิกจริงทันที (ไม่ต้องรอคิว) ถ้า Supabase ให้ถอย
+  // (ยังไม่เปิดใช้/สำเนายังไม่ทัน) หรือเรียกไม่สำเร็จ จะเข้าคิวสมัครแบบเดิมทุกกรณี
+  registerViaSupabase_(signupPayload).then(function(r){
+    if (!r) return enqueueRegistration_();
+    didFinish = true; clearTimeout(slowTimer);
+    if (r.success && r.member) {
+      showRegisteredMember_(r.member);
+      return;
+    }
+    btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
+    errBox.textContent = r.error || 'เกิดข้อผิดพลาด';
+    errBox.classList.add('show');
+  });
+  function enqueueRegistration_(){
+    return callApi('enqueueMemberRegistration', signupPayload)
+      .then(function(r){
+        didFinish = true; clearTimeout(slowTimer);
+        if (r && r.success && r.alreadyMember) {
+          checkStatus();
+          return;
         }
-        showPendingStartCard_(fullName);
-        kickRegistrationQueue_();
-        watchRegistrationQueue_();
-        return;
-      }
-      btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
-      errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด';
-      errBox.classList.add('show');
+        if (r && r.success && r.queued) {
+          btn.disabled = true; btn.textContent = '⏳ กำลังสร้างบัตรสมาชิก...';
+          if (queueInfo) {
+            queueInfo.textContent = '✅ รับคำขอสมัครแล้ว กำลังสร้างบัตรสมาชิกให้อัตโนมัติ';
+            queueInfo.classList.add('show');
+          }
+          showPendingStartCard_(fullName);
+          kickRegistrationQueue_();
+          watchRegistrationQueue_();
+          return;
+        }
+        btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
+        errBox.textContent = r ? r.error : 'เกิดข้อผิดพลาด';
+        errBox.classList.add('show');
+      })
+      .catch(function(e){
+        didFinish = true; clearTimeout(slowTimer);
+        btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
+        errBox.innerHTML = 'Error: ' + e.message.replace(/</g,'&lt;');
+        errBox.classList.add('show');
+      });
+  }
+}
+// ⚡ เพิ่ม (Supabase) — สมัครผ่าน Edge Function member-signup (รัน registerMember ตัวเดิมของ Apps Script
+// บนสำเนาชีต แล้วให้ Apps Script เขียนแถวลงชีตตามหลังไม่กี่วินาที) คืนผลแบบเดียวกับ registerMember
+// หรือ null เมื่อต้องสมัครทางเดิม (Supabase ให้ถอย / เรียกไม่สำเร็จ / ช้าเกิน) — กรณีเรียกไม่สำเร็จแต่ Supabase
+// รับการสมัครไปแล้วจริง ทางเดิมจะตอบว่าเป็นสมาชิกแล้ว (นับรวมการสมัครที่รอลงชีต) หน้านี้จึงไปหน้าบัตรตามปกติ
+var SUPABASE_SIGNUP_URL_ = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/member-signup?forceFunctionRegion=ap-northeast-2';
+var SUPABASE_SIGNUP_TIMEOUT_MS_ = 10000;
+function registerViaSupabase_(payload){
+  var body = 'action=registerMember' + Object.keys(payload).map(function(k){
+    return '&' + encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
+  }).join('');
+  var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, SUPABASE_SIGNUP_TIMEOUT_MS_) : null;
+  return fetch(SUPABASE_SIGNUP_URL_, { method: 'POST', body: body, signal: controller ? controller.signal : undefined })
+    .then(function(res){ return res.json(); })
+    .then(function(r){
+      if (timeoutId) clearTimeout(timeoutId);
+      if (!r || r.needsAppsScript) return null;
+      return r;
     })
-    .catch(function(e){
-      didFinish = true; clearTimeout(slowTimer);
-      btn.disabled = false; btn.textContent = '✅ สมัครสมาชิก';
-      errBox.innerHTML = 'Error: ' + e.message.replace(/</g,'&lt;');
-      errBox.classList.add('show');
+    .catch(function(){
+      if (timeoutId) clearTimeout(timeoutId);
+      return null;
     });
+}
+// สมัครสำเร็จ (ได้ข้อมูลสมาชิกจริงแล้ว): แสดงบัตร + popup ต้อนรับ แบบเดียวกับตอนคิวสมัครเสร็จ
+function showRegisteredMember_(member){
+  clearPendingStartCard_();
+  lastMemberData = member;
+  lastMemberDataTime = Date.now();
+  saveCachedMemberStatus_(currentLineUserId, { success: true, isMember: true, member: member });
+  renderMemberCard(member);
+  showState('memberCardState');
+  showRegSuccessOverlay_();
+  callApiFast_('getMyPrivileges', { idToken: currentIdToken })
+    .then(function(r){ if (r && r.success) renderRegSuccessPrivileges_(r.results); })
+    .catch(function(){ /* ดึงไม่สำเร็จ ปล่อยข้อความทั่วไปใน popup ไว้เหมือนเดิม */ });
 }
 function showPendingStartCard_(fullName){
   // แสดง Start ชั่วคราวทันที แต่ปิดการกดเมนูไว้จนกว่าจะยืนยันจากหลังบ้าน
@@ -1004,19 +1059,10 @@ function watchRegistrationQueue_(){
   function unlockWithRealMember_(member){
     if (registrationQueueWatcher_) clearTimeout(registrationQueueWatcher_);
     registrationQueueWatcher_ = null;
-    clearPendingStartCard_();
-    lastMemberData = member;
-    lastMemberDataTime = Date.now();
     // ⚡ สมัครผ่านคิวจบแล้ว ต้องอัปเดตแคชด้วย เพราะรอบนี้ไม่ได้ผ่าน checkStatus() (เรียก checkMemberStatus
     // ตรงๆ ในนี้เพื่อ poll คิว) ถ้าไม่อัปเดต ครั้งหน้าที่เปิดหน้าใหม่จะยังอ่านแคชเก่าที่บอกว่า "ยังไม่ใช่สมาชิก"
-    // แล้ววาบไปโชว์หน้าชวนสมัครซ้ำก่อนสักครู่หนึ่ง ก่อนที่ API จริงจะตอบกลับมาแก้ให้
-    saveCachedMemberStatus_(currentLineUserId, { success: true, isMember: true, member: member });
-    renderMemberCard(member);
-    showState('memberCardState');
-    showRegSuccessOverlay_();
-    callApiFast_('getMyPrivileges', { idToken: currentIdToken })
-      .then(function(r){ if (r && r.success) renderRegSuccessPrivileges_(r.results); })
-      .catch(function(){ /* ดึงไม่สำเร็จ ปล่อยข้อความทั่วไปใน popup ไว้เหมือนเดิม */ });
+    // แล้ววาบไปโชว์หน้าชวนสมัครซ้ำก่อนสักครู่หนึ่ง ก่อนที่ API จริงจะตอบกลับมาแก้ให้ (showRegisteredMember_ ทำให้)
+    showRegisteredMember_(member);
   }
   function poll(){
     // ปลดเมนูทันทีที่ฐานข้อมูลสร้างสมาชิกแล้ว ไม่ต้องรอส่ง LINE Flex ให้เสร็จ
