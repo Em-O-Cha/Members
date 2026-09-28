@@ -535,7 +535,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
     <div class="reg-success-title">ยินดีต้อนรับสู่<br>คลับของคนรักเอมโอชา</div>
     <div class="reg-success-check">💚 สมัครสมาชิกสำเร็จแล้ว! 💚</div>
     <div class="reg-success-list">
-      <div id="regSuccessPrivileges">🎁 รับเลยสิทธิพิเศษต้อนรับสมาชิกใหม่</div>
+      <div id="regSuccessPrivileges" class="sh"></div>
       <div>⭐ ทุกการสั่งซื้อ รับคะแนนสะสม</div>
       <div>🎫 พร้อมคูปอง ส่วนลด และสิทธิพิเศษเฉพาะสมาชิก</div>
     </div>
@@ -618,12 +618,14 @@ function closeRegSuccessOverlay_(){
 // มาแทนที่ข้อความทั่วไปใน popup ต้อนรับ ให้ลูกค้าเห็นโปรจริงที่ตัวเองได้รับ ไม่ใช่แค่ข้อความยินดีเฉยๆ
 // กรองเอาเฉพาะสิทธิ์ที่มาจาก "การสมัครสมาชิก" เท่านั้น (reason มีคำว่า "ต้อนรับสมาชิกใหม่") ไม่เอาสิทธิ์จาก
 // แหล่งอื่นที่อาจได้มาพร้อมกันในบางเคส เช่น รางวัลแนะนำเพื่อน/วันเกิด/แอดมินให้เอง มาปนใน popup นี้
-// ถ้าดึงไม่สำเร็จหรือไม่มีสิทธิพิเศษต้อนรับสมาชิกใหม่เลย จะคงข้อความทั่วไปเดิมไว้ ไม่ทำให้ popup ว่างเปล่า
+// ถ้าดึงไม่สำเร็จหรือไม่มีสิทธิพิเศษต้อนรับสมาชิกใหม่เลย จะซ่อนบรรทัดนี้ไว้ (popup เหลือแค่ข้อความต้อนรับ)
 function renderRegSuccessPrivileges_(privileges){
   var el = document.getElementById('regSuccessPrivileges');
   if (!el || !privileges || !privileges.length) return;
   var signupOnly = privileges.filter(function(p){ return String(p.reason || '').indexOf('ต้อนรับสมาชิกใหม่') !== -1; });
+  // ⚡ แก้ (28/9/69) — ไม่มีสิทธิ์ต้อนรับจริง = ไม่แสดงบรรทัดโปรเลย (popup เป็นแค่ข้อความต้อนรับ)
   if (!signupOnly.length) return;
+  el.classList.remove('sh');
   // ⚡ สมัครสมาชิกได้สิทธิ์ติดตัวไปทันทีเสมอ ไม่ว่าโปรจะเริ่มใช้ได้จริงวันไหน (ดู isUpcoming ที่ backend ส่งมา
   // แต่ไม่ต้องใช้ตรงนี้ก็ได้ เพราะ popup นี้โชว์ครั้งเดียวตอนสมัครเสร็จอยู่แล้ว ไม่ต้องแยกข้อความตามวันเริ่มใช้)
   el.innerHTML = signupOnly.map(function(p){
