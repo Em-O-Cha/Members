@@ -195,7 +195,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
   background:#fff !important;color:var(--g8) !important;border-color:#e3e3e3 !important;box-shadow:none !important;}
 .seven-opt.on{background:#e6f6f0 !important;color:#006b52 !important;border-color:#008163 !important;font-weight:700;}
 .seven-opt.on::before{content:'✓ ';}
-.seven-drop{border:2px dashed #f3b27a;border-radius:14px;padding:18px;text-align:center;background:#fff8f1;cursor:pointer;}
+.seven-drop{display:block;border:2px dashed #f3b27a;border-radius:14px;padding:18px;text-align:center;background:#fff8f1;cursor:pointer;}
 .seven-drop img{max-width:100%;max-height:240px;border-radius:10px;display:block;margin:0 auto 8px;}
 .seven-drop .big{font-size:30px;}
 .seven-drop .t{font-size:14px;font-weight:700;color:#c2410c;}
@@ -205,6 +205,31 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
 .seven-st.approved{background:#d3f9d8;color:#2b8a3e;}
 .seven-st.rejected{background:#ffe3e3;color:#c92a2a;}
 .seven-progress{text-align:center;padding:26px 8px;}
+/* ขั้นตอนทีละคำถาม: ต้องตอบครบก่อนถึงขั้นแนบใบเสร็จ */
+.seven-wiz-top{border-radius:16px;padding:14px 16px;color:#fff;margin-bottom:14px;
+  background:linear-gradient(135deg,#f58220 0%,#ee2737 55%,#b3123a 100%);box-shadow:0 6px 18px rgba(238,39,55,.22);}
+.seven-wiz-top .t1{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:700;}
+.seven-wiz-top .t1 a{color:#fff;font-weight:600;font-size:12px;text-decoration:underline;cursor:pointer;white-space:nowrap;}
+.seven-wiz-top .t2{font-size:12px;opacity:.92;margin-top:2px;}
+.seven-prog{display:flex;gap:5px;margin-top:10px;}
+.seven-prog i{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.35);}
+.seven-prog i.done{background:#fff;}
+.seven-prog i.cur{background:#ffe08a;}
+.seven-qnum{font-size:12px;font-weight:700;color:#ee2737;margin-bottom:4px;}
+.seven-qtext{font-size:18px;font-weight:700;line-height:1.35;margin-bottom:4px;}
+.seven-qsub{font-size:12px;color:var(--g6);margin-bottom:12px;}
+.seven-card-opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-bottom:8px;padding:13px 14px;
+  border-radius:14px;font-family:inherit;font-size:15px;cursor:pointer;
+  background:#fff !important;color:#1b2e1c !important;border:1.5px solid #e6e6e6 !important;box-shadow:0 1px 4px rgba(0,0,0,.04) !important;}
+.seven-card-opt .mk{width:22px;height:22px;border-radius:50%;border:2px solid #cfcfcf;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:13px;color:#fff;}
+.seven-card-opt.multi .mk{border-radius:6px;}
+.seven-card-opt.on{background:#e6f6f0 !important;border-color:#008163 !important;color:#006b52 !important;font-weight:700;}
+.seven-card-opt.on .mk{background:#008163;border-color:#008163;}
+.seven-nav{display:flex;gap:8px;margin-top:10px;}
+.seven-nav .btn{flex:1;}
+.seven-answers{background:#f7f7f8;border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:12px;line-height:1.6;color:var(--g8);}
+.seven-answers b{color:#1b2e1c;}
 .seven-progress .spin{width:44px;height:44px;margin:0 auto 12px;border-radius:50%;border:4px solid #ffe0cc;border-top-color:#ee2737;animation:sevenSpin 1s linear infinite;}
 @keyframes sevenSpin{to{transform:rotate(360deg)}}
 .ship-addr{background:#f7f7f8;border-radius:12px;padding:10px 12px;margin-top:12px;font-size:13px;line-height:1.5;text-align:left;}
@@ -1672,35 +1697,60 @@ refreshSevenCta_();
 
 function loadReceipt7Panel(){
   var body = document.getElementById('panelBody');
-  if (sevenData_) renderReceipt7Home_();
+  // เปิดเมนูนี้ = เริ่มตอบคำถามข้อแรกทันที (ถ้าเปิดรับอยู่) ประวัติใบเสร็จอยู่ในลิงก์ "ใบเสร็จของฉัน"
+  if (sevenData_) openReceipt7Start_();
   else body.innerHTML = '<div class="empty">กำลังโหลด...</div>';
   sevenApi_({ action: 'myReceipts', idToken: currentIdToken }).then(function(r){
     if (!r || !r.success) { if (!sevenData_) body.innerHTML = '<div class="empty">' + esc(r && r.error || 'โหลดไม่สำเร็จ') + '</div>'; return; }
     var firstLoad = !sevenData_;
+    var wasLive = sevenData_ && sevenData_.config && sevenData_.config.live;
     sevenData_ = r;
-    // วาดใหม่เฉพาะตอนยังอยู่หน้าแรกของเมนูนี้ (ไม่ทับฟอร์มที่ลูกค้ากำลังกรอก)
-    if (document.getElementById('sevenHome') || (firstLoad && isPanelOpen_('receipt7'))) renderReceipt7Home_();
+    if (!isPanelOpen_('receipt7')) return;
+    if (document.getElementById('sevenHome')) renderReceipt7Home_();          // หน้าประวัติ: วาดใหม่ด้วยข้อมูลล่าสุด
+    else if (firstLoad) openReceipt7Start_();
+    else if (wasLive && !r.config.live) renderReceipt7Home_();                // แอดมินเพิ่งปิดรับ
   }).catch(function(e){ if (!sevenData_) body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
+}
+
+// หน้าประวัติ: แสดงของที่มีทันที แล้วโหลดสถานะล่าสุดมาวาดทับ
+function showSevenHistory_(){
+  if (sevenData_) renderReceipt7Home_();
+  else document.getElementById('panelBody').innerHTML = '<div class="empty">กำลังโหลด...</div>';
+  sevenApi_({ action: 'myReceipts', idToken: currentIdToken }).then(function(r){
+    if (!r || !r.success) return;
+    sevenData_ = r;
+    if (document.getElementById('sevenHome') || !document.querySelector('.seven-card-opt, #sevenSubmitBtn, .seven-progress')) renderReceipt7Home_();
+  }).catch(function(){});
+}
+
+function openReceipt7Start_(){
+  if (sevenData_.config && sevenData_.config.live) startReceipt7Wizard_();
+  else renderReceipt7Home_();
 }
 
 function isPanelOpen_(type){
   var t = PANEL_TITLES[type];
   return !document.getElementById('panelOverlay').classList.contains('sh') && !!t
     && document.getElementById('panelTitle').textContent.indexOf(t.label) !== -1
-    && !document.getElementById('sevenSubmitBtn') && !document.querySelector('.seven-progress');
+    && !document.querySelector('.seven-progress');
 }
+
+function sevenDay_(d){ return d ? new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : ''; }
+
+// ---------- หน้า "ใบเสร็จของฉัน" (ประวัติ + เงื่อนไข) ----------
 function renderReceipt7Home_(){
   var cfg = sevenData_.config || {}, list = sevenData_.receipts || [];
   var h = '<div id="sevenHome">'
     + '<div class="seven-hero"><h3>ซื้อเอมโอชาที่ 7-Eleven รับคะแนนสะสม</h3>'
     + '<p>ซื้อสินค้าเอมโอชาที่ 7-Eleven ทุกช่องทาง (หน้าร้าน, 7-Delivery, ALL Online) แล้วส่งใบเสร็จมาที่นี่ ทีมงานตรวจแล้วเพิ่มคะแนนให้อัตโนมัติ</p>'
-    + '<span class="rate">ยอดสินค้าเอมโอชาทุก ' + esc(cfg.bahtPerPoint || 30) + ' บาท = 1 คะแนน</span></div>'
-    + '<div class="seven-steps"><div><b>📝</b>ตอบคำถาม<br>สั้นๆ</div><div><b>📸</b>แนบรูป<br>ใบเสร็จ</div><div><b>⭐</b>ตรวจแล้ว<br>แจ้งทาง LINE</div></div>';
-  var sevenDay_ = function(d){ return d ? new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : ''; };
-  if (cfg.live === false) h += '<div class="err show">' + (cfg.liveReason === 'not_started' ? 'เริ่มรับใบเสร็จวันที่ ' + esc(sevenDay_(cfg.liveFrom))
+    + '<span class="rate">ยอดสินค้าเอมโอชาทุก ' + esc(cfg.bahtPerPoint || 30) + ' บาท = 1 คะแนน</span></div>';
+  if (cfg.live === false) {
+    h += '<div class="err show">' + (cfg.liveReason === 'not_started' ? 'เริ่มรับใบเสร็จวันที่ ' + esc(sevenDay_(cfg.liveFrom))
       : cfg.liveReason === 'ended' ? 'หมดเขตรับใบเสร็จแล้ว (' + esc(sevenDay_(cfg.liveUntil)) + ')' : 'ขณะนี้ยังไม่เปิดรับใบเสร็จ') + '</div>';
-  else if (cfg.liveUntil) h += '<div class="hint" style="text-align:center;margin:-6px 0 10px">📅 รับใบเสร็จถึงวันที่ ' + esc(sevenDay_(cfg.liveUntil)) + '</div>';
-  else h += '<button class="btn btn-block" onclick="renderReceipt7Form_()">📸 ส่งใบเสร็จใหม่</button>';
+  } else {
+    if (cfg.liveUntil) h += '<div class="hint" style="text-align:center;margin:-6px 0 10px">📅 รับใบเสร็จถึงวันที่ ' + esc(sevenDay_(cfg.liveUntil)) + '</div>';
+    h += '<button class="btn btn-block" onclick="startReceipt7Wizard_()">📸 ส่งใบเสร็จใหม่</button>';
+  }
   h += '<p style="font-weight:700;font-size:14px;margin:18px 0 8px">ใบเสร็จของฉัน</p>';
   if (!list.length) h += '<div class="empty">ยังไม่เคยส่งใบเสร็จ</div>';
   list.forEach(function(x){
@@ -1711,51 +1761,126 @@ function renderReceipt7Home_(){
       + (x.status === 'approved' && !x.pointsAdded ? ' · กำลังเพิ่มคะแนน' : '') + '</div>'
       + (x.note ? '<div class="row2" style="color:#c92a2a">เหตุผล: ' + esc(x.note) + '</div>' : '') + '</div>';
   });
-  h += '<div class="terms-content" style="margin-top:14px"><p style="font-weight:700;margin-bottom:6px">เงื่อนไข</p>'
+  h += sevenTermsHtml_(cfg) + '</div>';
+  document.getElementById('panelBody').innerHTML = h;
+}
+
+function sevenTermsHtml_(cfg){
+  return '<div class="terms-content" style="margin-top:14px"><p style="font-weight:700;margin-bottom:6px">เงื่อนไข</p>'
     + '<p>• ใบเสร็จต้องเห็นชื่อร้าน เลขที่ใบเสร็จ วันที่ และรายการสินค้าเอมโอชาชัดเจน</p>'
     + '<p>• ใบเสร็จอายุไม่เกิน ' + esc(cfg.maxReceiptAgeDays || 30) + ' วัน ส่งได้วันละไม่เกิน ' + esc(cfg.maxPerDay || 5) + ' ใบ</p>'
     + '<p>• ใบเสร็จ 1 ใบใช้สะสมคะแนนได้ครั้งเดียว ใบเสร็จที่ซ้ำ แก้ไข หรือสร้างขึ้นจะไม่ได้รับคะแนน</p>'
-    + '<p>• คะแนนคิดจากยอดสินค้าเอมโอชาในใบเสร็จเท่านั้น</p></div></div>';
-  document.getElementById('panelBody').innerHTML = h;
+    + '<p>• คะแนนคิดจากยอดสินค้าเอมโอชาในใบเสร็จเท่านั้น</p></div>';
 }
 
-function renderReceipt7Form_(){
-  var cfg = (sevenData_ && sevenData_.config) || {};
+// ---------- ขั้นตอนทีละคำถาม -> แนบใบเสร็จ ----------
+var sevenStep_ = 0;
+function sevenSurvey_(){ return (sevenData_ && sevenData_.config && sevenData_.config.survey) || []; }
+function sevenAnswered_(q){
+  var a = sevenAnswers_[q.id];
+  return Array.isArray(a) ? a.length > 0 : !!a;
+}
+function sevenFirstMissing_(){
+  var qs = sevenSurvey_();
+  for (var i = 0; i < qs.length; i++) if (qs[i].required && !sevenAnswered_(qs[i])) return i;
+  return -1;
+}
+
+function startReceipt7Wizard_(){
   sevenAnswers_ = {};
   sevenFile_ = null;
   sevenClientKey_ = sevenUuid_();
-  var h = '<button class="btn btn-outline btn-sm" onclick="renderReceipt7Home_()">← กลับ</button><div style="height:14px"></div>';
-  (cfg.survey || []).forEach(function(q, qi){
-    h += '<div class="seven-q"><div class="qt">' + (qi + 1) + '. ' + esc(q.q)
-      + (q.type === 'multi' ? ' <small>(เลือกได้หลายข้อ)</small>' : '') + '</div><div class="seven-opts">';
-    (q.options || []).forEach(function(o, oi){
-      h += '<button type="button" class="seven-opt" data-q="' + qi + '" data-o="' + oi + '" onclick="toggleSevenOpt_(' + qi + ',' + oi + ')">' + esc(o) + '</button>';
-    });
-    h += '</div></div>';
-  });
-  h += '<div class="seven-q"><div class="qt">' + ((cfg.survey || []).length + 1) + '. แนบใบเสร็จ</div>'
-    + '<label class="seven-drop" id="sevenDrop"><input type="file" id="sevenFileInput" accept="image/*,application/pdf,.pdf,.heic,.heif" style="display:none" onchange="onSevenFile_(this)">'
-    + '<div class="big">🧾</div><div class="t">แตะเพื่อถ่ายรูป / เลือกไฟล์ใบเสร็จ</div><div class="s">รูปภาพทุกชนิด (JPG, PNG, HEIC ฯลฯ) หรือ PDF ไม่เกิน 12 MB</div></label></div>'
-    + '<div class="err" id="sevenErr"></div>'
-    + '<button class="btn btn-block" id="sevenSubmitBtn" onclick="submitReceipt7_()">✅ ส่งใบเสร็จ</button>';
-  document.getElementById('panelBody').innerHTML = h;
+  sevenStep_ = 0;
+  renderSevenStep_();
+}
+function renderReceipt7Form_(){ startReceipt7Wizard_(); }
+
+function sevenTopHtml_(){
+  var qs = sevenSurvey_(), n = qs.length, cfg = sevenData_.config || {};
+  var bars = '';
+  for (var i = 0; i <= n; i++) bars += '<i class="' + (i < sevenStep_ ? 'done' : (i === sevenStep_ ? 'cur' : '')) + '"></i>';
+  return '<div class="seven-wiz-top"><div class="t1"><span>' + (sevenStep_ < n ? '📝 ตอบคำถามสั้นๆ ' + n + ' ข้อ' : '📸 ขั้นสุดท้าย แนบใบเสร็จ')
+    + '</span><a onclick="showSevenHistory_()">ใบเสร็จของฉัน ›</a></div>'
+    + '<div class="t2">ตอบครบแล้วแนบใบเสร็จ รับคะแนน · ทุก ' + esc(cfg.bahtPerPoint || 30) + ' บาท = 1 คะแนน'
+    + (cfg.liveUntil ? ' · ถึง ' + esc(sevenDay_(cfg.liveUntil)) : '') + '</div>'
+    + '<div class="seven-prog">' + bars + '</div></div>';
 }
 
-function toggleSevenOpt_(qi, oi){
-  var q = sevenData_.config.survey[qi], opt = q.options[oi];
+function renderSevenStep_(){
+  var qs = sevenSurvey_(), n = qs.length;
+  if (sevenStep_ >= n) {
+    var miss = sevenFirstMissing_();
+    if (miss !== -1) sevenStep_ = miss;     // ยังตอบไม่ครบ ไปแนบใบเสร็จไม่ได้
+  }
+  var body = document.getElementById('panelBody');
+  if (sevenStep_ < n) {
+    var q = qs[sevenStep_], multi = q.type === 'multi';
+    var h = sevenTopHtml_()
+      + '<div class="seven-qnum">คำถามที่ ' + (sevenStep_ + 1) + ' จาก ' + n + '</div>'
+      + '<div class="seven-qtext">' + esc(q.q) + '</div>'
+      + '<div class="seven-qsub">' + (multi ? 'เลือกได้หลายข้อ แล้วกด "ถัดไป"' : 'เลือก 1 ข้อ') + '</div>';
+    (q.options || []).forEach(function(o, oi){
+      var a = sevenAnswers_[q.id];
+      var on = multi ? (a || []).indexOf(o) !== -1 : a === o;
+      h += '<button type="button" class="seven-card-opt' + (multi ? ' multi' : '') + (on ? ' on' : '') + '" onclick="sevenPick_(' + oi + ')">'
+        + '<span class="mk">' + (on ? '✓' : '') + '</span><span>' + esc(o) + '</span></button>';
+    });
+    var canNext = !q.required || sevenAnswered_(q);
+    h += '<div class="err" id="sevenErr"></div><div class="seven-nav">'
+      + (sevenStep_ > 0 ? '<button class="btn btn-outline" onclick="sevenGo_(-1)">← ย้อนกลับ</button>' : '')
+      + ((multi || sevenAnswered_(q) || !q.required)
+          ? '<button class="btn" id="sevenNextBtn" onclick="sevenGo_(1)"' + (canNext ? '' : ' disabled') + '>'
+            + (sevenStep_ === n - 1 ? 'ไปแนบใบเสร็จ →' : 'ถัดไป →') + '</button>'
+          : '')
+      + '</div>';
+    body.innerHTML = h;
+    return;
+  }
+  // ขั้นแนบใบเสร็จ (มาถึงได้เมื่อตอบครบเท่านั้น)
+  var summary = qs.map(function(q){
+    var a = sevenAnswers_[q.id];
+    return a && (!Array.isArray(a) || a.length) ? '<b>' + esc(q.q) + ':</b> ' + esc(Array.isArray(a) ? a.join(', ') : a) : '';
+  }).filter(Boolean).join('<br>');
+  var h2 = sevenTopHtml_()
+    + (summary ? '<div class="seven-answers">' + summary + '<br><a style="color:#ee2737;font-weight:700;cursor:pointer" onclick="sevenGo_(-1)">✏️ แก้ไขคำตอบ</a></div>' : '')
+    + '<div class="seven-qtext">แนบรูปใบเสร็จ 7-Eleven</div>'
+    + '<div class="seven-qsub">ถ่ายให้เห็นชื่อร้าน เลขที่ใบเสร็จ วันที่ และรายการสินค้าเอมโอชาชัดเจน</div>'
+    + '<label class="seven-drop" id="sevenDrop"><input type="file" id="sevenFileInput" accept="image/*,application/pdf,.pdf,.heic,.heif" style="display:none" onchange="onSevenFile_(this)">'
+    + '<div class="big">🧾</div><div class="t">แตะเพื่อถ่ายรูป / เลือกไฟล์ใบเสร็จ</div><div class="s">รูปภาพทุกชนิด (JPG, PNG, HEIC ฯลฯ) หรือ PDF ไม่เกิน 12 MB</div></label>'
+    + '<div class="err" id="sevenErr" style="margin-top:12px"></div>'
+    + '<button class="btn btn-block" id="sevenSubmitBtn" style="margin-top:12px" onclick="submitReceipt7_()">✅ ส่งใบเสร็จ</button>'
+    + sevenTermsHtml_(sevenData_.config || {});
+  body.innerHTML = h2;
+}
+
+function sevenPick_(oi){
+  var q = sevenSurvey_()[sevenStep_], opt = q.options[oi];
   if (q.type === 'multi') {
     var arr = sevenAnswers_[q.id] || [];
     var at = arr.indexOf(opt);
     if (at === -1) arr.push(opt); else arr.splice(at, 1);
     sevenAnswers_[q.id] = arr;
+    renderSevenStep_();
   } else {
-    sevenAnswers_[q.id] = sevenAnswers_[q.id] === opt ? '' : opt;
+    sevenAnswers_[q.id] = opt;
+    renderSevenStep_();
+    // เลือกข้อเดียว: ไปข้อถัดไปเองหลังเห็นว่าเลือกแล้ว
+    var stepAt = sevenStep_;
+    setTimeout(function(){ if (sevenStep_ === stepAt && document.querySelector('.seven-card-opt')) sevenGo_(1); }, 280);
   }
-  document.querySelectorAll('.seven-opt[data-q="' + qi + '"]').forEach(function(el){
-    var o = q.options[parseInt(el.getAttribute('data-o'), 10)];
-    var on = q.type === 'multi' ? (sevenAnswers_[q.id] || []).indexOf(o) !== -1 : sevenAnswers_[q.id] === o;
-    el.classList.toggle('on', on);
-  });
+}
+
+function sevenGo_(d){
+  var qs = sevenSurvey_();
+  if (d > 0 && sevenStep_ < qs.length) {
+    var q = qs[sevenStep_];
+    if (q.required && !sevenAnswered_(q)) { sevenErr_('กรุณาตอบคำถามข้อนี้ก่อน'); return; }
+  }
+  if (d < 0 && sevenStep_ >= qs.length) sevenStep_ = qs.length;   // จากหน้าแนบใบเสร็จ ย้อนไปข้อสุดท้าย
+  sevenStep_ = Math.max(0, Math.min(qs.length, sevenStep_ + d));
+  renderSevenStep_();
+  var sheet = document.querySelector('.panel-sheet');
+  if (sheet) sheet.scrollTop = 0;
 }
 
 function sevenErr_(msg){
@@ -1894,7 +2019,7 @@ function submitReceipt7_(){
       body.innerHTML = '<div class="empty" style="padding:18px 0">' + (ok ? '🎉' : '⚠️') + '<br><b>' + (ok ? 'ส่งใบเสร็จ ' + esc(r.ref) + ' แล้ว' : 'ส่งใบเสร็จไม่สำเร็จ') + '</b><br>'
         + esc(r.message || '').replace(/\n/g, '<br>') + '</div>'
         + '<button class="btn btn-block" onclick="renderReceipt7Form_()">📸 ส่งใบเสร็จอีกใบ</button>'
-        + '<button class="btn btn-outline btn-block" style="margin-top:8px" onclick="sevenData_=null;loadReceipt7Panel()">ดูใบเสร็จของฉัน</button>';
+        + '<button class="btn btn-outline btn-block" style="margin-top:8px" onclick="showSevenHistory_()">ดูใบเสร็จของฉัน</button>';
       sevenApi_({ action: 'myReceipts', idToken: currentIdToken }).then(function(x){ if (x && x.success) sevenData_ = x; }).catch(function(){});
     })
     .catch(function(e){
