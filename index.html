@@ -518,7 +518,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
       </div>
       <div class="lower-section">
         <h2 class="menu-section-title has-seven" id="menuSectionTitle"><span>สิทธิพิเศษสมาชิก<span class="tier-info-icon" onclick="openPanel('terms')" title="เงื่อนไขสิทธิพิเศษสมาชิก">ⓘ</span></span>
-          <button type="button" class="seven-cta" onclick="openPanel('receipt7')" aria-label="สะสมคะแนนจากใบเสร็จ 7-Eleven"><img src="logo-7eleven.png" alt="7-Eleven"><span><b>ใบเสร็จ 7-Eleven</b>ส่งรับคะแนน</span></button></h2>
+          <button type="button" class="seven-cta sh" id="sevenCta" onclick="openPanel('receipt7')" aria-label="สะสมคะแนนจากใบเสร็จ 7-Eleven"><img src="logo-7eleven.png" alt="7-Eleven"><span><b>ใบเสร็จ 7-Eleven</b>ส่งรับคะแนน</span></button></h2>
         <div class="tier-progress-boxes">
           <div class="tier-progress-box tap-box" onclick="openPanel('history')">
             <div class="tier-progress-label">ยอดใช้จ่ายสะสม</div>
@@ -1652,6 +1652,23 @@ function sevenDate_(s){
   var d = new Date(s);
   return isNaN(d) ? '' : d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
 }
+
+// ปุ่ม 7-Eleven แสดงเฉพาะตอนแอดมินเปิดรับใบเสร็จ (สวิตช์ในหน้าแอดมิน) — จำค่าล่าสุดไว้ให้ขึ้นทันทีรอบหน้า
+var SEVEN_LIVE_KEY_ = 'emocha.members.sevenLive';
+function applySevenCta_(live){
+  var b = document.getElementById('sevenCta');
+  if (b) b.classList.toggle('sh', !live);
+}
+function refreshSevenCta_(){
+  try { applySevenCta_(localStorage.getItem(SEVEN_LIVE_KEY_) === '1'); } catch (e) {}
+  sevenApi_({ action: 'config' }).then(function(r){
+    if (!r || !r.success || !r.config) return;
+    var live = r.config.live === true;
+    applySevenCta_(live);
+    try { localStorage.setItem(SEVEN_LIVE_KEY_, live ? '1' : '0'); } catch (e) {}
+  }).catch(function(){});
+}
+refreshSevenCta_();
 
 function loadReceipt7Panel(){
   var body = document.getElementById('panelBody');
