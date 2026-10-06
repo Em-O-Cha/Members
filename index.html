@@ -1787,11 +1787,26 @@ function sevenFirstMissing_(){
 }
 
 function startReceipt7Wizard_(){
-  sevenAnswers_ = {};
+  sevenAnswers_ = sevenPrefillAnswers_();
   sevenFile_ = null;
   sevenClientKey_ = sevenUuid_();
-  sevenStep_ = 0;
+  // ⚡ เพิ่ม (6/10/69) — เคยตอบแบบสอบถามแล้ว (คำตอบครั้งล่าสุดยังครบ) = ข้ามไปหน้าแนบใบเสร็จเลย
+  // (ยังกด "แก้ไขคำตอบ" ได้) — คำถามที่เพิ่มใหม่/ยังไม่เคยตอบ จะเริ่มที่ข้อนั้น
+  sevenStep_ = Object.keys(sevenAnswers_).length ? sevenSurvey_().length : 0;
   renderSevenStep_();
+}
+// คำตอบครั้งล่าสุดของลูกค้าคนนี้ (lastSurvey จาก myReceipts) เฉพาะข้อ/ตัวเลือกที่ยังมีอยู่ในแบบสอบถามปัจจุบัน
+function sevenPrefillAnswers_(){
+  var last = (sevenData_ && sevenData_.lastSurvey) || null, out = {};
+  if (!last || typeof last !== 'object') return out;
+  sevenSurvey_().forEach(function(q){
+    var a = last[q.id], opts = q.options || [];
+    if (q.type === 'multi') {
+      var arr = (Array.isArray(a) ? a : []).filter(function(x){ return opts.indexOf(x) !== -1; });
+      if (arr.length) out[q.id] = arr;
+    } else if (typeof a === 'string' && opts.indexOf(a) !== -1) out[q.id] = a;
+  });
+  return out;
 }
 function renderReceipt7Form_(){ startReceipt7Wizard_(); }
 
