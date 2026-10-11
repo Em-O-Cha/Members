@@ -509,7 +509,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .spin-priv-tag{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;padding:1px 7px;border-radius:999px;background:#f5d77a;color:#3a2a00;vertical-align:middle;}
 .spin-result-overlay{position:fixed;inset:0;background:rgba(5,10,30,.72);z-index:10050;display:flex;align-items:center;justify-content:center;padding:20px;}
 .spin-result-overlay.sh{display:none;}
-.spin-result-box{width:100%;max-width:340px;border-radius:22px;padding:24px 20px 18px;text-align:center;color:#fff;
+.spin-result-box{width:100%;max-width:340px;max-height:calc(100vh - 40px);overflow-y:auto;border-radius:22px;padding:24px 20px 18px;text-align:center;color:#fff;
   background:radial-gradient(120% 90% at 50% 0%,#2c4fa8 0%,#162a63 60%,#0d1a40 100%);box-shadow:0 18px 50px rgba(0,0,0,.45);
   animation:spinPop .45s cubic-bezier(.34,1.56,.64,1);}
 @keyframes spinPop{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
@@ -517,6 +517,14 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .spin-result-msg{font-size:14px;color:rgba(255,255,255,.85);margin:6px 0 14px;}
 .spin-result-box .spin-coupon{box-shadow:0 0 0 2px #f5d77a,0 8px 20px rgba(0,0,0,.35);}
 .spin-result-box .btn{margin-top:10px;}
+.spin-terms{margin-top:18px;text-align:left;background:#f6f8fd;border:1px solid #e3e8f5;border-radius:12px;padding:12px 14px;}
+.spin-terms-title{font-size:13px;font-weight:700;color:#162a63;margin-bottom:6px;}
+.spin-terms ul{margin:0;padding-left:18px;}
+.spin-terms li{font-size:12px;color:#4b5563;line-height:1.55;margin-bottom:3px;}
+.spin-result-terms{margin:12px 0 2px;text-align:left;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 12px;}
+.spin-result-terms div{font-size:12px;font-weight:700;color:#f5d77a;margin-bottom:4px;}
+.spin-result-terms ul{margin:0;padding-left:18px;}
+.spin-result-terms li{font-size:12px;color:rgba(255,255,255,.88);line-height:1.5;}
 .spin-result-box .btn-ghost{background:transparent !important;border:1.5px solid rgba(255,255,255,.6) !important;box-shadow:none;}
 </style>
 </head>
@@ -1729,7 +1737,10 @@ function renderSpinPanel_(d, errMsg){
     if (reason) h = h.replace('class="spin-hub"', 'class="spin-hub is-disabled"');
     h += '<button class="btn spin-go" id="spinGoBtn" onclick="spinHubTap_()"' + (reason ? ' disabled' : '') + '>🎡 หมุนเลย (ใช้ ' + Number(w.cost || 0).toLocaleString('th-TH') + ' คะแนน)</button>';
     h += '<div class="spin-note" id="spinNote" style="' + (errMsg ? 'color:#c62828' : '') + '">' + esc(errMsg || reason || 'รางวัลส่วนลดเข้าสิทธิ์พิเศษของคุณทันที ใช้อัตโนมัติตอนสั่งซื้อ') + '</div>';
-    if (w.endDate) h += '<div class="spin-note">หมุนได้ถึงวันที่ ' + esc(new Date(w.endDate + 'T00:00:00').toLocaleDateString('th-TH')) + '</div>';
+    if (w.terms && w.terms.length) {
+      h += '<div class="spin-terms" id="spinTerms"><div class="spin-terms-title">📋 เงื่อนไขกิจกรรม</div><ul>'
+        + w.terms.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
+    } else if (w.endDate) h += '<div class="spin-note">หมุนได้ถึงวันที่ ' + esc(new Date(w.endDate + 'T00:00:00').toLocaleDateString('th-TH')) + '</div>';
   }
   var coupons = d.coupons || [];
   if (coupons.length || w.enabled) {
@@ -1851,8 +1862,20 @@ function showSpinResult_(r){
   } else {
     h = '<div class="spin-result-get">GET!</div><div class="spin-result-msg">ยินดีด้วย! คุณได้รับคูปอง</div>'
       + (r.coupon ? spinCouponHtml_(r.coupon, false) : '<div style="font-size:20px;font-weight:700">' + esc(prize.name) + '</div>')
-      + '<div class="spin-result-msg" style="margin-top:4px">เข้าสิทธิ์พิเศษของคุณแล้ว ใช้อัตโนมัติตอนสั่งซื้อ</div>';
+      + '<div class="spin-result-msg" style="margin-top:4px">เข้าสิทธิ์พิเศษของคุณแล้ว</div>';
   }
+  // ⚡ เงื่อนไขของรางวัลที่ได้ (สั้นๆ) — เงื่อนไขกิจกรรมทั้งหมดอยู่ในหน้าวงล้อ
+  var cond = [];
+  if (r.coupon) {
+    var c = r.coupon;
+    if (c.expiry && c.expiry !== 'ไม่มีวันหมดอายุ') cond.push('ใช้ได้ถึงวันที่ ' + c.expiry + (c.daysLeft >= 0 ? ' (อีก ' + c.daysLeft + ' วัน) เลยกำหนดถือว่าสละสิทธิ์' : ''));
+    if (c.minPurchase > 0) cond.push('ต้องมียอดสั่งซื้อขั้นต่ำ ' + Number(c.minPurchase).toLocaleString('th-TH') + ' บาท (ไม่รวมค่าส่ง)');
+    cond.push('ใช้ได้ครั้งละ 1 สิทธิ์ต่อการสั่งซื้อ ใช้ร่วมกับโปรโมชั่นอื่นไม่ได้');
+    cond.push('ใช้อัตโนมัติตอนสั่งซื้อ ไม่ต้องกรอกโค้ด');
+  } else if (prize.type === 'points') {
+    cond.push('คะแนนเข้าคะแนนสะสมทันที ใช้แลกของรางวัลหรือส่วนลดได้ตามปกติ');
+  }
+  if (cond.length) h += '<div class="spin-result-terms"><div>เงื่อนไข</div><ul>' + cond.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
   h += '<div class="spin-result-msg" style="margin:0">คะแนนคงเหลือ ' + Number(r.newPoints).toLocaleString('th-TH') + ' คะแนน'
     + '</div>';
   if (r.coupon) h += '<button class="btn" onclick="closeSpinResult_();openPanel(\'privileges\')">ดูสิทธิ์พิเศษของฉัน</button>';
