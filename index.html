@@ -774,6 +774,19 @@ function renderRegSuccessPrivileges_(privileges){
     return '🎁 ' + esc(p.name) + expiryText;
   }).join('<br>');
 }
+// ⚡ เพิ่ม (11/10/69) — เปิดมาจากปุ่มในข้อความโปร (ลิงก์มี ?src=<รหัสข้อความ>) จดว่าใครกดจากข้อความไหน
+// (แบบเดียวกับหน้าร้าน logPromoClickFromUrl_) ให้หน้าแอดมินนับคนกดได้เป๊ะ — ยิงเบื้องหลัง ไม่รอผล
+function logPromoClickFromUrl_(){
+  try {
+    var params = new URLSearchParams(location.search);
+    var src = params.get('src');
+    if (!src && params.get('liff.state')) src = new URLSearchParams(String(params.get('liff.state')).split('?')[1] || '').get('src');
+    if (!src || !/^[A-Za-z]{1,12}\d{14}$/.test(src) || !currentIdToken) return;
+    var key = 'promoClickLogged.' + src;
+    try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+    callApi('logPromoClick', { idToken: currentIdToken, src: src }).catch(function(){});
+  } catch (e) {}
+}
 var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'enqueueMemberRegistration', 'redeemReward', 'updateMemberProfile', 'spinWheel'];
 function callApi(action, payload, _attempt){
   payload = payload || {};
@@ -2742,6 +2755,7 @@ function initLiff(){
     if (profile && profile.sub) currentLineUserId = profile.sub;
     brandLogoDataUrl = document.querySelector('.brand-logo') ? document.querySelector('.brand-logo').src : '';
     checkStatus();
+    setTimeout(logPromoClickFromUrl_, 3000); // หลังโหลดบัตรสมาชิก ไม่แย่งคิว Apps Script กับ checkStatus
   }).catch(function(e){
     clearTimeout(initTimeout);
     showErrorState('liff.init() ล้มเหลว: ' + (e && e.message ? e.message : String(e)));
