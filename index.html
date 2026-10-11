@@ -1724,7 +1724,7 @@ function spinCouponHtml_(c, isNew){
     + '<div class="spin-coupon-stub">' + stub + '</div>'
     + '<div class="spin-coupon-body"><div class="spin-coupon-name">' + esc(c.name) + '</div>'
     + (sub ? '<div class="spin-coupon-sub">' + esc(sub) + '</div>' : '')
-    + '<div class="spin-coupon-sub">🎡 จากวงล้อนำโชค · ใช้อัตโนมัติตอนสั่งซื้อ</div>'
+    + '<div class="spin-coupon-sub">🎡 จากวงล้อนำโชค · ใช้อัตโนมัติตอนสั่งซื้อ' + (c.stackable === undefined ? '' : (c.stackable ? ' · ใช้ร่วมกับโปรอื่นได้' : ' · ใช้ร่วมกับโปรอื่นไม่ได้')) + '</div>'
     + '<span class="spin-coupon-exp' + (c.daysLeft >= 0 && c.daysLeft <= 1 ? ' urgent' : '') + '">⏰ ' + esc(exp) + '</span></div>'
     + '</div>';
 }
@@ -1884,7 +1884,7 @@ function showSpinResult_(r){
     var c = r.coupon;
     if (c.expiry && c.expiry !== 'ไม่มีวันหมดอายุ') cond.push('ใช้ได้ถึงวันที่ ' + c.expiry + (c.daysLeft >= 0 ? ' (อีก ' + c.daysLeft + ' วัน) เลยกำหนดถือว่าสละสิทธิ์' : ''));
     if (c.minPurchase > 0) cond.push('ต้องมียอดสั่งซื้อขั้นต่ำ ' + Number(c.minPurchase).toLocaleString('th-TH') + ' บาท (ไม่รวมค่าส่ง)');
-    cond.push('ใช้ได้ครั้งละ 1 สิทธิ์ต่อการสั่งซื้อ ใช้ร่วมกับโปรโมชั่นอื่นไม่ได้');
+    cond.push('ใช้สิทธิ์จากวงล้อได้ครั้งละ 1 สิทธิ์ต่อการสั่งซื้อ · ' + (c.stackable ? 'ใช้ร่วมกับโปรโมชั่นอื่นได้' : 'ใช้ร่วมกับโปรโมชั่นอื่นไม่ได้'));
     cond.push('ใช้อัตโนมัติตอนสั่งซื้อ ไม่ต้องกรอกโค้ด');
   } else if (prize.type === 'points') {
     cond.push('คะแนนเข้าคะแนนสะสมทันที ใช้แลกของรางวัลหรือส่วนลดได้ตามปกติ');
