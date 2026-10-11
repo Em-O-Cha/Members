@@ -1556,6 +1556,9 @@ function spinHubTap_(){
   if (!spinInFlight_) {
     var btn = document.getElementById('spinGoBtn');
     if (btn && btn.disabled) return;
+    // ⚡ สิทธิ์หมุนหมดแล้ว: ไม่โชว์จำนวนครั้งบนหน้า แต่ขึ้นเตือนตอนกด (ระบบไม่หักคะแนน)
+    var d = spinData_ || loadSpinStale_();
+    if (d && d.spinsLeft === 0) return showCustomAlert_(d.limitMsg || 'คุณใช้สิทธิ์หมุนวงล้อครบแล้ว ขอบคุณที่ร่วมสนุกนะคะ 🙏');
     return doSpin_();
   }
   if (spinStopReq_ || spinDecelerating_) return;
@@ -1611,7 +1614,6 @@ function renderSpinBanner_(d){
   var w = d.wheel;
   document.getElementById('spinBannerTitle').textContent = w.title || 'หมุนวงล้อลุ้นรางวัล';
   var sub = 'ใช้ ' + Number(w.cost || 0).toLocaleString('th-TH') + ' คะแนน/ครั้ง';
-  if (d.spinsLeft >= 0) sub += ' · วันนี้เหลือ ' + d.spinsLeft + ' ครั้ง';
   document.getElementById('spinBannerSub').textContent = sub;
   document.getElementById('spinBannerWheel').innerHTML = spinWheelSvg_(w.prizes || [], true);
 }
@@ -1715,7 +1717,7 @@ function renderSpinPanel_(d, errMsg){
     h += '<div style="font-size:17px;font-weight:700;color:#162a63">' + esc(w.title || 'หมุนวงล้อลุ้นรางวัล') + '</div>';
     h += '<div class="spin-meta"><span class="spin-chip">คะแนนที่ใช้ได้ ' + Number(d.available || 0).toLocaleString('th-TH') + '</span>'
       + '<span class="spin-chip">ใช้ ' + Number(w.cost || 0).toLocaleString('th-TH') + ' คะแนน/ครั้ง</span>'
-      + (d.spinsLeft >= 0 ? '<span class="spin-chip">วันนี้เหลือ ' + d.spinsLeft + ' ครั้ง</span>' : '') + '</div>';
+      + '</div>';
     h += '<div class="spin-stage">'
       + '<svg class="spin-pointer" viewBox="0 0 34 42"><path d="M17 41 L3 14 A15 15 0 1 1 31 14 Z" fill="#fff"/><circle cx="17" cy="15" r="6" fill="#3b63c4"/></svg>'
       + spinWheelSvg_(w.prizes || [], false)
@@ -1723,7 +1725,6 @@ function renderSpinPanel_(d, errMsg){
     var reason = '';
     if (d.isMember === false) reason = 'สมัครสมาชิกก่อนถึงจะหมุนได้';
     else if (d.tierAllowed === false) reason = 'วงล้อรอบนี้สำหรับสมาชิกบางระดับเท่านั้น';
-    else if (d.spinsLeft === 0) reason = 'วันนี้หมุนครบแล้ว พรุ่งนี้มาหมุนใหม่นะคะ';
     else if (Number(d.available || 0) < Number(w.cost || 0)) reason = 'คะแนนไม่พอ (ต้องใช้ ' + Number(w.cost).toLocaleString('th-TH') + ' คะแนน)';
     if (reason) h = h.replace('class="spin-hub"', 'class="spin-hub is-disabled"');
     h += '<button class="btn spin-go" id="spinGoBtn" onclick="spinHubTap_()"' + (reason ? ' disabled' : '') + '>🎡 หมุนเลย (ใช้ ' + Number(w.cost || 0).toLocaleString('th-TH') + ' คะแนน)</button>';
@@ -1806,7 +1807,8 @@ function doSpin_(){
     if (r && r.success) result = r;
     else {
       failed = (r && r.error) || 'หมุนไม่สำเร็จ';
-      if (r && r.spinsLeft === 0 && spinData_) spinData_.spinsLeft = 0;
+      if (r && r.spinsLeft === 0 && spinData_) { spinData_.spinsLeft = 0; spinData_.limitMsg = r.limitMsg || failed; saveSpinData_(spinData_); }
+      if (r && r.limitMsg) setTimeout(function(){ showCustomAlert_(r.limitMsg); }, 300);
     }
   }).catch(function(e){
     failed = e.message + ' — กรุณาปิดแล้วเปิดหน้านี้ใหม่เพื่อเช็คคะแนนก่อนหมุนอีกครั้ง';
@@ -1818,6 +1820,7 @@ function finishSpin_(r){
   d.points = r.newPoints;
   d.available = r.available;
   d.spinsLeft = r.spinsLeft;
+  d.limitMsg = r.limitMsg || '';
   if (r.coupon) {
     d.coupons = [r.coupon].concat(d.coupons || []);
     spinNewKey_ = r.coupon.name + '|' + r.coupon.receivedAt;
@@ -1851,7 +1854,7 @@ function showSpinResult_(r){
       + '<div class="spin-result-msg" style="margin-top:4px">เข้าสิทธิ์พิเศษของคุณแล้ว ใช้อัตโนมัติตอนสั่งซื้อ</div>';
   }
   h += '<div class="spin-result-msg" style="margin:0">คะแนนคงเหลือ ' + Number(r.newPoints).toLocaleString('th-TH') + ' คะแนน'
-    + (r.spinsLeft >= 0 ? ' · วันนี้หมุนได้อีก ' + r.spinsLeft + ' ครั้ง' : '') + '</div>';
+    + '</div>';
   if (r.coupon) h += '<button class="btn" onclick="closeSpinResult_();openPanel(\'privileges\')">ดูสิทธิ์พิเศษของฉัน</button>';
   h += '<button class="btn btn-ghost" onclick="closeSpinResult_()">ปิด</button>';
   box.innerHTML = h;
