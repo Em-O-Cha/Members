@@ -481,7 +481,12 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .spin-pointer{position:absolute;top:0;left:50%;transform:translateX(-50%);width:34px;height:42px;z-index:2;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));}
 .spin-hub{position:absolute;left:50%;top:calc(50% + 9px);transform:translate(-50%,-50%);width:23%;aspect-ratio:1;border-radius:50%;
   background:#162a63;border:4px solid #fff;box-shadow:0 0 0 3px #3b63c4,0 4px 10px rgba(0,0,0,.35);color:#fff;font-weight:800;font-size:15px;
-  display:flex;align-items:center;justify-content:center;z-index:2;}
+  display:flex;align-items:center;justify-content:center;z-index:2;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;}
+.spin-hub:active{transform:translate(-50%,-50%) scale(.94);}
+.spin-hub.is-disabled{cursor:default;opacity:.85;}
+.spin-hub.is-stop{background:#c62828;box-shadow:0 0 0 3px #f5d77a,0 4px 10px rgba(0,0,0,.35);font-size:17px;animation:spinHubPulse .8s ease-in-out infinite;}
+.spin-hub.is-stopping{background:#6b7280;box-shadow:0 0 0 3px #c5cbd8,0 4px 10px rgba(0,0,0,.3);font-size:13px;animation:none;}
+@keyframes spinHubPulse{50%{transform:translate(-50%,-50%) scale(1.08);}}
 .spin-meta{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:6px 0 12px;}
 .spin-chip{font-size:12px;padding:4px 10px;border-radius:999px;background:#eef2fb;color:#162a63;font-weight:600;}
 .spin-go{margin-top:14px;}
@@ -1543,6 +1548,29 @@ var spinInFlight_ = false;
 var spinFetching_ = null;
 var spinRot_ = 0;          // มุมปัจจุบันของวงล้อ (องศา สะสมไปเรื่อยๆ)
 var spinNewKey_ = '';      // คูปองใบที่เพิ่งได้ (ติดป้าย NEW)
+var spinStopReq_ = false;  // ลูกค้ากด "หยุด" แล้ว (ถ้าไม่กด วงล้อหยุดเองตาม SPIN_AUTO_STOP_MS_)
+var spinDecelerating_ = false;
+var SPIN_AUTO_STOP_MS_ = 6000;
+// ปุ่มกลางวงล้อ (และปุ่มด้านล่าง): ยังไม่หมุน = เริ่มหมุน / กำลังหมุน = หยุด
+// ผลรางวัลระบบสุ่มไว้แล้วตั้งแต่กดหมุน การกดหยุดแค่ให้วงล้อค่อยๆ ชะลอไปหยุดที่ช่องรางวัลนั้น
+function spinHubTap_(){
+  if (!spinInFlight_) {
+    var btn = document.getElementById('spinGoBtn');
+    if (btn && btn.disabled) return;
+    return doSpin_();
+  }
+  if (spinStopReq_ || spinDecelerating_) return;
+  spinStopReq_ = true;
+  setSpinHub_('กำลังหยุด', 'is-stopping');
+  var b = document.getElementById('spinGoBtn');
+  if (b) { b.disabled = true; b.textContent = '⏳ กำลังหยุด...'; }
+}
+function setSpinHub_(text, cls){
+  var hub = document.getElementById('spinHub');
+  if (!hub) return;
+  hub.textContent = text;
+  hub.className = 'spin-hub' + (cls ? ' ' + cls : '');
+}
 function spinStorageKey_(){ return SPIN_STORAGE_KEY_ + '.' + (currentLineUserId || '-'); }
 function loadSpinStale_(){
   if (spinData_) return spinData_;
@@ -1692,13 +1720,14 @@ function renderSpinPanel_(d, errMsg){
     h += '<div class="spin-stage">'
       + '<svg class="spin-pointer" viewBox="0 0 34 42"><path d="M17 41 L3 14 A15 15 0 1 1 31 14 Z" fill="#fff"/><circle cx="17" cy="15" r="6" fill="#3b63c4"/></svg>'
       + spinWheelSvg_(w.prizes || [], false)
-      + '<div class="spin-hub">GO!</div></div>';
+      + '<div class="spin-hub" id="spinHub" role="button" onclick="spinHubTap_()">หมุน</div></div>';
     var reason = '';
     if (d.isMember === false) reason = 'สมัครสมาชิกก่อนถึงจะหมุนได้';
     else if (d.tierAllowed === false) reason = 'วงล้อรอบนี้สำหรับสมาชิกบางระดับเท่านั้น';
     else if (d.spinsLeft === 0) reason = 'วันนี้หมุนครบแล้ว พรุ่งนี้มาหมุนใหม่นะคะ';
     else if (Number(d.available || 0) < Number(w.cost || 0)) reason = 'คะแนนไม่พอ (ต้องใช้ ' + Number(w.cost).toLocaleString('th-TH') + ' คะแนน)';
-    h += '<button class="btn spin-go" id="spinGoBtn" onclick="doSpin_()"' + (reason ? ' disabled' : '') + '>🎡 หมุนเลย (ใช้ ' + Number(w.cost || 0).toLocaleString('th-TH') + ' คะแนน)</button>';
+    if (reason) h = h.replace('class="spin-hub"', 'class="spin-hub is-disabled"');
+    h += '<button class="btn spin-go" id="spinGoBtn" onclick="spinHubTap_()"' + (reason ? ' disabled' : '') + '>🎡 หมุนเลย (ใช้ ' + Number(w.cost || 0).toLocaleString('th-TH') + ' คะแนน)</button>';
     h += '<div class="spin-note" id="spinNote" style="' + (errMsg ? 'color:#c62828' : '') + '">' + esc(errMsg || reason || 'รางวัลส่วนลดเข้าสิทธิ์พิเศษของคุณทันที ใช้อัตโนมัติตอนสั่งซื้อ') + '</div>';
     if (w.endDate) h += '<div class="spin-note">หมุนได้ถึงวันที่ ' + esc(new Date(w.endDate + 'T00:00:00').toLocaleDateString('th-TH')) + '</div>';
   }
@@ -1729,10 +1758,13 @@ function doSpin_(){
   var d = spinData_ || loadSpinStale_();
   if (!d || !d.wheel || !d.wheel.enabled) return;
   spinInFlight_ = true;
+  spinStopReq_ = false;
+  spinDecelerating_ = false;
   var btn = document.getElementById('spinGoBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังหมุน...'; }
+  if (btn) { btn.disabled = false; btn.textContent = '✋ หยุด'; }
+  setSpinHub_('หยุด', 'is-stop');
   var note = document.getElementById('spinNote');
-  if (note) { note.style.color = ''; note.textContent = 'ขอให้โชคดีนะคะ 🍀'; }
+  if (note) { note.style.color = ''; note.textContent = 'กด "หยุด" ตรงกลางวงล้อได้เลย ขอให้โชคดีนะคะ 🍀'; }
   var rotor = document.getElementById('spinRotor');
   var prizes = d.wheel.prizes || [];
   var VMAX = 0.72; // องศา/มิลลิวินาที (2 รอบ/วินาที)
@@ -1750,10 +1782,14 @@ function doSpin_(){
     spinRot_ += v * dt;
     if (rotor) rotor.style.transform = 'rotate(' + spinRot_ + 'deg)';
     if (failed) {
-      spinInFlight_ = false;
+      spinInFlight_ = false; spinDecelerating_ = false;
       return renderSpinPanel_(spinData_ || d, failed);
     }
-    if (result && now - t0 > 1200) {
+    if (result && now - t0 > 800 && (spinStopReq_ || now - t0 > SPIN_AUTO_STOP_MS_)) {
+      spinDecelerating_ = true;
+      setSpinHub_('…', 'is-stopping');
+      var gb = document.getElementById('spinGoBtn');
+      if (gb) { gb.disabled = true; gb.textContent = '⏳ กำลังหยุด...'; }
       var idx = -1;
       prizes.forEach(function(p, i){ if (p.id === result.prizeId) idx = i; });
       if (idx === -1) idx = 0;
@@ -1778,7 +1814,7 @@ function doSpin_(){
   });
 }
 function finishSpin_(r){
-  spinInFlight_ = false;
+  spinInFlight_ = false; spinDecelerating_ = false;
   var d = spinData_ || loadSpinStale_() || { success: true, wheel: { enabled: false } };
   d.points = r.newPoints;
   d.available = r.available;
