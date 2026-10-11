@@ -2621,7 +2621,7 @@ function renderCartPanel_(r){
     h += '<div class="list-item">'
       + '<div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Math.round(Number(o.totalAmount) || 0).toLocaleString('th-TH') + '</span></div>'
       + '<div class="row2">' + esc(o.date) + (o.firstItemName ? ' · ' + esc(o.firstItemName) : '') + '</div>'
-      + '<div class="row2" style="color:#e65100;font-weight:600">⏳ รอแนบสลิป</div>'
+      + '<div class="row2" style="color:#e65100;font-weight:600">' + (o.isCard ? '⏳ รอชำระเงิน' : '⏳ รอแนบสลิป') + '</div>'
       + '</div>';
   });
   h += '<a class="btn btn-block" style="margin-top:14px" href="' + SHOP_LIFF_URL_ + '?view=cart">📎 ไปแนบสลิป / ชำระเงิน</a>'
