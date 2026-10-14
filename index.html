@@ -164,6 +164,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
 .menu-badge{position:absolute;top:-6px;left:50%;margin-left:10px;min-width:20px;height:20px;line-height:16px;padding:0 6px;
   border-radius:999px;background:#d32f2f;color:#fff;font-size:11px;font-weight:800;white-space:nowrap;
   box-shadow:0 2px 6px rgba(211,47,47,.45);border:2px solid #fff;z-index:2;animation:badgeIn .35s ease-out;}
+.menu-item:last-child .menu-badge{left:auto;right:-2px;margin-left:0;}
 @keyframes badgeIn{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
 .reward-notice{display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px 12px;border-radius:14px;cursor:pointer;
   background:linear-gradient(135deg,#fff6e0,#ffe6ea);border:1.5px solid #ffc2b0;color:#b3261e;font-size:13px;font-weight:700;
@@ -172,7 +173,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
 .reward-notice .rn-txt{flex:1;min-width:0;line-height:1.45;}
 .reward-notice .rn-go{flex-shrink:0;background:#d32f2f;color:#fff;border-radius:999px;padding:4px 10px;font-size:12px;}
 .reward-new-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:#d32f2f;color:#fff;
-  font-size:10.5px;font-weight:700;line-height:17px;vertical-align:1px;}
+  font-size:10.5px;font-weight:700;line-height:17px;vertical-align:1px;color:#fff !important;}
 .reward-card.can-redeem{border-color:#9fd5a8;background:#f6fbf6;}
 .list-item .row1{display:flex;justify-content:space-between;font-weight:600;font-size:14px;}
 .list-item .row2{font-size:12px;color:var(--g6);margin-top:3px;}
@@ -643,19 +644,19 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
           </div>
         </div>
         <div class="tier-progress-card" id="tierProgressHint"></div>
-        <div class="reward-notice sh" id="rewardNotice" onclick="openPanel('rewards')" role="button"></div>
+        <div class="reward-notice sh" id="menuNotice" onclick="if(this.dataset.menu)openPanel(this.dataset.menu)" role="button"></div>
         <div class="menu-grid">
           <div class="menu-item" onclick="openPanel('rewards')">
-            <div class="icon">🎁</div><div class="txt">แลก<br>ของรางวัล</div><span class="menu-badge sh" id="rewardsBadge"></span>
+            <div class="icon">🎁</div><div class="txt">แลก<br>ของรางวัล</div><span class="menu-badge sh" id="menuBadge-rewards"></span>
           </div>
           <div class="menu-item" onclick="openPanel('coupons')">
-            <div class="icon"><img src="icon-coupon.png" alt="คูปอง"></div><div class="txt">คูปอง</div>
+            <div class="icon"><img src="icon-coupon.png" alt="คูปอง"></div><div class="txt">คูปอง</div><span class="menu-badge sh" id="menuBadge-coupons"></span>
           </div>
           <div class="menu-item" onclick="openPanel('privileges')">
-            <div class="icon">👑</div><div class="txt">สิทธิ์<br>พิเศษ</div>
+            <div class="icon">👑</div><div class="txt">สิทธิ์<br>พิเศษ</div><span class="menu-badge sh" id="menuBadge-privileges"></span>
           </div>
           <div class="menu-item" onclick="openPanel('info')">
-            <div class="icon">👤</div><div class="txt">ข้อมูล<br>สมาชิก</div>
+            <div class="icon">👤</div><div class="txt">ข้อมูล<br>สมาชิก</div><span class="menu-badge sh" id="menuBadge-info"></span>
           </div>
         </div>
       </div>
@@ -978,6 +979,7 @@ function renderMemberCard(member){
   renderTierProgressHint_(member);
   applyThemeColor_(baseColor);
   warmMemberMenuData_();
+  updateMenuNotices_();
 }
 function tierButtonGradient_(baseColor){
   return 'linear-gradient(135deg,' + shadeColor(baseColor, -16) + ' 0%,' + baseColor + ' 52%,' + shadeColor(baseColor, 14) + ' 100%)';
@@ -1418,6 +1420,7 @@ function setOpenMenuItem_(type){
 }
 function openPanel(type){
   setOpenMenuItem_(type);
+  menuSeenAtOpen_ = loadMenuSeen_();
   var t = PANEL_TITLES[type];
   var iconHtml = MENU_ICON_BASE_FILES[type]
     ? menuIcon(type, 'panel-menu-icon')
@@ -1496,10 +1499,9 @@ function warmMemberMenuData_(){
   initSpinBanner_();
   // ดึงหลังบัตรสมาชิกแสดงแล้ว จึงไม่ทำให้หน้าแรกค้าง แต่กดเข้าเมนูไหนก็มีข้อมูลรอไว้เกือบทันที (หรือเห็นของเดิม
   // จาก localStorage ทันทีระหว่างรอของใหม่ ถ้าเพิ่งเปิดหน้านี้เป็นครั้งแรกในรอบนี้)
-  updateRewardNotice_(memberMenuData_.loadStale());
   setTimeout(function(){
-    memberMenuData_.fetch().then(updateRewardNotice_).catch(function(){});
-    couponsMenuData_.fetch().catch(function(){});
+    memberMenuData_.fetch().then(updateMenuNotices_).catch(function(){});
+    couponsMenuData_.fetch().then(updateMenuNotices_).catch(function(){});
     pointsHistoryData_.fetch().catch(function(){});
     orderHistoryData_.fetch().then(refreshCartBadgeFrom_).catch(function(){});
   }, 500);
@@ -1535,62 +1537,110 @@ function loadPointsPanel(){
     renderPointsPanel_(r);
   }).catch(function(e){ if (!stale) body.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; });
 }
-// ⚡ เพิ่ม (14/10/69) — Notice เมนูแลกของรางวัล (ผู้ใช้ขอ: คะแนนพอแลกได้ หรือมีของใหม่ที่ลูกค้ายังไม่เคยเปิดดู ให้ขึ้นแจ้ง)
-//   จำในเครื่องลูกค้า (localStorage ต่อ LINE UID) ว่าเคยเห็นของรางวัลชิ้นไหนแล้ว และชิ้นไหนเคยเห็นตอนที่คะแนนพอแลกแล้ว
-//   ป้าย/แถบแจ้งหายเมื่อเปิดหน้าแลกของรางวัล แล้วขึ้นใหม่เมื่อมีของใหม่ หรือมีชิ้นใหม่ที่คะแนนพอแลก
-//   เปิดหน้าครั้งแรก (ยังไม่เคยจำอะไร) ถือว่าของที่มีอยู่แล้วไม่ใช่ "ใหม่" — กันทุกชิ้นขึ้นว่าใหม่พร้อมกันตอนเริ่มใช้
-var REWARD_SEEN_KEY_ = 'emocha.members.rewardSeen';
-var rewardSeenAtOpen_ = null;
+// ⚡ เพิ่ม (14/10/69) — Notice ทุกเมนูหน้าสมาชิก (ผู้ใช้ขอ: มีอะไรใหม่ที่ลูกค้ายังไม่ได้เปิดดู ให้ขึ้นแจ้ง ลูกค้าจะได้กดเข้าไปดู)
+//   ป้ายแดงที่มุมไอคอนเมนู + แถบแจ้งเหนือเมนู (แสดงเรื่องที่สำคัญที่สุดเรื่องเดียว แตะแล้วเปิดเมนูนั้น) + ป้าย "ใหม่" ในรายการ
+//   - แลกของรางวัล: คะแนนพอแลกได้ (ชิ้นที่ยังไม่เคยเห็นตอนคะแนนพอ) / มีของรางวัลใหม่
+//   - สิทธิ์พิเศษ: สิทธิ์ โปรแต้ม หรือสิทธิ์ตามระดับที่เพิ่งปลดล็อก ที่ยังไม่เคยเห็น
+//   - คูปอง: คูปองที่ยังไม่เคยเห็น
+//   - ข้อมูลสมาชิก: เพิ่งเลื่อนระดับสมาชิก / ยังไม่มีที่อยู่จัดส่ง (ต้องใช้ตอนแลกของพรีเมียม — เปิดดูแล้วเงียบไป 7 วัน)
+//   จำในเครื่องลูกค้า (localStorage ต่อ LINE UID) ว่าเคยเห็นอะไรแล้ว ป้ายหายเมื่อเปิดเมนูนั้น ขึ้นใหม่เมื่อมีของใหม่
+//   ครั้งแรกที่ยังไม่เคยจำอะไร ถือว่าของที่มีอยู่แล้วไม่ใช่ "ใหม่" — กันทุกเมนูขึ้นว่าใหม่พร้อมกันตอนเริ่มใช้
+var MENU_SEEN_KEY_ = 'emocha.members.menuSeen';
+var MENU_INFO_SNOOZE_MS_ = 7 * 24 * 3600 * 1000;
+var menuSeenAtOpen_ = null;
 function rewardKey_(item){ return item.rowIndex + '|' + item.name + '|' + item.pointCost; }
 function rewardCanRedeem_(item, points){ return points >= item.pointCost && item.remaining !== 0; }
-function loadRewardSeen_(){
-  try { var raw = localStorage.getItem(REWARD_SEEN_KEY_ + '.' + (currentLineUserId || '-')); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+function privilegeItemKey_(p){ return [p.name, p.expiry, p.startDateText || '', p.isUpcoming ? 'upcoming' : 'active'].join('|'); }
+function privilegeKeys_(r){
+  return ((r && r.privileges) || []).map(privilegeItemKey_)
+    .concat(((r && r.pointsPromos) || []).map(function(p){ return 'promo|' + p.name; }))
+    .concat(((r && r.tierPerks) || []).filter(function(p){ return p.unlocked; }).map(function(p){ return 'perk|' + p.text; }));
 }
-function saveRewardSeen_(seen){
-  try { localStorage.setItem(REWARD_SEEN_KEY_ + '.' + (currentLineUserId || '-'), JSON.stringify(seen)); } catch (e) {}
+function memberTierKey_(m){ return String((m && (m.tierKey || m.tier)) || ''); }
+function couponKey_(c){ return c.code + '|' + (c.expiry || ''); }
+function loadMenuSeen_(){
+  try { var raw = localStorage.getItem(MENU_SEEN_KEY_ + '.' + (currentLineUserId || '-')); return (raw && JSON.parse(raw)) || {}; } catch (e) { return {}; }
 }
-function rewardNoticeState_(r){
-  var items = (r && r.rewards) || [], points = (r && r.points) || 0;
-  var seen = loadRewardSeen_();
-  if (!seen) { seen = { items: items.map(rewardKey_), afford: [] }; saveRewardSeen_(seen); }
-  var afford = items.filter(function(it){ return rewardCanRedeem_(it, points); });
-  return {
-    afford: afford,
-    newAfford: afford.filter(function(it){ return seen.afford.indexOf(rewardKey_(it)) === -1; }),
-    fresh: items.filter(function(it){ return seen.items.indexOf(rewardKey_(it)) === -1; })
-  };
+function saveMenuSeen_(all){
+  try { localStorage.setItem(MENU_SEEN_KEY_ + '.' + (currentLineUserId || '-'), JSON.stringify(all)); } catch (e) {}
 }
-function updateRewardNotice_(r){
-  if (!r || !r.success) return;
-  var st = rewardNoticeState_(r);
-  var badge = document.getElementById('rewardsBadge'), bar = document.getElementById('rewardNotice');
-  if (!badge || !bar) return;
-  var badgeText = '', barHtml = '';
-  if (st.newAfford.length) {
-    badgeText = 'แลกได้ ' + st.afford.length;
-    barHtml = '<span class="rn-ico">🎉</span><span class="rn-txt">คะแนนพอแลกของรางวัลได้ ' + st.afford.length + ' รายการ!</span><span class="rn-go">ดูเลย ›</span>';
-  } else if (st.fresh.length) {
-    badgeText = 'ใหม่';
-    barHtml = '<span class="rn-ico">🆕</span><span class="rn-txt">มีของรางวัลใหม่ ' + st.fresh.length + ' รายการ</span><span class="rn-go">ดูเลย ›</span>';
+function markMenuSeen_(type, seen){
+  var all = loadMenuSeen_();
+  all[type] = seen;
+  saveMenuSeen_(all);
+  updateMenuNotices_();
+}
+// ป้าย "ใหม่" ในรายการ: เทียบกับที่เคยเห็นก่อนเปิดเมนูรอบนี้ (ครั้งแรกที่ยังไม่มีบันทึก ไม่ติดป้าย)
+function isNewInPanel_(type, key){
+  var seen = menuSeenAtOpen_ && menuSeenAtOpen_[type];
+  return !!(seen && seen.items && seen.items.indexOf(key) === -1);
+}
+function newTagHtml_(type, key){ return isNewInPanel_(type, key) ? '<span class="reward-new-tag">ใหม่</span>' : ''; }
+function menuNoticeState_(){
+  var all = loadMenuSeen_(), changed = false, st = {};
+  function unseen(type, keys){
+    if (!all[type] || !all[type].items) { all[type] = { items: keys }; changed = true; return []; }
+    return keys.filter(function(k){ return all[type].items.indexOf(k) === -1; });
   }
-  badge.textContent = badgeText;
-  badge.classList.toggle('sh', !badgeText);
-  bar.innerHTML = barHtml;
-  bar.classList.toggle('sh', !barHtml);
+  var m = memberMenuData_.loadStale();
+  if (m && m.success) {
+    var items = m.rewards || [], points = m.points || 0;
+    var fresh = unseen('rewards', items.map(rewardKey_));
+    var seenAfford = all.rewards.afford || [];
+    var afford = items.filter(function(it){ return rewardCanRedeem_(it, points); });
+    st.rewards = { afford: afford.length, fresh: fresh.length,
+      newAfford: afford.filter(function(it){ return seenAfford.indexOf(rewardKey_(it)) === -1; }).length };
+    st.privileges = { fresh: unseen('privileges', privilegeKeys_(m)).length };
+  }
+  var c = couponsMenuData_.loadStale();
+  if (c && c.success) st.coupons = { fresh: unseen('coupons', (c.results || []).map(couponKey_)).length };
+  if (lastMemberData) {
+    var tier = memberTierKey_(lastMemberData);
+    if (!all.info) { all.info = { at: 0, tier: tier }; changed = true; }
+    else if (all.info.tier === undefined) { all.info.tier = tier; changed = true; }
+    st.info = {
+      newTier: tier && all.info.tier !== tier ? (lastMemberData.tier || tier) : '',
+      needAddress: !String(lastMemberData.address || '').trim() && Date.now() - (all.info.at || 0) > MENU_INFO_SNOOZE_MS_
+    };
+  }
+  if (changed) saveMenuSeen_(all);
+  return st;
 }
-function markRewardsSeen_(r){
-  var items = (r && r.rewards) || [], points = (r && r.points) || 0;
-  saveRewardSeen_({
-    items: items.map(rewardKey_),
-    afford: items.filter(function(it){ return rewardCanRedeem_(it, points); }).map(rewardKey_)
+function updateMenuNotices_(){
+  var st = menuNoticeState_();
+  var r = st.rewards || {}, p = st.privileges || {}, c = st.coupons || {}, i = st.info || {};
+  function newText(n){ return n > 1 ? 'ใหม่ ' + n : 'ใหม่'; }
+  var badges = {
+    rewards: r.newAfford ? 'แลกได้ ' + r.afford : (r.fresh ? newText(r.fresh) : ''),
+    privileges: p.fresh ? newText(p.fresh) : '',
+    coupons: c.fresh ? newText(c.fresh) : '',
+    info: i.newTier ? 'ระดับใหม่' : (i.needAddress ? 'เพิ่มที่อยู่' : '')
+  };
+  Object.keys(badges).forEach(function(type){
+    var el = document.getElementById('menuBadge-' + type);
+    if (!el) return;
+    el.textContent = badges[type];
+    el.classList.toggle('sh', !badges[type]);
   });
-  updateRewardNotice_(r);
+  // แถบแจ้ง: เรื่องสำคัญที่สุดเรื่องเดียว
+  var notes = [];
+  if (i.newTier) notes.push(['info', '🎊', 'ยินดีด้วย! คุณเลื่อนเป็นระดับ ' + i.newTier + ' แล้ว']);
+  if (r.newAfford) notes.push(['rewards', '🎉', 'คะแนนพอแลกของรางวัลได้ ' + r.afford + ' รายการ!']);
+  if (p.fresh) notes.push(['privileges', '👑', 'คุณได้รับสิทธิ์พิเศษใหม่ ' + p.fresh + ' รายการ']);
+  if (c.fresh) notes.push(['coupons', '🎟️', 'มีคูปองใหม่ ' + c.fresh + ' ใบ']);
+  if (r.fresh) notes.push(['rewards', '🆕', 'มีของรางวัลใหม่ ' + r.fresh + ' รายการ']);
+  if (i.needAddress) notes.push(['info', '📦', 'เพิ่มที่อยู่จัดส่ง พร้อมรับของรางวัล']);
+  var bar = document.getElementById('menuNotice');
+  if (!bar) return;
+  var n = notes[0];
+  bar.dataset.menu = n ? n[0] : '';
+  bar.innerHTML = n ? '<span class="rn-ico">' + n[1] + '</span><span class="rn-txt">' + esc(n[2]) + '</span><span class="rn-go">ดูเลย ›</span>' : '';
+  bar.classList.toggle('sh', !n);
 }
 function renderRewardsPanel_(r){
   var body = document.getElementById('panelBody');
   currentPointsBalance = r.points || 0;
   var h = '';
-  var seenItems = (rewardSeenAtOpen_ && rewardSeenAtOpen_.items) || null;
   // ชิ้นที่แลกได้ขึ้นก่อน (นอกนั้นคงลำดับเดิมจากชีต)
   rewardsCatalogCache = (r.rewards || []).map(function(item, i){ return { item: item, i: i }; })
     .sort(function(a, b){
@@ -1601,14 +1651,13 @@ function renderRewardsPanel_(r){
     rewardsCatalogCache.forEach(function(item, idx){
       var subText = rewardSubText_(item);
       var canAfford = currentPointsBalance >= item.pointCost;
-      var isNew = seenItems && seenItems.indexOf(rewardKey_(item)) === -1;
       var imgHtml = item.image
         ? '<img class="reward-img" src="' + esc(item.image) + '" onerror="this.style.display=\'none\'">'
         : '<div class="reward-img" style="display:flex;align-items:center;justify-content:center;font-size:22px">🎁</div>';
       h += '<div class="reward-card' + (rewardCanRedeem_(item, currentPointsBalance) ? ' can-redeem' : '') + '">'
         + imgHtml
         + '<div class="reward-body">'
-        +   '<div class="reward-name">' + esc(item.name) + (isNew ? '<span class="reward-new-tag">ใหม่</span>' : '') + '</div>'
+        +   '<div class="reward-name">' + esc(item.name) + newTagHtml_('rewards', rewardKey_(item)) + '</div>'
         +   '<div class="reward-sub">' + esc(item.categoryLabel) + ' · ' + esc(subText) + (item.remaining >= 0 ? ' · เหลือ ' + item.remaining + ' ชิ้น' : '') + '</div>'
         +   '<div class="reward-sub" style="color:var(--gd);font-weight:600">' + item.pointCost.toLocaleString('th-TH') + ' แต้ม</div>'
         + '</div>'
@@ -1619,11 +1668,13 @@ function renderRewardsPanel_(r){
     h += '<div class="empty" style="padding:12px 0">ยังไม่มีของรางวัลให้แลกตอนนี้</div>';
   }
   body.innerHTML = h;
-  markRewardsSeen_(r);
+  markMenuSeen_('rewards', {
+    items: rewardsCatalogCache.map(rewardKey_),
+    afford: rewardsCatalogCache.filter(function(it){ return rewardCanRedeem_(it, currentPointsBalance); }).map(rewardKey_)
+  });
 }
 function loadRewardsPanel(){
   var body = document.getElementById('panelBody');
-  rewardSeenAtOpen_ = loadRewardSeen_();
   var stale = memberMenuData_.loadStale();
   if (stale && stale.success) renderRewardsPanel_(stale);
   getMemberMenuData_().then(function(r){
@@ -1983,7 +2034,7 @@ function renderPrivilegesPanel_(r){
     if (r.pointsPromos && r.pointsPromos.length) {
       h += '<div style="font-size:13px;font-weight:700;color:var(--gd);margin-bottom:8px">🎯 โปรแต้มสะสมพิเศษตอนนี้</div>';
       r.pointsPromos.forEach(function(p){
-        h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span></div></div>';
+        h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + newTagHtml_('privileges', 'promo|' + p.name) + '</span></div></div>';
       });
       h += '<div style="height:14px"></div>';
     }
@@ -2002,15 +2053,15 @@ function renderPrivilegesPanel_(r){
         // (แพทเทิร์นเดียวกับ renderRegSuccessPrivileges_ ด้านบนและหน้าสั่งซื้อสินค้า)
         var hasExpiry_ = p.expiry && p.expiry !== 'ไม่มีวันหมดอายุ';
         if (p.isUpcoming) {
-          h += '<div class="list-item" style="opacity:.55"><div class="row1"><span>⏳ ' + esc(p.name) + '</span></div>'
+          h += '<div class="list-item" style="opacity:.55"><div class="row1"><span>⏳ ' + esc(p.name) + newTagHtml_('privileges', privilegeItemKey_(p)) + '</span></div>'
             + '<div class="row2">ใช้สิทธิ์ได้ตั้งแต่วันที่ ' + esc(p.startDateText)
             + (hasExpiry_ ? (' · หมดอายุ ' + esc(p.expiry)) : '') + '</div></div>';
         } else if (isSpinPrivilege_(p)) {
           // ⚡ เพิ่ม (11/10/69) — สิทธิ์ที่ได้จากวงล้อนำโชค: การ์ดสีน้ำเงินทองแยกจากสิทธิ์ปกติ + บอกวันที่ใช้ได้ถึง
-          h += '<div class="list-item spin-priv"><div class="row1"><span>' + esc(p.name) + '<span class="spin-priv-tag">🎡 จากวงล้อ</span></span></div>'
+          h += '<div class="list-item spin-priv"><div class="row1"><span>' + esc(p.name) + '<span class="spin-priv-tag">🎡 จากวงล้อ</span>' + newTagHtml_('privileges', privilegeItemKey_(p)) + '</span></div>'
             + '<div class="row2">' + (hasExpiry_ ? ('ใช้ได้ถึง ' + esc(p.expiry)) : 'ไม่มีวันหมดอายุ') + '</div></div>';
         } else {
-          h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + '</span></div>'
+          h += '<div class="list-item"><div class="row1"><span>' + esc(p.name) + newTagHtml_('privileges', privilegeItemKey_(p)) + '</span></div>'
             + '<div class="row2">' + (hasExpiry_ ? ('หมดอายุ: ' + esc(p.expiry)) : 'ไม่มีวันหมดอายุ') + '</div></div>';
         }
       });
@@ -2021,7 +2072,7 @@ function renderPrivilegesPanel_(r){
       h += '<div style="font-size:13px;font-weight:700;color:var(--gd);margin:16px 0 8px">🌟 สิทธิ์ตามระดับสมาชิก</div>';
       r.tierPerks.forEach(function(p){
         if (p.unlocked) {
-          h += '<div class="list-item"><div class="row1"><span>✅ ' + esc(p.text) + '</span></div>'
+          h += '<div class="list-item"><div class="row1"><span>✅ ' + esc(p.text) + newTagHtml_('privileges', 'perk|' + p.text) + '</span></div>'
             + '<div class="row2">ปลดล็อคแล้ว (' + esc(p.tierName) + ')</div></div>';
         } else {
           // สิทธิ์ของระดับที่ยังไปไม่ถึง: แสดงไว้ให้เห็นเป้าหมาย แต่ต้องจางและระบุชัดว่าใช้ไม่ได้
@@ -2031,6 +2082,7 @@ function renderPrivilegesPanel_(r){
       });
     }
     body.innerHTML = h;
+    markMenuSeen_('privileges', { items: privilegeKeys_(r) });
 }
 function loadPrivilegesPanel(){
   var body = document.getElementById('panelBody');
@@ -2608,7 +2660,7 @@ function renderMemberInfoPanel_(m){
       + '<div class="info-row" style="opacity:.55"><span>วันเกิด</span><span style="font-weight:400">' + esc(m.birthday) + '</span></div>'
       + '<div class="info-row"><span>ที่อยู่จัดส่ง</span><span style="text-align:right;max-width:60%">' + esc(m.address || '-') + '</span></div>'
       + '<div class="info-row"><span>จังหวัด</span><span>' + esc(m.province || '-') + '</span></div>'
-      + '<div class="info-row"><span>ระดับสมาชิก</span><span>' + esc(m.tier) + '</span></div>'
+      + '<div class="info-row"><span>ระดับสมาชิก</span><span>' + esc(m.tier) + (menuSeenAtOpen_ && menuSeenAtOpen_.info && menuSeenAtOpen_.info.tier !== undefined && menuSeenAtOpen_.info.tier !== memberTierKey_(m) ? '<span class="reward-new-tag">ใหม่</span>' : '') + '</span></div>'
       + '<div class="info-row"><span>คะแนนสะสม</span><span>' + (m.points || 0).toLocaleString('th-TH') + '</span></div>'
       + '<div class="info-row"><span>ยอดซื้อสะสม</span><span>฿' + (m.lifetimeSpend || 0).toLocaleString('th-TH') + '</span></div>'
       + '<div class="info-row"><span>สมัครเมื่อ</span><span>' + (m.joinDate ? new Date(m.joinDate).toLocaleDateString('th-TH') : '') + '</span></div>';
@@ -2625,6 +2677,7 @@ function renderMemberInfoPanel_(m){
     var provSel = document.getElementById('editProvince');
     provSel.innerHTML = '<option value="">— เลือกจังหวัด —</option>';
     THAI_PROVINCES.forEach(function(p){ provSel.innerHTML += '<option value="' + p + '"' + (p === m.province ? ' selected' : '') + '>' + p + '</option>'; });
+    markMenuSeen_('info', { at: Date.now(), tier: memberTierKey_(m) });
 }
 function toggleMemberEditMode(){
   var wrap = document.getElementById('editFormWrap');
@@ -2757,11 +2810,12 @@ function couponValueTextCompact_(c){
 }
 function renderCouponsPanel_(r){
   var body = document.getElementById('panelBody');
+  markMenuSeen_('coupons', { items: (r.results || []).map(couponKey_) });
   if (!r.results.length) { body.innerHTML = '<div class="empty">ยังไม่มีคูปองที่ใช้ได้ตอนนี้</div>'; return; }
   var h = '';
   r.results.forEach(function(c){
     var valueText = couponValueTextCompact_(c);
-    h += '<div class="list-item"><div class="row1"><span>' + esc(c.code) + '</span><span>' + valueText + '</span></div>'
+    h += '<div class="list-item"><div class="row1"><span>' + esc(c.code) + newTagHtml_('coupons', couponKey_(c)) + '</span><span>' + valueText + '</span></div>'
       + '<div class="row2">' + (c.autoApply ? 'ใช้อัตโนมัติที่หน้าชำระเงิน' : 'พิมพ์โค้ดนี้ตอนชำระเงิน') + (c.expiry ? ' · หมดอายุ ' + esc(c.expiry) : '') + '</div></div>';
   });
   body.innerHTML = h;
