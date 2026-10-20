@@ -1882,7 +1882,11 @@ function renderSpinPanel_(d, errMsg){
     if (w.terms && w.terms.length) {
       h += '<div class="spin-terms" id="spinTerms"><div class="spin-terms-title">📋 เงื่อนไขกิจกรรม</div><ul>'
         + w.terms.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
-    } else if (w.endDate) h += '<div class="spin-note">หมุนได้ถึงวันที่ ' + esc(new Date(w.endDate + 'T00:00:00').toLocaleDateString('th-TH')) + '</div>';
+    } else if (w.endDate) {
+      // วันสิ้นสุดอาจมีเวลาด้วย (โปร Live) เช่น '2026-10-20 22:00'
+      var endStr_ = String(w.endDate), endTime_ = endStr_.length > 10 ? endStr_.slice(11, 16) : '';
+      h += '<div class="spin-note">หมุนได้ถึงวันที่ ' + esc(new Date(endStr_.slice(0, 10) + 'T00:00:00').toLocaleDateString('th-TH') + (endTime_ ? ' เวลา ' + endTime_ + ' น.' : '')) + '</div>';
+    }
   }
   var coupons = d.coupons || [];
   if (coupons.length || w.enabled) {
