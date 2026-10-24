@@ -1752,7 +1752,8 @@ function isSpinPrivilege_(p){
 // วงล้อเช็กก่อนแถวลงชีต = ตอบว่ายังไม่เป็นสมาชิก วงล้อเลยไม่ขึ้น — หน้านี้รู้แล้วว่าเป็นสมาชิก (บัตรขึ้นแล้ว) จึงถามใหม่อีกเป็นระยะ
 var SPIN_NEW_MEMBER_RETRY_MS_ = [4000, 8000, 15000, 30000, 60000];
 function initSpinBanner_(){
-  renderSpinBanner_(loadSpinStale_());
+  var stale = loadSpinStale_();
+  renderSpinBanner_(stale);
   var tries = 0;
   var go = function(){
     fetchSpinData_().then(function(r){
@@ -1760,7 +1761,8 @@ function initSpinBanner_(){
       if (r && r.success && r.isMember === false && tries < SPIN_NEW_MEMBER_RETRY_MS_.length) setTimeout(go, SPIN_NEW_MEMBER_RETRY_MS_[tries++]);
     }).catch(function(){});
   };
-  setTimeout(go, 1500);
+  // ยังไม่เคยมีข้อมูลวงล้อในเครื่อง (เช่น เพิ่งสมัคร) = ถามทันที ไม่ต้องรอ 1.5 วินาที
+  setTimeout(go, stale ? 1500 : 200);
 }
 function renderSpinBanner_(d){
   var el = document.getElementById('spinBanner');
