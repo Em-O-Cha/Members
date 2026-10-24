@@ -1748,11 +1748,19 @@ function isSpinPrivilege_(p){
   if (!d || !d.coupons || !p) return false;
   return d.coupons.some(function(c){ return c.name === p.name && c.expiry === p.expiry; });
 }
+// ⚡ แก้ (24/10/69) — เพิ่งสมัคร: ระบบสมัครเร็วตอบบัตรสมาชิกทันที แต่แถวสมาชิกลงชีตตามหลังไม่กี่วินาที (ช้าสุด ~1 นาที)
+// วงล้อเช็กก่อนแถวลงชีต = ตอบว่ายังไม่เป็นสมาชิก วงล้อเลยไม่ขึ้น — หน้านี้รู้แล้วว่าเป็นสมาชิก (บัตรขึ้นแล้ว) จึงถามใหม่อีกเป็นระยะ
+var SPIN_NEW_MEMBER_RETRY_MS_ = [4000, 8000, 15000, 30000, 60000];
 function initSpinBanner_(){
   renderSpinBanner_(loadSpinStale_());
-  setTimeout(function(){
-    fetchSpinData_().then(renderSpinBanner_).catch(function(){});
-  }, 1500);
+  var tries = 0;
+  var go = function(){
+    fetchSpinData_().then(function(r){
+      renderSpinBanner_(r);
+      if (r && r.success && r.isMember === false && tries < SPIN_NEW_MEMBER_RETRY_MS_.length) setTimeout(go, SPIN_NEW_MEMBER_RETRY_MS_[tries++]);
+    }).catch(function(){});
+  };
+  setTimeout(go, 1500);
 }
 function renderSpinBanner_(d){
   var el = document.getElementById('spinBanner');
