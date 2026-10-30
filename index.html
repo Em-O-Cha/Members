@@ -1766,11 +1766,21 @@ function initSpinBanner_(){
   // ยังไม่เคยมีข้อมูลวงล้อในเครื่อง (เช่น เพิ่งสมัคร) = ถามทันที ไม่ต้องรอ 1.5 วินาที
   setTimeout(go, stale ? 1500 : 200);
 }
+// ⚡ (30/10/69) ลิงก์ ?open=spin (ปุ่ม "หมุนเลย" ในข้อความ LINE เตือนวงล้อ) = เปิดหน้าวงล้อให้เลย ไม่ต้องกดแบนเนอร์ซ้ำ
+var OPEN_SPIN_ON_LOAD_ = (function(){
+  try {
+    var params = new URLSearchParams(location.search);
+    var open = params.get('open');
+    if (!open && params.get('liff.state')) open = new URLSearchParams(String(params.get('liff.state')).split('?')[1] || '').get('open');
+    return open === 'spin';
+  } catch (e) { return false; }
+})();
 function renderSpinBanner_(d){
   var el = document.getElementById('spinBanner');
   if (!el) return;
   var on = !!(d && d.success && d.wheel && d.wheel.enabled && d.isMember !== false && d.tierAllowed !== false);
   el.classList.toggle('sh', !on);
+  if (on && OPEN_SPIN_ON_LOAD_) { OPEN_SPIN_ON_LOAD_ = false; setTimeout(function(){ try { openPanel('spin'); } catch (e) {} }, 0); }
   if (!on) return;
   var w = d.wheel;
   document.getElementById('spinBannerTitle').textContent = w.title || 'หมุนวงล้อลุ้นรางวัล';
