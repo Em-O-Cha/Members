@@ -493,6 +493,80 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
 .spin-banner-btn{flex:0 0 auto;padding:6px 12px;border-radius:999px;background:#fff;color:#162a63;font-size:12.5px;font-weight:700;}
 .spin-banner-wheel{width:46px;height:46px;flex:0 0 auto;animation:spinIdle 10s linear infinite;}
 @keyframes spinIdle{to{transform:rotate(360deg);}}
+/* ⚡ เพิ่ม (4/11/69) — เกมจับคู่ (พลิกการ์ด): แถบเชิญเล่น + หน้าเกมเต็มจอ (MatchGame.gs) */
+.match-banner{margin:10px 0 0;padding:8px 10px 8px 8px;border-radius:16px;cursor:pointer;display:flex;align-items:center;gap:10px;position:relative;z-index:1;
+  background:linear-gradient(135deg,#a50d0c 0%,#d9332f 60%,#e4504d 100%);color:#fff;box-shadow:0 6px 16px rgba(165,13,12,.28);border:1px solid rgba(255,255,255,.2);transition:transform .15s;}
+.match-banner.sh{display:none;}
+.match-banner:active{transform:scale(.98);}
+.match-banner-ic{width:46px;height:46px;flex:0 0 auto;position:relative;}
+.match-banner-ic i{position:absolute;width:26px;height:35px;border-radius:5px;border:2px solid #f5d77a;background:#2b1d14 url(match-card-back.jpg) center/88% no-repeat;top:6px;box-shadow:0 2px 4px rgba(0,0,0,.3);}
+.match-banner-ic i:first-child{left:3px;transform:rotate(-12deg);}
+.match-banner-ic i:last-child{left:17px;transform:rotate(10deg);animation:matchWiggle 2.4s ease-in-out infinite;}
+@keyframes matchWiggle{0%,70%,100%{transform:rotate(10deg)}80%{transform:rotate(18deg) translateY(-3px)}90%{transform:rotate(6deg)}}
+.match-banner-txt{flex:1;min-width:0;}
+.match-banner-kicker{display:inline-block;font-size:9.5px;letter-spacing:.6px;color:#7a1210;background:#ffd43b;font-weight:800;padding:1px 6px;border-radius:6px;margin-right:6px;vertical-align:2px;}
+.match-banner-title{font-size:14.5px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.match-banner-sub{font-size:11.5px;color:rgba(255,255,255,.88);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.match-banner-btn{flex:0 0 auto;padding:6px 12px;border-radius:999px;background:#fff;color:#a50d0c;font-size:12.5px;font-weight:700;}
+.match-ov{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:flex;justify-content:center;}
+.match-ov.sh{display:none;}
+.match-ph{width:100%;max-width:440px;height:100%;background:linear-gradient(180deg,#fff6ec,#fff);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.match-hd{background:linear-gradient(135deg,#a50d0c,#e4504d);color:#fff;padding:14px 16px 12px;position:relative;flex:0 0 auto;}
+.match-hd h1{margin:0;font-size:19px;padding-right:36px;}
+.match-hd p{margin:3px 0 0;font-size:12.5px;opacity:.92;}
+.match-lv{display:inline-block;background:#ffd43b;color:#5a2a00;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:700;margin-left:6px;vertical-align:2px;}
+.match-x{position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.22);color:#fff;font-size:15px;cursor:pointer;}
+.match-body{flex:1;overflow-y:auto;}
+.match-info{margin:10px 14px;background:#fff;border-radius:14px;padding:10px 12px;font-size:12.8px;line-height:1.75;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.match-info b{color:#a50d0c;}
+.match-info .t{font-weight:700;font-size:13.5px;margin-bottom:2px;color:#333;}
+.match-stars-tb{border-collapse:collapse;}
+.match-stars-tb td{padding:3px 4px;font-size:12.5px;vertical-align:top;}
+.match-stars-tb td:first-child{white-space:nowrap;}
+.match-btn{display:block;width:calc(100% - 32px);margin:12px 16px 16px;background:linear-gradient(135deg,#06c755,#04a948);color:#fff;text-align:center;border:0;border-radius:14px;padding:13px;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;}
+.match-btn:disabled{opacity:.6;}
+.match-btn.ghost{background:#fff;color:#a50d0c;border:1.5px solid #e4504d;}
+.match-bar{display:flex;justify-content:space-between;align-items:center;padding:9px 14px 6px;font-size:13px;font-weight:700;color:#a50d0c;flex:0 0 auto;}
+.match-bar .lo{color:#c62828;animation:matchBlink .6s infinite alternate;}
+@keyframes matchBlink{to{opacity:.45}}
+.match-tb{height:8px;background:#f3d7d4;border-radius:4px;margin:0 14px 8px;overflow:hidden;flex:0 0 auto;}
+.match-tb i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffb300,#e4504d);transition:width .2s linear;}
+.match-grid{display:grid;gap:6px;padding:0 12px 14px;justify-content:center;align-content:start;}
+.mc{aspect-ratio:3/4;perspective:600px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.mc-in{position:relative;width:100%;height:100%;transition:transform .32s;transform-style:preserve-3d;}
+.mc.up .mc-in{transform:rotateY(180deg);}
+.mc-f{position:absolute;inset:0;border-radius:10px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 2px 5px rgba(0,0,0,.15);}
+.mc-back{background:#2b1d14 radial-gradient(circle at 50% 45%,#3d2a1c 0,#1c120c 70%);display:flex;align-items:center;justify-content:center;border:2.5px solid #d4a94c;}
+.mc-back img{width:70%;border-radius:8px;}
+.mc-front{transform:rotateY(180deg);background:#fff;border:2.5px solid #fff;}
+.mc-front img{width:100%;height:100%;object-fit:cover;display:block;}
+.mc-sz{position:absolute;left:3px;bottom:3px;background:#a50d0c;color:#fff;font-size:10px;font-weight:700;border-radius:6px;padding:0 5px;}
+.mc.ok .mc-front{border-color:#06c755;}
+.mc.ok .mc-front::after{content:'✓';position:absolute;right:3px;top:2px;background:#06c755;color:#fff;border-radius:50%;width:17px;height:17px;font-size:11px;text-align:center;line-height:17px;font-weight:700;}
+.mc.bad .mc-front{border-color:#ff5252;}
+.mc-front.trap{background:#2d0a0a;border-color:#ff5252;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ff8a80;font-weight:700;font-size:12px;}
+.mc-front.trap b{font-size:28px;}
+.mc-front.bonus{background:#e8f5e9;border-color:#06c755;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#1b5e20;font-weight:700;font-size:12px;}
+.mc-front.bonus b{font-size:26px;}
+.mc.used .mc-front{opacity:.5;}
+.match-grid.shuf .mc{animation:matchShuf .45s ease;}
+@keyframes matchShuf{30%{transform:scale(.85) rotate(-4deg)}60%{transform:scale(.9) rotate(4deg)}}
+.match-peek{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3;}
+.match-peek div{background:rgba(0,0,0,.7);color:#fff;border-radius:18px;padding:12px 22px;text-align:center;font-weight:700;font-size:16px;}
+.match-peek b{font-size:42px;display:block;color:#ffd43b;}
+.match-toast{position:absolute;left:50%;transform:translateX(-50%);top:140px;background:#c62828;color:#fff;padding:7px 14px;border-radius:20px;font-weight:700;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,.3);white-space:nowrap;z-index:4;pointer-events:none;animation:matchToast 1.3s ease forwards;}
+.match-toast.good{background:#06a148;}.match-toast.info{background:#5a2a00;}
+@keyframes matchToast{0%{opacity:0;transform:translate(-50%,8px)}12%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0}}
+.match-win{text-align:center;padding:18px 14px 4px;}
+.match-win .st{font-size:44px;letter-spacing:4px;}
+.match-win .st .off{opacity:.22;filter:grayscale(.4);}
+.match-win h2{margin:6px 0 2px;color:#a50d0c;font-size:19px;}
+.match-win p{margin:0;color:#888;font-size:13px;}
+.match-prize{margin:12px 14px;border:2px dashed #e4504d;border-radius:14px;padding:10px;background:#fff6f5;text-align:center;font-size:13px;line-height:1.6;}
+.match-prize b{font-size:17px;color:#a50d0c;display:block;margin:2px 0;}
+.match-prize small{color:#999;}
+.match-foot{text-align:center;color:#999;font-size:12.5px;margin:-6px 0 14px;}
+.match-wait{text-align:center;padding:40px 16px;color:#a50d0c;font-weight:700;}
 .spin-panel{text-align:center;}
 .spin-stage{position:relative;width:min(300px,78vw);margin:4px auto 0;padding-top:18px;}
 .spin-stage>svg:not(.spin-pointer){display:block;width:100%;height:auto;}
@@ -630,6 +704,14 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
         </div>
         <span class="spin-banner-btn">เล่นเลย ›</span>
       </div>
+      <div class="match-banner sh" id="matchBanner" onclick="openMatch_()" role="button" aria-label="เกมจับคู่">
+        <div class="match-banner-ic" aria-hidden="true"><i></i><i></i></div>
+        <div class="match-banner-txt">
+          <div class="match-banner-title"><span class="match-banner-kicker">GAME</span><span id="matchBannerTitle">เกมจับคู่ เอมโอชา</span></div>
+          <div class="match-banner-sub" id="matchBannerSub"></div>
+        </div>
+        <span class="match-banner-btn" id="matchBannerBtn">เล่นเลย ›</span>
+      </div>
       <div class="lower-section">
         <h2 class="menu-section-title has-seven" id="menuSectionTitle"><span>สิทธิพิเศษสมาชิก<span class="tier-info-icon" onclick="openPanel('terms')" title="เงื่อนไขสิทธิพิเศษสมาชิก">ⓘ</span></span>
           <button type="button" class="seven-cta sh" id="sevenCta" onclick="openPanel('receipt7')" aria-label="สะสมคะแนนจากใบเสร็จ 7-Eleven"><img src="logo-7eleven.png" alt="7-Eleven"><span><b>ใบเสร็จ 7-Eleven</b>ส่งรับคะแนน</span></button></h2>
@@ -672,6 +754,7 @@ button:disabled,.btn:disabled{opacity:.5;box-shadow:none;}
   </div>
 </div>
 </div>
+<div class="match-ov sh" id="matchOv"><div class="match-ph" id="matchPh"></div></div>
 <div class="panel-overlay sh" id="panelOverlay" onclick="if(event.target===this)closePanel()">
   <div class="panel-sheet">
     <div class="panel-hd">
@@ -806,7 +889,7 @@ function logPromoClickFromUrl_(){
     callApi('logPromoClick', { idToken: currentIdToken, src: src }).catch(function(){});
   } catch (e) {}
 }
-var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'enqueueMemberRegistration', 'redeemReward', 'updateMemberProfile', 'spinWheel'];
+var NON_IDEMPOTENT_ACTIONS_ = ['registerMember', 'enqueueMemberRegistration', 'redeemReward', 'updateMemberProfile', 'spinWheel', 'startMatchGame'];
 function callApi(action, payload, _attempt){
   payload = payload || {};
   payload.action = action;
@@ -1499,6 +1582,7 @@ function warmMemberMenuData_(){
   if (memberMenuWarmStarted_) return;
   memberMenuWarmStarted_ = true;
   initSpinBanner_();
+  initMatchBanner_();
   // ดึงหลังบัตรสมาชิกแสดงแล้ว จึงไม่ทำให้หน้าแรกค้าง แต่กดเข้าเมนูไหนก็มีข้อมูลรอไว้เกือบทันที (หรือเห็นของเดิม
   // จาก localStorage ทันทีระหว่างรอของใหม่ ถ้าเพิ่งเปิดหน้านี้เป็นครั้งแรกในรอบนี้)
   setTimeout(function(){
@@ -1690,6 +1774,360 @@ function loadRewardsPanel(){
   });
 }
 // ==================== ⚡ เพิ่ม (11/10/69) — วงล้อนำโชค ====================
+// ==================== ⚡ เพิ่ม (4/11/69) — เกมจับคู่ (พลิกการ์ด) ====================
+// Apps Script: getMatchGame / startMatchGame / finishMatchGame ใน MatchGame.gs — เล่นฟรีวันละ 1 ครั้ง
+// เซิร์ฟเวอร์สุ่มการ์ดและตรวจผลเอง (หน้านี้ส่ง "ลำดับการพลิก + เวลา" กลับไป) ตัวสุ่มสลับการ์ด matchRng_/matchShuffleDown_
+// ต้องเหมือนฝั่ง Apps Script ทุกตัวอักษร (แก้ที่หนึ่งต้องแก้อีกที่)
+var MATCH_STORAGE_KEY_ = 'emocha.members.matchCache';
+var matchData_ = null, matchFetching_ = null, matchG_ = null;
+function matchStorageKey_(){ return MATCH_STORAGE_KEY_ + '.' + (currentLineUserId || '-'); }
+function loadMatchStale_(){
+  if (matchData_) return matchData_;
+  try { var raw = localStorage.getItem(matchStorageKey_()); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+}
+function saveMatchData_(r){
+  matchData_ = r;
+  try { localStorage.setItem(matchStorageKey_(), JSON.stringify(r)); } catch (e) {}
+}
+function fetchMatchData_(){
+  if (matchFetching_) return matchFetching_;
+  matchFetching_ = callApi('getMatchGame', { idToken: currentIdToken }).then(function(r){
+    matchFetching_ = null;
+    if (r && r.success) saveMatchData_(r);
+    return r;
+  }).catch(function(e){ matchFetching_ = null; throw e; });
+  return matchFetching_;
+}
+function initMatchBanner_(){
+  renderMatchBanner_(loadMatchStale_());
+  setTimeout(function(){ fetchMatchData_().then(renderMatchBanner_).catch(function(){}); }, 1700);
+}
+function matchStarsText_(n){ var s = ''; for (var i = 0; i < 3; i++) s += i < n ? '⭐' : ''; return s || '—'; }
+function renderMatchBanner_(d){
+  var el = document.getElementById('matchBanner');
+  if (!el) return;
+  var on = !!(d && d.success && d.game && d.game.enabled && d.isMember !== false);
+  el.classList.toggle('sh', !on);
+  if (!on) return;
+  var g = d.game;
+  document.getElementById('matchBannerTitle').textContent = g.title || 'เกมจับคู่ เอมโอชา';
+  var sub;
+  if (d.tester) sub = '🧪 โหมดทดสอบ · เล่นได้ไม่จำกัด';
+  else if (d.playedToday) sub = 'วันนี้เล่นแล้ว ' + (d.today && d.today.stars ? matchStarsText_(d.today.stars) : '') + ' · พรุ่งนี้มาเล่นใหม่นะคะ';
+  else sub = 'เล่นฟรีวันละ 1 ครั้ง' + (g.endText ? ' · ถึง ' + g.endText : '');
+  document.getElementById('matchBannerSub').textContent = sub;
+  document.getElementById('matchBannerBtn').textContent = d.playedToday && !d.tester ? 'ดูผล ›' : 'เล่นเลย ›';
+}
+function matchPh_(){ return document.getElementById('matchPh'); }
+function matchHead_(title, sub, lv){
+  return '<div class="match-hd"><h1>🎴 ' + esc(title) + (lv ? ' <span class="match-lv">' + esc(lv) + '</span>' : '') + '</h1>'
+    + (sub ? '<p>' + esc(sub) + '</p>' : '') + '<button class="match-x" onclick="closeMatch_()" aria-label="ปิด">✕</button></div>';
+}
+function openMatch_(){
+  document.getElementById('matchOv').classList.remove('sh');
+  document.body.style.overflow = 'hidden';
+  var d = loadMatchStale_();
+  if (d && d.success && d.game && d.game.enabled) renderMatchStart_(d);
+  else matchPh_().innerHTML = matchHead_('เกมจับคู่ เอมโอชา', '') + '<div class="match-wait">กำลังโหลด...</div>';
+  fetchMatchData_().then(function(r){
+    if (matchG_) return;
+    renderMatchBanner_(r);
+    if (!r || !r.success) return renderMatchMsg_((r && r.error) || 'โหลดเกมไม่สำเร็จ');
+    if (!r.game || !r.game.enabled) return renderMatchMsg_('ตอนนี้ยังไม่เปิดให้เล่นเกมค่ะ');
+    renderMatchStart_(r);
+  }).catch(function(e){ if (!matchG_ && !(d && d.success)) renderMatchMsg_(e.message); });
+}
+function closeMatch_(){
+  var g = matchG_;
+  if (g && (g.state === 'play' || g.state === 'peek')) {
+    if (!confirm('ออกจากเกมตอนนี้ = จบเกมเลย (นับว่าเล่นแล้ววันนี้) ออกใช่ไหมคะ?')) return;
+    matchEnd_('quit');
+    return;
+  }
+  if (g && g.state === 'sending') return;
+  matchG_ = null;
+  document.getElementById('matchOv').classList.add('sh');
+  document.body.style.overflow = '';
+}
+function renderMatchMsg_(msg){
+  matchPh_().innerHTML = matchHead_('เกมจับคู่ เอมโอชา', '') + '<div class="match-wait" style="color:#555;font-weight:500">' + esc(msg) + '</div>'
+    + '<button class="match-btn ghost" onclick="closeMatch_()">ปิด</button>';
+}
+function renderMatchStart_(d){
+  var g = d.game;
+  var sub = d.tester ? '🧪 โหมดทดสอบ (เห็นเฉพาะคนทดสอบ)' : ('เล่นฟรีวันละ 1 ครั้ง' + (g.endText ? ' · เปิดถึง ' + g.endText : ''));
+  var html = matchHead_(g.title || 'เกมจับคู่ เอมโอชา', sub, g.levelLabel ? 'ระดับ' + g.levelLabel : '') + '<div class="match-body">';
+  html += '<div class="match-info"><div class="t">กติกา</div>' + (g.terms || []).map(function(l){ return esc(l); }).join('<br>') + '</div>';
+  var rw = g.rewards || {};
+  html += '<div class="match-info"><div class="t">รางวัล</div><table class="match-stars-tb">'
+    + '<tr><td>⭐⭐⭐</td><td>ครบภายใน ' + g.star3Time + ' วิ + ผิดไม่เกิน ' + g.star3Wrong + ' ครั้ง' + (rw.s3 ? '<br><b>' + esc(rw.s3) + '</b>' : '') + '</td></tr>'
+    + '<tr><td>⭐⭐</td><td>จับครบทันเวลา' + (rw.s2 ? ' · <b>' + esc(rw.s2) + '</b>' : '') + '</td></tr>'
+    + '<tr><td>⭐</td><td>จับไม่ครบ' + (rw.s1 ? ' · <b>' + esc(rw.s1) + '</b>' : '') + '</td></tr></table></div>';
+  if (d.isMember === false) {
+    html += '<div class="match-info" style="text-align:center">สมัครสมาชิกก่อนแล้วมาเล่นได้เลยค่ะ</div>';
+  } else if (d.playedToday && !d.tester) {
+    var t = d.today || {};
+    html += '<div class="match-prize">วันนี้คุณเล่นไปแล้ว<b>' + (t.stars ? matchStarsText_(t.stars) : esc(t.status || '')) + '</b>'
+      + (t.reward ? '🎁 ' + esc(t.reward) + '<br>' : '') + '<small>กลับมาเล่นใหม่ได้พรุ่งนี้ 🌿</small></div>';
+    html += '<button class="match-btn ghost" onclick="closeMatch_()">ปิด</button>';
+  } else {
+    html += '<button class="match-btn" id="matchGoBtn" onclick="startMatch_()">เริ่มเล่นเลย</button>';
+  }
+  matchPh_().innerHTML = html + '</div>';
+}
+function matchRng_(seed){
+  var a = seed >>> 0;
+  return function(){
+    a = (a + 0x6D2B79F5) >>> 0;
+    var t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function matchShuffleDown_(layout, positions, rnd){
+  var vals = positions.map(function(i){ return layout[i]; });
+  for (var i = vals.length - 1; i > 0; i--) {
+    var j = Math.floor(rnd() * (i + 1));
+    var t = vals[i]; vals[i] = vals[j]; vals[j] = t;
+  }
+  var out = layout.slice();
+  positions.forEach(function(p, k){ out[p] = vals[k]; });
+  return out;
+}
+function startMatch_(){
+  var btn = document.getElementById('matchGoBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'กำลังสับการ์ด...'; }
+  callApi('startMatchGame', { idToken: currentIdToken }).then(function(r){
+    if (!r || !r.success) {
+      if (r && r.playedToday) { var d = loadMatchStale_() || {}; d.playedToday = true; d.today = r.today; saveMatchData_(d); renderMatchBanner_(d); renderMatchStart_(d); return; }
+      if (btn) { btn.disabled = false; btn.textContent = 'เริ่มเล่นเลย'; }
+      return showCustomAlert_((r && r.error) || 'เริ่มเกมไม่สำเร็จ');
+    }
+    var d0 = loadMatchStale_() || {};
+    matchG_ = {
+      sid: r.sessionId, layout: r.layout.slice(), faces: r.faces, R: r.rules, pairs: r.pairs, tester: !!r.tester,
+      rnd: matchRng_(r.seed ^ 0x5bd1e995), gone: {}, first: -1, wrong: 0, streak: 0, matched: 0, adj: 0, flips: [],
+      t0: 0, timer: null, lock: false, state: 'load', title: (d0.game && d0.game.title) || 'เกมจับคู่ เอมโอชา',
+      lv: (d0.game && d0.game.levelLabel) || ''
+    };
+    // โหลดรูปให้ครบก่อนเริ่มดู (ไม่เกิน 5 วินาที) — กันการ์ดขึ้นช่องว่างตอนช่วงจำ
+    var imgs = r.faces.map(function(f){ return new Promise(function(res){ var im = new Image(); im.onload = im.onerror = res; im.src = f.img; }); });
+    Promise.race([Promise.all(imgs), new Promise(function(res){ setTimeout(res, 5000); })]).then(matchBeginPeek_);
+  }).catch(function(e){
+    if (btn) { btn.disabled = false; btn.textContent = 'เริ่มเล่นเลย'; }
+    showCustomAlert_(e.message);
+  });
+}
+function matchCardHtml_(g, i){
+  var c = g.layout[i], front;
+  if (c === 'T') front = '<div class="mc-f mc-front trap"><b>💣</b>-' + g.R.trapSec + ' วิ</div>';
+  else if (c === 'B') front = '<div class="mc-f mc-front bonus"><b>⏰</b>+' + g.R.bonusSec + ' วิ</div>';
+  else {
+    var f = g.faces[c] || {};
+    front = '<div class="mc-f mc-front"><img src="' + esc(f.img) + '" alt="">' + (f.label ? '<span class="mc-sz">' + esc(f.label) + '</span>' : '') + '</div>';
+  }
+  return '<div class="mc" id="mc' + i + '" onclick="matchTap_(' + i + ')"><div class="mc-in"><div class="mc-f mc-back"><img src="match-card-back.jpg" alt=""></div>' + front + '</div></div>';
+}
+function matchRenderGame_(sub){
+  var g = matchG_;
+  var html = matchHead_(g.title, sub, g.lv)
+    + '<div class="match-bar"><span id="matchClock">⏱️ ' + matchFmt_(g.R.timeSec * 1000) + '</span><span id="matchPairs">✅ ' + g.matched + '/' + g.pairs + '</span>'
+    + '<span id="matchWrong">❌ ' + g.wrong + (g.R.maxWrong > 0 ? '/' + g.R.maxWrong : '') + '</span></div>'
+    + '<div class="match-tb"><i id="matchTb"></i></div><div class="match-grid" id="matchGrid">';
+  for (var i = 0; i < g.layout.length; i++) html += matchCardHtml_(g, i);
+  matchPh_().innerHTML = html + '</div>';
+  matchSizeGrid_();
+}
+function matchSizeGrid_(){
+  var g = matchG_, grid = document.getElementById('matchGrid');
+  if (!g || !grid) return;
+  var n = g.layout.length, cols = n <= 12 ? 3 : 4;
+  if (n > 20) cols = 5;
+  var rows = Math.ceil(n / cols);
+  var ph = matchPh_(), top = grid.getBoundingClientRect().top - ph.getBoundingClientRect().top;
+  var availW = ph.clientWidth - 24 - 6 * (cols - 1), availH = ph.clientHeight - top - 14 - 6 * (rows - 1);
+  var w = Math.floor(Math.min(availW / cols, (availH / rows) * 0.75));
+  grid.style.gridTemplateColumns = 'repeat(' + cols + ',' + Math.max(48, w) + 'px)';
+}
+function matchFmt_(ms){
+  var s = Math.max(0, Math.ceil(ms / 1000));
+  return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+}
+function matchToast_(text, cls){
+  var el = document.createElement('div');
+  el.className = 'match-toast' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+  matchPh_().appendChild(el);
+  setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 1400);
+}
+function matchBeginPeek_(){
+  var g = matchG_;
+  if (!g || g.state !== 'load') return;
+  matchRenderGame_(g.R.peekSec ? 'จำตำแหน่งการ์ดให้ได้!' : 'เริ่มเลย!');
+  if (!g.R.peekSec) return matchBeginPlay_();
+  g.state = 'peek';
+  for (var i = 0; i < g.layout.length; i++) document.getElementById('mc' + i).classList.add('up');
+  var left = g.R.peekSec;
+  var box = document.createElement('div');
+  box.className = 'match-peek';
+  box.innerHTML = '<div>จำให้ได้!<b id="matchPeekN">' + left + '</b></div>';
+  matchPh_().appendChild(box);
+  var iv = setInterval(function(){
+    if (matchG_ !== g) return clearInterval(iv);
+    left--;
+    if (left > 0) { var n = document.getElementById('matchPeekN'); if (n) n.textContent = left; return; }
+    clearInterval(iv);
+    if (box.parentNode) box.parentNode.removeChild(box);
+    for (var i = 0; i < g.layout.length; i++) document.getElementById('mc' + i).classList.remove('up');
+    setTimeout(matchBeginPlay_, 350);
+  }, 1000);
+}
+function matchBeginPlay_(){
+  var g = matchG_;
+  if (!g || (g.state !== 'peek' && g.state !== 'load')) return;
+  g.state = 'play';
+  g.t0 = performance.now();
+  var hp = matchPh_().querySelector('.match-hd p');
+  if (hp) hp.textContent = 'เหลืออีก ' + (g.pairs - g.matched) + ' คู่!';
+  g.timer = setInterval(matchTick_, 100);
+}
+function matchLeftMs_(g, t){ return g.R.timeSec * 1000 + g.adj - t; }
+function matchTick_(){
+  var g = matchG_;
+  if (!g || g.state !== 'play') return;
+  var left = matchLeftMs_(g, performance.now() - g.t0);
+  var c = document.getElementById('matchClock'), tb = document.getElementById('matchTb');
+  if (c) { c.textContent = '⏱️ ' + matchFmt_(left); c.className = left < 10000 ? 'lo' : ''; }
+  if (tb) tb.style.width = Math.max(0, Math.min(100, left / (g.R.timeSec * 10))) + '%';
+  if (left <= 0) matchEnd_('time');
+}
+function matchUpdateBar_(){
+  var g = matchG_;
+  document.getElementById('matchPairs').textContent = '✅ ' + g.matched + '/' + g.pairs;
+  document.getElementById('matchWrong').textContent = '❌ ' + g.wrong + (g.R.maxWrong > 0 ? '/' + g.R.maxWrong : '');
+  var hp = matchPh_().querySelector('.match-hd p');
+  if (hp) hp.textContent = 'เหลืออีก ' + (g.pairs - g.matched) + ' คู่!';
+}
+function matchTap_(i){
+  var g = matchG_;
+  if (!g || g.state !== 'play' || g.lock || g.gone[i] || i === g.first) return;
+  var t = Math.round(performance.now() - g.t0);
+  if (g.flips.length && t - g.flips[g.flips.length - 1][1] < 110) return; // กดรัวเกินไป (เซิร์ฟเวอร์ไม่รับ)
+  if (matchLeftMs_(g, t) <= 0) return matchEnd_('time');
+  g.flips.push([i, t]);
+  var el = document.getElementById('mc' + i), card = g.layout[i];
+  el.classList.add('up');
+  if (card === 'T' || card === 'B') {
+    g.gone[i] = true;
+    el.classList.add('used');
+    if (card === 'T') { g.adj -= g.R.trapSec * 1000; matchToast_('💣 โดนกับดัก! −' + g.R.trapSec + ' วินาที'); }
+    else { g.adj += g.R.bonusSec * 1000; matchToast_('⏰ โบนัส! +' + g.R.bonusSec + ' วินาที', 'good'); }
+    matchTick_();
+    return;
+  }
+  if (g.first < 0) { g.first = i; return; }
+  var a = g.first;
+  g.first = -1;
+  if (g.layout[a] === card) {
+    g.gone[a] = g.gone[i] = true;
+    g.matched++; g.streak = 0;
+    document.getElementById('mc' + a).classList.add('ok'); el.classList.add('ok');
+    matchUpdateBar_();
+    if (g.matched >= g.pairs) matchEnd_('done');
+    return;
+  }
+  g.wrong++; g.streak++;
+  matchUpdateBar_();
+  var ea = document.getElementById('mc' + a);
+  ea.classList.add('bad'); el.classList.add('bad');
+  var lost = g.R.maxWrong > 0 && g.wrong >= g.R.maxWrong;
+  var shuffle = !lost && g.R.shuffleAfter > 0 && g.streak >= g.R.shuffleAfter;
+  if (shuffle) {
+    g.streak = 0;
+    var down = [];
+    for (var k = 0; k < g.layout.length; k++) if (!g.gone[k]) down.push(k);
+    g.layout = matchShuffleDown_(g.layout, down, g.rnd);
+  }
+  g.lock = true;
+  if (lost) { g.state = 'ending'; clearInterval(g.timer); }
+  setTimeout(function(){
+    if (matchG_ !== g) return;
+    ea.classList.remove('up', 'bad'); el.classList.remove('up', 'bad');
+    if (lost) return setTimeout(function(){ matchEnd_('wrong'); }, 300);
+    if (shuffle) {
+      setTimeout(function(){
+        if (matchG_ !== g) return;
+        var grid = document.getElementById('matchGrid');
+        down.forEach(function(p){ var old = document.getElementById('mc' + p); old.outerHTML = matchCardHtml_(g, p); });
+        grid.classList.remove('shuf'); void grid.offsetWidth; grid.classList.add('shuf');
+        matchToast_('🔀 ผิด ' + g.R.shuffleAfter + ' ครั้งติด การ์ดสลับที่!', 'info');
+        g.lock = false;
+      }, 330);
+    } else g.lock = false;
+  }, 650);
+}
+function matchEnd_(reason){
+  var g = matchG_;
+  if (!g || g.state === 'sending' || g.state === 'done') return;
+  clearInterval(g.timer);
+  g.state = 'sending';
+  setTimeout(function(){ matchSend_(g); }, reason === 'done' ? 600 : 300);
+}
+function matchSend_(g){
+  if (matchG_ !== g) return;
+  matchPh_().innerHTML = matchHead_(g.title, 'กำลังตรวจผล...', g.lv) + '<div class="match-wait">⏳ กำลังตรวจผลและให้รางวัล...</div>';
+  callApi('finishMatchGame', { idToken: currentIdToken, sessionId: g.sid, flips: JSON.stringify(g.flips) }).then(function(r){
+    if (matchG_ !== g) return;
+    if (!r || !r.success) return matchSendFail_(g, (r && r.error) || 'ส่งผลไม่สำเร็จ');
+    g.state = 'done';
+    matchShowResult_(g, r.result || {});
+    var d = loadMatchStale_();
+    if (d && !g.tester) { d.playedToday = true; d.today = { stars: (r.result || {}).stars, reward: (r.result || {}).reward, status: (r.result || {}).status }; saveMatchData_(d); renderMatchBanner_(d); }
+    try { if (typeof memberMenuData_ !== 'undefined') memberMenuData_.reset(); } catch (e) {}
+  }).catch(function(e){ if (matchG_ === g) matchSendFail_(g, e.message); });
+}
+function matchSendFail_(g, msg){
+  g.state = 'sendfail';
+  matchPh_().innerHTML = matchHead_(g.title, '', g.lv) + '<div class="match-wait" style="color:#555;font-weight:500">' + esc(msg) + '</div>'
+    + '<button class="match-btn" onclick="matchRetrySend_()">ส่งผลอีกครั้ง</button>';
+}
+function matchRetrySend_(){ var g = matchG_; if (g && g.state === 'sendfail') { g.state = 'sending'; matchSend_(g); } }
+function matchShowResult_(g, res){
+  var stars = res.stars || 0, head, sub;
+  if (stars >= 2) { head = 'จับครบ ' + res.pairs + ' คู่ ใน ' + Math.round(res.timeUsed) + ' วินาที!'; sub = 'พลิกผิด ' + res.wrong + ' ครั้ง'; }
+  else if (stars === 1) { head = (res.status === 'พลิกผิดครบ' ? 'พลิกผิดครบแล้ว!' : 'หมดเวลา!') + ' จับได้ ' + res.matched + '/' + res.pairs + ' คู่'; sub = g.tester ? 'ลองใหม่ได้เลย' : 'พรุ่งนี้ลองใหม่นะคะ'; }
+  else { head = 'เกมนี้ตรวจผลไม่ผ่าน'; sub = res.status || ''; }
+  var st = '';
+  for (var i = 0; i < 3; i++) st += '<span class="' + (i < stars ? '' : 'off') + '">⭐</span>';
+  var html = matchHead_(g.title, stars === 3 ? 'สุดยอด!' : stars === 2 ? 'เก่งมาก!' : 'เกือบแล้ว!', '') + '<div class="match-body">'
+    + '<div class="match-win"><div class="st">' + st + '</div><h2>' + esc(head) + '</h2><p>' + esc(sub) + '</p></div>';
+  var btn = '<button class="match-btn ghost" onclick="closeMatch_()">ปิด</button>';
+  if (res.reward) {
+    html += '<div class="match-prize">🎁 ' + (stars === 1 ? 'รางวัลปลอบใจ' : 'รางวัลของคุณ');
+    if (res.coupon) {
+      html += '<b>' + esc(res.coupon.name) + '</b>' + esc(res.coupon.label || '')
+        + (res.coupon.pts ? '<br>ใช้ ' + res.coupon.pts + ' คะแนน + จ่ายเงินตอนสั่งซื้อ (ต้องมีคะแนนพอ)' : '')
+        + '<br><small>ใช้ได้ถึง ' + esc(res.coupon.expiry) + '</small>';
+      if (res.points) html += '<br>และ <b style="display:inline;font-size:15px">+' + res.points + ' คะแนน</b>';
+      var shop = document.getElementById('shopCtaBtn');
+      btn = '<button class="match-btn" onclick="location.href=\'' + esc(shop ? shop.href : '') + '\'">ไปใช้สิทธิ์เลย</button>';
+    } else if (res.points) {
+      html += '<b>+' + res.points + ' คะแนน</b>เก็บเข้าบัญชีแล้ว';
+      btn = '<button class="match-btn" onclick="closeMatch_();openPanel(\'points\')">ดูคะแนนของฉัน</button>';
+    } else {
+      html += '<b>' + esc(res.reward) + '</b>';
+    }
+    if (!res.granted) html += '<br><small>🧪 โหมดทดสอบ: ไม่ได้ให้รางวัลจริง</small>';
+    html += '</div>';
+  }
+  html += btn;
+  if (g.tester) html += '<button class="match-btn ghost" style="margin-top:-6px" onclick="matchG_=null;openMatch_()">เล่นอีกครั้ง (ทดสอบ)</button>';
+  else html += '<div class="match-foot">กลับมาเล่นใหม่ได้พรุ่งนี้ 🌿</div>';
+  matchPh_().innerHTML = html + '</div>';
+}
+window.addEventListener('resize', function(){ if (matchG_ && matchG_.state === 'play') matchSizeGrid_(); });
+
 // สมาชิกใช้คะแนนหมุนวงล้อ (Apps Script: getSpinWheel / spinWheel ใน SpinWheel.gs) รางวัลส่วนลดเข้า "สิทธิ์พิเศษ"
 // ทันที มีวันหมดอายุ — การ์ดคูปองจากวงล้อเป็นสีน้ำเงินทองแยกจากสิทธิ์ปกติ (ทั้งในหน้าวงล้อและเมนูสิทธิ์พิเศษ)
 var SPIN_STORAGE_KEY_ = 'emocha.members.spinCache';
