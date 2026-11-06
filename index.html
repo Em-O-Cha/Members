@@ -2262,6 +2262,7 @@ function isSpinPrivilege_(p){
 // วงล้อเช็กก่อนแถวลงชีต = ตอบว่ายังไม่เป็นสมาชิก วงล้อเลยไม่ขึ้น — หน้านี้รู้แล้วว่าเป็นสมาชิก (บัตรขึ้นแล้ว) จึงถามใหม่อีกเป็นระยะ
 var SPIN_NEW_MEMBER_RETRY_MS_ = [4000, 8000, 15000, 30000, 60000];
 function initSpinBanner_(){
+  if (OPEN_RECEIPT7_ON_LOAD_) { OPEN_RECEIPT7_ON_LOAD_ = false; setTimeout(function(){ try { openPanel('receipt7'); } catch (e) {} }, 0); }
   var stale = loadSpinStale_();
   renderSpinBanner_(stale);
   var tries = 0;
@@ -2275,14 +2276,17 @@ function initSpinBanner_(){
   setTimeout(go, stale ? 1500 : 200);
 }
 // ⚡ (30/10/69) ลิงก์ ?open=spin (ปุ่ม "หมุนเลย" ในข้อความ LINE เตือนวงล้อ) = เปิดหน้าวงล้อให้เลย ไม่ต้องกดแบนเนอร์ซ้ำ
-var OPEN_SPIN_ON_LOAD_ = (function(){
+var OPEN_PARAM_ = (function(){
   try {
     var params = new URLSearchParams(location.search);
     var open = params.get('open');
     if (!open && params.get('liff.state')) open = new URLSearchParams(String(params.get('liff.state')).split('?')[1] || '').get('open');
-    return open === 'spin';
-  } catch (e) { return false; }
+    return open || '';
+  } catch (e) { return ''; }
 })();
+var OPEN_SPIN_ON_LOAD_ = OPEN_PARAM_ === 'spin';
+// ⚡ (6/11/69) ลิงก์ ?open=receipt7 = เปิดหน้าส่งใบเสร็จ 7-Eleven ให้เลย (เปิดครั้งเดียวหลังเข้าสู่ระบบสมาชิกแล้ว)
+var OPEN_RECEIPT7_ON_LOAD_ = OPEN_PARAM_ === 'receipt7';
 function renderSpinBanner_(d){
   var el = document.getElementById('spinBanner');
   if (!el) return;
