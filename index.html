@@ -3263,9 +3263,19 @@ function renderHistoryPanel_(r){
     var codNote = o.isCod ? ('<div class="row2" style="color:' + (o.codStatus === 'รอเก็บเงิน' ? '#e65100' : '#2e7d32') + '">💵 เก็บเงินปลายทาง' + (o.codStatus ? ' · ' + esc(o.codStatus) : '') + '</div>') : '';
     h += '<div class="list-item"><div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Number(o.totalAmount).toLocaleString('th-TH') + '</span></div>'
       + '<div class="row2">' + esc(o.date) + ' · ' + esc(o.paymentMethod) + (o.campaign ? ' · ' + esc(o.campaign) : '') + '</div>'
-      + codNote + '</div>';
+      + codNote + preorderHistoryNote_(o) + '</div>';
   });
   body.innerHTML = h;
+}
+// ⚡ (13/11/69) Pre-order: บอกยอดที่จ่ายแล้ว/ยอดค้างส่วนที่เหลือในประวัติ (ข้อมูล preorder มากับ getMyOrderHistory อยู่แล้ว)
+function preorderHistoryNote_(o){
+  var p = o.preorder;
+  if (!p || !p.state || o.cancelled) return '';
+  if (p.state === 'paid') return '<div class="row2" style="color:#2e7d32">🧾 Pre-order · ชำระครบแล้ว</div>';
+  var bal = Math.round(Number(p.balance) || 0);
+  return '<div class="row2" style="color:#e65100;font-weight:600">🧾 Pre-order · จ่ายแล้ว ฿' + Math.round(Number(o.payNow) || 0).toLocaleString('th-TH')
+    + ' · ค้างส่วนที่เหลือ ฿' + bal.toLocaleString('th-TH') + '</div>'
+    + (o.hasSlip ? '<a class="btn btn-sm" style="margin-top:8px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none" href="' + preorderPayLink_(o.orderId) + '">💳 ชำระส่วนที่เหลือ</a>' : '');
 }
 // ออเดอร์ค้างชำระ = สั่งไว้แล้วแต่ยังไม่แนบสลิป และไม่ใช่เก็บเงินปลายทาง (ปลายทางถือว่าจบแล้วตั้งแต่กดสั่ง)
 // และต้องไม่ใช่ออเดอร์ที่ถูกยกเลิกไปแล้ว — ชุดข้อมูลเดียวกับที่หน้าสั่งซื้อใช้ในหน้า "รถเข็น"
@@ -3274,6 +3284,16 @@ function pendingOrders_(r){
     return !o.hasSlip && !o.isCod && !o.cancelled;
   });
 }
+// ⚡ (13/11/69) ออเดอร์ Pre-order ที่จ่ายมัดจำแล้ว (แนบสลิป/จ่ายบัตรแล้ว) แต่ยังค้างส่วนที่เหลือ — เดิมไม่ขึ้นที่ไหนเลย
+// ลูกค้าต้องหาปุ่มในข้อความ LINE เอง · กดชำระแล้วไปหน้าร้าน ?paybalance= (หน้าเดียวกับปุ่มใน LINE)
+function balanceOrders_(r){
+  return (r && r.results ? r.results : []).filter(function(o){
+    return o.hasSlip && !o.cancelled && o.preorder && o.preorder.state === 'pending' && Number(o.preorder.balance) > 0;
+  });
+}
+function preorderPayLink_(orderId){ return SHOP_LIFF_URL_ + '?paybalance=' + encodeURIComponent(orderId); }
+// ยอดที่ลูกค้าต้องจ่ายตอนนี้ของออเดอร์ที่ยังไม่แนบสลิป (Pre-order = มัดจำ ไม่รวมส่วนที่เหลือ)
+function payNowOf_(o){ return (o.preorder && o.preorder.state === 'pending' && typeof o.payNow === 'number') ? o.payNow : (Number(o.totalAmount) || 0); }
 function updateCartBadge_(count){
   var el = document.getElementById('cartBadge');
   if (!el) return;
@@ -3281,27 +3301,41 @@ function updateCartBadge_(count){
   el.classList.toggle('sh', !count);
 }
 function refreshCartBadgeFrom_(r){
-  if (r && r.success) updateCartBadge_(pendingOrders_(r).length);
+  if (r && r.success) updateCartBadge_(pendingOrders_(r).length + balanceOrders_(r).length);
 }
 var SHOP_LIFF_URL_ = 'https://liff.line.me/2010892131-3XYQXNzq';
 function renderCartPanel_(r){
   var body = document.getElementById('panelBody');
-  var list = pendingOrders_(r);
-  updateCartBadge_(list.length);
-  if (!list.length) {
+  var list = pendingOrders_(r), bals = balanceOrders_(r);
+  updateCartBadge_(list.length + bals.length);
+  if (!list.length && !bals.length) {
     body.innerHTML = '<div class="empty" style="padding:22px 0">🎉<br>ไม่มีคำสั่งซื้อที่ค้างชำระ</div>'
       + '<a class="btn btn-block" style="margin-top:6px" href="' + SHOP_LIFF_URL_ + '">🛍️ สั่งซื้อสินค้า</a>';
     return;
   }
-  var total = list.reduce(function(sum, o){ return sum + (Number(o.totalAmount) || 0); }, 0);
+  var total = list.reduce(function(sum, o){ return sum + payNowOf_(o); }, 0)
+    + bals.reduce(function(sum, o){ return sum + (Number(o.preorder.balance) || 0); }, 0);
   var h = '<div class="bank-box" style="margin-bottom:14px;text-align:center">'
-    + '<div style="font-size:13px;color:var(--g6)">ค้างชำระ ' + list.length + ' คำสั่งซื้อ</div>'
+    + '<div style="font-size:13px;color:var(--g6)">ค้างชำระ ' + (list.length + bals.length) + ' คำสั่งซื้อ</div>'
     + '<div style="font-size:26px;font-weight:700;color:var(--gd)">฿' + Math.round(total).toLocaleString('th-TH') + '</div>'
     + '</div>';
-  list.forEach(function(o){
-    h += '<div class="list-item">'
-      + '<div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Math.round(Number(o.totalAmount) || 0).toLocaleString('th-TH') + '</span></div>'
+  // ⚡ (13/11/69) Pre-order ค้างส่วนที่เหลือ: การ์ดสีส้ม + ปุ่มไปหน้าชำระส่วนที่เหลือ
+  bals.forEach(function(o){
+    var bal = Math.round(Number(o.preorder.balance) || 0);
+    h += '<div class="list-item" style="border-color:#ffb74d;background:#fffaf2">'
+      + '<div class="row1"><span>' + esc(o.orderId) + '</span><span style="color:#e65100">฿' + bal.toLocaleString('th-TH') + '</span></div>'
       + '<div class="row2">' + esc(o.date) + (o.firstItemName ? ' · ' + esc(o.firstItemName) : '') + '</div>'
+      + '<div class="row2" style="color:#e65100;font-weight:600">🧾 Pre-order · จ่ายมัดจำแล้ว ฿' + Math.round(Number(o.payNow) || 0).toLocaleString('th-TH') + ' · ค้างส่วนที่เหลือ ฿' + bal.toLocaleString('th-TH') + '</div>'
+      + '<a class="btn btn-block" style="margin-top:10px;display:flex;align-items:center;justify-content:center;text-decoration:none" href="' + preorderPayLink_(o.orderId) + '">💳 ชำระส่วนที่เหลือ ฿' + bal.toLocaleString('th-TH') + '</a>'
+      + '</div>';
+  });
+  if (!list.length) { body.innerHTML = h; return; }
+  list.forEach(function(o){
+    var pre = o.preorder && o.preorder.state === 'pending';
+    h += '<div class="list-item">'
+      + '<div class="row1"><span>' + esc(o.orderId) + '</span><span>฿' + Math.round(payNowOf_(o)).toLocaleString('th-TH') + '</span></div>'
+      + '<div class="row2">' + esc(o.date) + (o.firstItemName ? ' · ' + esc(o.firstItemName) : '') + '</div>'
+      + (pre ? '<div class="row2">🧾 Pre-order · ยอดนี้คือมัดจำ ส่วนที่เหลือ ฿' + Math.round(Number(o.preorder.balance) || 0).toLocaleString('th-TH') + ' ชำระเมื่อสินค้าพร้อมส่ง</div>' : '')
       + '<div class="row2" style="color:#e65100;font-weight:600">' + (o.isCard ? '⏳ รอชำระเงิน' : '⏳ รอแนบสลิป') + '</div>'
       + '</div>';
   });
