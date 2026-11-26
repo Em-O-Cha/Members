@@ -1,6 +1,57 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+<!-- หน้าต่าง "กำลังดำเนินการ…" (ผู้ใช้ขอ 26/11/69: อย่าปล่อยให้เงียบ ทุกครั้งที่ระบบทำงานต้องรู้ว่ายังทำงานอยู่) — ขึ้นเองเมื่อคำขอที่เริ่มจากการกดของผู้ใช้ใช้เวลาเกิน 0.4 วินาที -->
+<style>
+.busyov{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:16px;background:rgba(15,23,42,.28);font-family:inherit}
+.busybox{display:flex;gap:14px;align-items:center;background:#fff;border-radius:18px;padding:18px 22px;box-shadow:0 12px 40px rgba(15,23,42,.25);max-width:360px;width:100%;box-sizing:border-box}
+.busybox b{display:block;font-size:16px;color:#0f172a;line-height:1.4}.busybox small{display:block;color:#64748b;font-size:13px;line-height:1.4}
+.busysp{width:30px;height:30px;flex:0 0 auto;border-radius:50%;border:3px solid #e2e8f0;border-top-color:#16a34a;animation:busyspin .8s linear infinite;box-sizing:border-box}
+@keyframes busyspin{to{transform:rotate(360deg)}}
+</style>
+<script>
+(function () {
+  if (window.__busyFetch || !window.fetch) return; window.__busyFetch = 1;
+  var act = 0, n = 0, t = null, t2 = null, at = 0, el = null, of = window.fetch.bind(window);
+  ['pointerdown', 'click', 'submit', 'change'].forEach(function (ev) { document.addEventListener(ev, function () { act = Date.now(); }, true); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Enter') act = Date.now(); }, true);
+  function label(url, opt) {
+    var u = String(url && url.url || url || ''), m = (opt && opt.method || 'GET').toUpperCase(), a = (u.match(/[?&]action=([^&]+)/) || [])[1] || u;
+    if (/delete|remove|cancel/i.test(a)) return 'กำลังดำเนินการ…';
+    if (/upload|slip|image|photo/i.test(a)) return 'กำลังอัปโหลด…';
+    if (/send|push|notify|line/i.test(a) && m !== 'GET') return 'กำลังส่ง…';
+    if (m !== 'GET' || /save|update|add|create|submit|redeem|claim|order|register|edit|set|confirm|use/i.test(a)) return 'กำลังบันทึก…';
+    return 'กำลังโหลดข้อมูล…';
+  }
+  function start(txt) {
+    n++;
+    if (el) { el.querySelector('b').textContent = txt; return; }
+    clearTimeout(t);
+    t = setTimeout(function () {
+      if (!n || el || !document.body) return;
+      el = document.createElement('div'); el.className = 'busyov'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+      el.innerHTML = '<div class="busybox"><span class="busysp"></span><div><b></b><small>กรุณารอสักครู่ ไม่ต้องกดซ้ำ</small></div></div>';
+      el.querySelector('b').textContent = txt;
+      document.body.appendChild(el); at = Date.now();
+      t2 = setTimeout(function () { if (el) el.querySelector('small').textContent = 'ยังทำงานอยู่ ใช้เวลานานกว่าปกติ — กรุณารอ'; }, 8000);
+    }, 400);
+  }
+  function end() {
+    n = Math.max(0, n - 1); if (n) return;
+    clearTimeout(t); clearTimeout(t2);
+    var e = el; if (!e) return; el = null;
+    setTimeout(function () { e.remove(); }, Math.max(0, 300 - (Date.now() - at)));
+  }
+  window.fetch = function (url, opt) {
+    var mine = Date.now() - act < 1500 && !window.busyQuiet;
+    if (mine) start(label(url, opt));
+    var p = of(url, opt);
+    if (mine) p.then(end, end);
+    return p;
+  };
+})();
+</script>
+
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://static.line-scdn.net">
 <link rel="preconnect" href="https://access.line.me">
