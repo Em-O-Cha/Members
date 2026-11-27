@@ -34,7 +34,7 @@
       el.querySelector('b').textContent = txt;
       document.body.appendChild(el); at = Date.now();
       t2 = setTimeout(function () { if (el) el.querySelector('small').textContent = 'ยังทำงานอยู่ ใช้เวลานานกว่าปกติ — กรุณารอ'; }, 8000);
-    }, 400);
+    }, 8000);   // ขึ้นเมื่อรอเกิน 8 วินาที (ผู้ใช้ขอ 27/11/69)
   }
   function end() {
     n = Math.max(0, n - 1); if (n) return;
